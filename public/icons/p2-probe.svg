@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- 外圈 -->
+  <circle cx="30" cy="30" r="22" fill="#daeaf7" stroke="#1668a8" stroke-width="1.5"/>
+  <!-- 中圈 -->
+  <circle cx="30" cy="30" r="15" fill="#c2d9f0" stroke="#1668a8" stroke-width="1.5"/>
+  <!-- 内圈 -->
+  <circle cx="30" cy="30" r="8" fill="#1668a8"/>
+  <!-- 中心点 -->
+  <circle cx="30" cy="30" r="3" fill="white"/>
+  <!-- 十字准线 -->
+  <line x1="30" y1="6" x2="30" y2="14" stroke="#1668a8" stroke-width="2" stroke-linecap="round"/>
+  <line x1="30" y1="46" x2="30" y2="54" stroke="#1668a8" stroke-width="2" stroke-linecap="round"/>
+  <line x1="6" y1="30" x2="14" y2="30" stroke="#1668a8" stroke-width="2" stroke-linecap="round"/>
+  <line x1="46" y1="30" x2="54" y2="30" stroke="#1668a8" stroke-width="2" stroke-linecap="round"/>
+  <!-- 金色探针箭头 -->
+  <circle cx="49" cy="49" r="10" fill="#d0ab68"/>
+  <circle cx="49" cy="49" r="7" fill="#e3c07a"/>
+  <path d="M45 53 L49 44 L53 53" stroke="#0d4e83" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+  <line x1="46.5" y1="50.5" x2="51.5" y2="50.5" stroke="#0d4e83" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

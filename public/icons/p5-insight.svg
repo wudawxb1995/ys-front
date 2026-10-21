@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- 连接线 -->
+  <line x1="20" y1="20" x2="38" y2="12" stroke="#1668a8" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+  <line x1="20" y1="20" x2="14" y2="38" stroke="#1668a8" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+  <line x1="20" y1="20" x2="38" y2="32" stroke="#1668a8" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+  <line x1="38" y1="12" x2="52" y2="20" stroke="#1668a8" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+  <line x1="38" y1="32" x2="52" y2="20" stroke="#1668a8" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+  <line x1="14" y1="38" x2="32" y2="50" stroke="#1668a8" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+  <line x1="38" y1="32" x2="32" y2="50" stroke="#1668a8" stroke-width="1.8" stroke-linecap="round" opacity="0.6"/>
+  <!-- 节点 -->
+  <circle cx="20" cy="20" r="7" fill="#1668a8"/>
+  <circle cx="20" cy="20" r="4" fill="white"/>
+  <circle cx="38" cy="12" r="6" fill="#daeaf7" stroke="#1668a8" stroke-width="1.5"/>
+  <circle cx="52" cy="20" r="6" fill="#daeaf7" stroke="#1668a8" stroke-width="1.5"/>
+  <circle cx="14" cy="38" r="5" fill="#daeaf7" stroke="#1668a8" stroke-width="1.5"/>
+  <circle cx="38" cy="32" r="6" fill="#c2d9f0" stroke="#1668a8" stroke-width="1.5"/>
+  <!-- 金色核心节点 -->
+  <circle cx="32" cy="50" r="10" fill="#d0ab68"/>
+  <circle cx="32" cy="50" r="7" fill="#e3c07a"/>
+  <circle cx="32" cy="50" r="3.5" fill="#0d4e83"/>
+</svg>

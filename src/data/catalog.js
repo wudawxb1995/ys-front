@@ -24,6 +24,7 @@ export const platforms = [
     brief: '异构资料统一汇聚与结构化解析，关键指标定向抽取，构建农业机械履历知识图谱',
     tags: ['数据解析', '指标抽取', '履历图谱', '态势展示'],
     icon: 'book',
+    iconFile: '/icons/p1-rebuild.svg',
     systems: [
       {
         id: 'quant',
@@ -88,7 +89,7 @@ export const platforms = [
               { name: '解析偏好', to: 'pref', desc: '意图映射为解析策略' },
               { name: '指标抽取', to: 'inds', desc: '性能参数自动抽取' },
               { name: '分类打标', to: 'cats', desc: '章节分类全生命周期' },
-              { name: '审核追溯', to: 'inds', desc: '预览、修订与原文定位' },
+              { name: '审核追溯', to: 'preview', desc: '预览、修订与原文定位' },
               { name: '标准建模', to: 'models', desc: '元数据与分类编码' },
             ],
             [
@@ -98,24 +99,25 @@ export const platforms = [
               { label: '问答训练数据', value: '5,200', unit: '条' },
             ],
           )),
-          g('pref-g', '解析偏好', 'target', [
-            leaf('pref', '业务意图与模板', crud('按知识库名称或描述推断解析偏好；意图不明时启用预制通用模板，保证策略始终可用。', 'preferences')),
-            leaf('modal-pref', '多模态解析偏好', { type: 'cards', cardKey: 'modalPref', desc: '文本侧重要点与关系，图像侧重文字与图形，视频侧重事件导览，并给出可对照的跨模态策略。' }),
+          g('pref-g', '解析策略配置', 'target', [
+            leaf('pref', '解析偏好管理', crud('按知识库名称或描述推断解析偏好；意图不明时启用预制通用模板，保证策略始终可用。', 'preferences')),
+            leaf('tpl-parse', '通用解析模板', crud('维护通用解析模板，支持新增、编辑、启用与停用。', 'schemeTpls')),
             leaf('entity-cfg', '实体识别配置', crud('按条目约定实体类别。可识别文档、音频、视频和图片中的业务对象。', 'entities')),
+            leaf('modal-pref', '模态策略管理', { type: 'cards', cardKey: 'modalPref', desc: '文本侧重要点与关系，图像侧重文字与图形，视频侧重事件导览，并给出可对照的跨模态策略。' }),
           ]),
           g('ind-g', '指标抽取', 'parse', [
-            leaf('inds', '关键指标解析', crud('抽取文档信息、概要、标签、导航与关键实体，内容对齐知识库主题。', 'indicators')),
-            leaf('custom', '自定义抽取配置', { type: 'entry', entryKey: 'extract', desc: '定义文档范围、内容类型与结果格式，系统按配置定位并提取指标。', dataset: 'indicators' }),
+            leaf('custom', '抽取配置管理', { type: 'entry', entryKey: 'extract', desc: '定义文档范围、内容类型与结果格式，系统按配置定位并提取指标。', dataset: 'indicators' }),
+            leaf('inds', '指标抽取任务', crud('抽取文档信息、概要、标签、导航与关键实体，内容对齐知识库主题。', 'indicators')),
+            leaf('cats', '文档分类管理', crud('分类信息可增删改查。系统按配置对章节自动打标，用户可审核修改。', 'categories')),
           ]),
-          g('cat-g', '分类标注', 'folder', [
-            leaf('cats', '分类体系与打标', crud('分类信息可增删改查。系统按配置对章节自动打标，用户可审核修改。', 'categories')),
-          ]),
-          g('rev-g', '审核与追溯', 'audit', [
-            leaf('preview', '预览与审核', { type: 'workbench', desc: '预览模式查看自动解析结果；审核模式对结果增删改。支持多类别农机的精细化人工核验。' }),
+          g('rev-g', '抽取结果审核', 'audit', [
+            leaf('preview', '结果预览与审核', { type: 'workbench', desc: '预览模式查看自动解析结果；审核模式对结果增删改。支持多类别农机的精细化人工核验。' }),
+            leaf('multi-rev', '多类别农机核验', crud('针对不同农业机械类别分别核验抽取结果，确保分类准确性。', 'indicators')),
             leaf('trace', '指标原文追溯', crud('由指标项定位并展示源文件，辅助人工核验。', 'indicators')),
           ]),
-          g('model-g', '标准化建模', 'model', [
-            leaf('models', '数据模型与编码', crud('依据试验鉴定数据标准建立统一模型与元数据，完成语义标注、分类编码和结构化生成。', 'dataModels')),
+          g('model-g', '数据建模与标注', 'model', [
+            leaf('models', '数据模型与元数据', crud('依据试验鉴定数据标准建立统一模型与元数据，完成语义标注、分类编码和结构化生成。', 'dataModels')),
+            leaf('auto-label', '自动标注与编码', crud('对抽取结果执行自动标注与分类编码，支持批量处理与人工复核。', 'entities')),
           ]),
         ],
       },
@@ -141,25 +143,27 @@ export const platforms = [
               { label: '关系抽取准确率', value: '79.2', unit: '%' },
             ],
           )),
-          g('life-g', '履历数据', 'book', [
-            leaf('life', '全生命周期整合', crud('资料按研发设计、性能试验设计、性能试验鉴定、成果验收归类。', 'lifecycle')),
-            leaf('events', '状态变更与事件', crud('记录技术状态、性能变更、问题及归零、关键事件。', 'events')),
+          g('life-g', '履历数据管理', 'book', [
+            leaf('life', '全生命周期数据整合', crud('资料按研发设计、性能试验设计、性能试验鉴定、成果验收归类。', 'lifecycle')),
+            leaf('events', '履历过程记录', crud('记录技术状态、性能变更、问题及归零、关键事件。', 'events')),
           ]),
-          g('build', '图谱构建', 'graph', [
-            leaf('graph', '履历知识图谱', { type: 'graph', graphKey: 'resume', desc: '二维 / 三维展示，支持搜索、筛选、查验、编辑。可手动创建节点、关系与事件类型。' }),
-            leaf('upload-graph', '批量上传构建', { type: 'entry', entryKey: 'graphUpload', desc: '非结构化 / 结构化数据批量上传，支持表格构建与文本构建，提供字典推荐与重复识别。', dataset: 'lifecycle' }),
-            leaf('fusion', '知识融合', { type: 'cards', cardKey: 'fusion', desc: '推荐可融合节点组，编辑后预览融合效果。' }),
+          g('build', '履历图谱构建', 'graph', [
+            leaf('graph', '图谱构建任务', { type: 'graph', graphKey: 'resume', desc: '二维 / 三维展示，支持搜索、筛选、查验、编辑。可手动创建节点、关系与事件类型。' }),
+            leaf('fusion', '知识融合管理', { type: 'cards', cardKey: 'fusion', desc: '推荐可融合节点组，编辑后预览融合效果。' }),
           ]),
-          g('schema-g', '结构设计', 'model', [
+          g('schema-g', '图谱Schema管理', 'model', [
             leaf('nodes', '节点类型定义', crud('定义实体类型，配置属性、颜色与图标。', 'nodeTypes')),
-            leaf('rels', '关系类型定义', crud('内置因果、条件、组成等事件关系，并支持扩展。', 'relTypes')),
-            leaf('schema', 'Schema 可视化', { type: 'graph', graphKey: 'schema', desc: '实时展示节点、关系与事件类型的整体关联，辅助结构设计与校验。' }),
+            leaf('rels', '关系与事件类型定义', crud('内置因果、条件、组成等事件关系，并支持扩展。', 'relTypes')),
+            leaf('schema', 'Schema可视化预览', { type: 'graph', graphKey: 'schema', desc: '实时展示节点、关系与事件类型的整体关联，辅助结构设计与校验。' }),
           ]),
-          g('ops', '交换与权限', 'shield', [
-            leaf('pack', '压缩包导入导出', crud('以压缩包导入外部图谱的数据与结构，也可导出当前图谱。', 'lifecycle')),
-            leaf('del', '安全删除', crud('支持单个或批量删除，执行前二次确认。', 'events')),
-            leaf('perm', '分角色权限', { type: 'crud', desc: '按角色管理图谱查看、编辑与发布权限。', dataset: 'kb' }),
+          g('ops', '图谱浏览与管理', 'shield', [
+            leaf('graph-view', '图谱可视化浏览', { type: 'graph', graphKey: 'resume', desc: '全图谱浏览与查询，支持节点筛选、关系展开与详情查看。' }),
+            leaf('pack', '图谱导入导出', crud('以压缩包导入外部图谱的数据与结构，也可导出当前图谱。', 'lifecycle')),
           ]),
+          g('resume-show', '履历信息展示', 'book', [
+            leaf('life-view', '履历结构化视图', { type: 'timeline', desc: '按时间轴展示农业机械全生命周期履历，支持阶段筛选与事件详情查看。' }),
+          ]),
+          leaf('perm', '图谱权限管理', { type: 'crud', desc: '按角色管理图谱查看、编辑与发布权限。', dataset: 'kb' }),
         ],
       },
       {
@@ -167,11 +171,28 @@ export const platforms = [
         name: '态势综合展示',
         full: '农业机械能力牵引的试验鉴定态势综合展示系统',
         menus: [
-          leaf('home', '综合态势', { type: 'stats', statsKey: 'situation', desc: '覆盖试验任务、资源、环境的综合信息面板，融合试验情况与测试数据，快速定位问题与结果。' }),
-          leaf('trace', '技术状态追溯', { type: 'timeline', desc: '建立技术状态发展链和关键事件时间轴，支持原文回溯。' }),
-          leaf('compare', '阶段对比与影响', { type: 'report', reportKey: 'compare', desc: '对比技术状态阶段，分析变更对指标与试验结论的影响。' }),
-          leaf('radar', '能力评估', { type: 'radar', desc: '以雷达图、能力矩阵和柱状图展示能力状态，维度包括打击、机动、防护，并补充可靠性与作业效率。' }),
-          leaf('locate', '问题与结果定位', crud('在任务、资源、环境面板中定位试验问题与试验结果。', 'events')),
+          leaf('home', '首页（综合态势面板）', { type: 'stats', statsKey: 'situation', desc: '覆盖试验任务、资源、环境的综合信息面板，融合试验情况与测试数据，快速定位问题与结果。' }),
+          g('trace-g', '技术状态追溯', 'timeline', [
+            leaf('trace', '技术状态发展链', { type: 'timeline', desc: '建立技术状态发展链，按时间轴展示关键技术节点演进，支持原文回溯。' }),
+            leaf('evt-axis', '关键事件时间轴', { type: 'timeline', desc: '展示农业机械关键事件时间轴，支持事件筛选与详情查看。' }),
+          ]),
+          g('hist-g', '履历全景追溯', 'report', [
+            leaf('compare', '阶段对比分析', { type: 'report', reportKey: 'compare', desc: '对比技术状态阶段，分析各阶段差异与演变规律。' }),
+            leaf('change-imp', '变更影响分析', { type: 'report', reportKey: 'changeImp', desc: '分析变更对指标与试验结论的影响，辅助决策。' }),
+          ]),
+          g('cap-g', '能力评估展示', 'radar', [
+            leaf('cap-idx', '能力指标体系', crud('维护能力评估指标体系，配置指标权重与评分规则。', 'indicators')),
+            leaf('radar', '能力可视化', { type: 'radar', desc: '以雷达图、能力矩阵和柱状图展示能力状态，维度包括打击、机动、防护，并补充可靠性与作业效率。' }),
+          ]),
+          g('panel-g', '综合态势面板', 'chart', [
+            leaf('task-panel', '试验任务态势', { type: 'stats', statsKey: 'taskPanel', desc: '展示试验任务进度、完成率与资源占用等态势信息。' }),
+            leaf('res-panel', '试验资源态势', { type: 'stats', statsKey: 'resPanel', desc: '展示试验资源分布、使用率与可用状态等态势信息。' }),
+            leaf('env-panel', '试验环境态势', { type: 'stats', statsKey: 'envPanel', desc: '展示试验环境参数、气候条件与保障状态等态势信息。' }),
+          ]),
+          g('node-g', '关键节点融合展示', 'flow', [
+            leaf('locate', '关键节点融合视图', { type: 'flow', flowKey: 'probe', desc: '融合展示关键节点推理过程和依据，帮助试验人员理解异常节点逻辑。' }),
+            leaf('issue-loc', '问题与结果定位', crud('在任务、资源、环境面板中定位试验问题与试验结果。', 'events')),
+          ]),
         ],
       },
       {
@@ -196,13 +217,28 @@ export const platforms = [
               { label: '服务接口', value: '18', unit: '个' },
             ],
           )),
-          leaf('cards', '个性化知识卡片', { type: 'cards', cardKey: 'knowledge', desc: '平台级卡片来自全平台问答主题，个性化卡片来自当前账号。涵盖农机参数与试验鉴定方法。' }),
-          leaf('topic', '专题文档', { type: 'report', reportKey: 'topic', desc: '按个人偏好生成专题目录、正文与多媒体，支持下载留存。' }),
-          leaf('mine', '要素关系挖掘', crud('从多类型文档识别性能、试验过程、技术状态等要素并挖掘关系。', 'entities')),
-          leaf('search', '多维智能检索', crud('按实体、关系、事件组合检索，并做语义扩展。可按需求调整排序权重。', 'indicators')),
-          leaf('qa', '知识图谱问答', { type: 'chat', chatKey: 'kg', desc: '全文与向量混合检索、重排、问题改写与对话补全，答案附带引用来源。' }),
-          leaf('reason', '业务推理分析', { type: 'flow', flowKey: 'reason', desc: '支持溯源、推理、关联、时序、时空分析，推理链路完成取数、裁剪与上下文拼装，并输出结构化结果。问答能力封装为标准接口。' }),
-          leaf('dkg', '领域图谱构建', { type: 'graph', graphKey: 'resume', desc: '接入量化系统数据，调用资源库图谱工具，自定义本体并融合为统一实体库与关系网络。' }),
+          g('card-g', '知识卡片服务', 'cards', [
+            leaf('plat-card', '平台级知识卡片', { type: 'cards', cardKey: 'platCard', desc: '平台级卡片来自全平台问答主题，涵盖农机参数与试验鉴定方法。' }),
+            leaf('cards', '个性化知识卡片', { type: 'cards', cardKey: 'knowledge', desc: '个性化卡片来自当前账号，按个人关注领域推送。' }),
+            leaf('topic', '专题知识管理', { type: 'report', reportKey: 'topic', desc: '按个人偏好生成专题目录、正文与多媒体，支持下载留存。' }),
+          ]),
+          g('search-g', '智能检索', 'search', [
+            leaf('search', '多维组合检索', crud('按实体、关系、事件组合检索，并做语义扩展。可按需求调整排序权重。', 'indicators')),
+            leaf('search-cfg', '检索策略管理', crud('配置检索权重、排序规则与语义扩展策略。', 'preferences')),
+          ]),
+          g('qa-g', '知识问答与推理', 'chat', [
+            leaf('qa', '图谱智能问答', { type: 'chat', chatKey: 'kg', desc: '全文与向量混合检索、重排、问题改写与对话补全，答案附带引用来源。' }),
+            leaf('reason', '推理分析服务', { type: 'flow', flowKey: 'reason', desc: '支持溯源、推理、关联、时序、时空分析，推理链路完成取数、裁剪与上下文拼装，并输出结构化结果。' }),
+          ]),
+          g('dkg-g', '领域知识组织', 'graph', [
+            leaf('onto', '图谱本体配置', crud('自定义图谱本体，配置核心概念与关系类型。', 'ontology')),
+            leaf('dkg', '知识抽取与融合', { type: 'graph', graphKey: 'resume', desc: '接入量化系统数据，调用资源库图谱工具，自定义本体并融合为统一实体库与关系网络。' }),
+            leaf('entity-lib', '统一实体库', crud('管理领域统一实体，支持实体合并、别名维护与属性补全。', 'entities')),
+          ]),
+          g('train-g', '训练数据生成', 'train', [
+            leaf('qa-gen', '问答数据生成', { type: 'entry', entryKey: 'qaGen', desc: '基于领域知识自动生成问答训练数据对，支持质量审核与批量导出。', dataset: 'indicators' }),
+            leaf('train-sets', '训练数据集管理', crud('管理生成的训练数据集，支持版本控制、筛选与导出。', 'trainSets')),
+          ]),
         ],
       },
     ],
@@ -215,6 +251,7 @@ export const platforms = [
     brief: '面向鉴定场景的探针设计与布设，异常数据智能定位与思维链根因分析',
     tags: ['探针设计', '异常定位', '根因分析'],
     icon: 'target',
+    iconFile: '/icons/p2-probe.svg',
     systems: [
       {
         id: 'discover',
@@ -330,6 +367,7 @@ export const platforms = [
     brief: '大模型辅助试验方案设计，智能匹配设备、场地、仪器等试验资源',
     tags: ['方案生成', '资源推荐', '编码辅助'],
     icon: 'flow',
+    iconFile: '/icons/p3-design.svg',
     systems: [
       {
         id: 'scheme',
@@ -467,6 +505,7 @@ export const platforms = [
     brief: '领域文档自动编写，规则化智能审校与跨文档比对，评审报告一键生成',
     tags: ['规则审查', '模板库', '评审报告'],
     icon: 'doc',
+    iconFile: '/icons/p4-doc.svg',
     systems: [
       {
         id: 'collect',
@@ -595,6 +634,7 @@ export const platforms = [
     brief: '文献创新点深度挖掘与聚类分析，支撑技术趋势研判与查新查重',
     tags: ['创新挖掘', '聚类分析', '技术研判'],
     icon: 'graph',
+    iconFile: '/icons/p5-insight.svg',
     systems: [
       {
         id: 'innov',

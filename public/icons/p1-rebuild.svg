@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- 底层书页 -->
+  <rect x="10" y="18" width="30" height="36" rx="3" fill="#daeaf7" stroke="#1668a8" stroke-width="1.5"/>
+  <!-- 中层书页 -->
+  <rect x="14" y="13" width="30" height="36" rx="3" fill="#c2d9f0" stroke="#1668a8" stroke-width="1.5"/>
+  <!-- 主书本 -->
+  <rect x="18" y="8" width="30" height="36" rx="3" fill="#1668a8"/>
+  <!-- 书脊 -->
+  <rect x="18" y="8" width="6" height="36" rx="2" fill="#0d4e83"/>
+  <!-- 书页线条 -->
+  <line x1="27" y1="16" x2="43" y2="16" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+  <line x1="27" y1="21" x2="43" y2="21" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <line x1="27" y1="26" x2="43" y2="26" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <!-- 金色数据图标 -->
+  <circle cx="46" cy="46" r="12" fill="#d0ab68"/>
+  <circle cx="46" cy="46" r="9" fill="#e3c07a"/>
+  <!-- 数据柱状 -->
+  <rect x="40" y="49" width="3" height="4" rx="1" fill="#0d4e83"/>
+  <rect x="44.5" y="45" width="3" height="8" rx="1" fill="#0d4e83"/>
+  <rect x="49" y="42" width="3" height="11" rx="1" fill="#0d4e83"/>
+</svg>

@@ -1,23 +1,24 @@
 <template>
   <div class="portal">
     <header class="p-header">
-      <div class="p-brand">
-        <div class="p-logo"><Mark /></div>
-        <div>
-          <div class="p-title">试验鉴定综合服务平台</div>
-          <div class="p-en">AGRI-MACHINERY TEST & APPRAISAL SERVICE PLATFORM</div>
+      <div class="p-header-inner">
+        <div class="p-brand">
+          <div class="p-logo"><Mark /></div>
+          <div>
+            <div class="p-title">试验鉴定综合服务平台</div>
+            <div class="p-en">AGRI-MACHINERY TEST & APPRAISAL SERVICE PLATFORM</div>
+          </div>
         </div>
-      </div>
-      <div class="p-user">
-        <span class="live"><i></i>服务正常</span>
-        <button class="hub-btn" @click="$router.push('/hub')">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7">
-            <rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" />
-            <rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" />
-          </svg>
-          后台管理系统
-        </button>
-        <span class="mona">Mona</span>
+        <div class="p-user">
+          <button class="hub-btn" @click="$router.push('/hub')">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7">
+              <rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" />
+              <rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" />
+            </svg>
+            后台管理系统
+          </button>
+          <span class="mona">Mona</span>
+        </div>
       </div>
     </header>
 
@@ -26,17 +27,13 @@
         <div class="pill">数智驱动 · 智慧鉴定</div>
         <h1>汇聚试验数据，赋能智能鉴定</h1>
         <p>面向农业机械试验鉴定领域的一站式数智化服务，五大应用平台协同，让数据价值充分释放</p>
-        <div class="arch">
-          <span>1 个领域资源库</span>
-          <span>2 个训推与编排平台</span>
-          <span>5 个业务应用</span>
-        </div>
       </div>
       <section class="cards">
         <article v-for="app in apps" :key="app.id" class="pcard" @click="enter(app)">
           <div class="pcard-top">
             <div class="pico">
-              <Icon :name="app.icon" />
+              <img v-if="app.iconFile" :src="app.iconFile" :alt="app.name" />
+              <Icon v-else :name="app.icon" />
             </div>
             <span class="pno">{{ app.no }}</span>
           </div>
@@ -68,23 +65,32 @@ function enter(app) {
 
 <style scoped>
 .portal {
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background:
     radial-gradient(900px 280px at 50% -40px, rgba(13, 78, 131, .06), transparent 70%),
     #f4f7fb;
 }
 .p-header {
-  height: 72px; background: rgba(255,255,255,.92); display: flex; align-items: center; justify-content: space-between;
-  padding: 0 36px; border-bottom: 1px solid #e8eef5; position: sticky; top: 0; z-index: 5;
+  height: 72px; flex: 0 0 72px;
+  background: rgba(255,255,255,.92);
+  border-bottom: 1px solid #e8eef5; z-index: 5;
   backdrop-filter: blur(10px);
+}
+.p-header-inner {
+  max-width: 1440px; width: 100%; margin: 0 auto;
+  padding: 0 40px; height: 100%;
+  display: flex; align-items: center; justify-content: space-between;
 }
 .p-brand { display: flex; align-items: center; gap: 12px; }
 .p-logo { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px rgba(13,78,131,.08); }
-.p-title { font-size: 18px; font-weight: 700; color: #16324f; letter-spacing: .5px; }
+.p-title { font-size: 22px; font-weight: 800; color: #1e6fa8; letter-spacing: .5px; }
 .p-en { font-size: 11px; color: #8aa0b5; letter-spacing: .6px; margin-top: 2px; }
 .p-user { display: flex; align-items: center; gap: 16px; }
 .hub-btn {
-  display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #d7e3ee;
+  display: inline-flex; align-items: center; gap: 6px; background: transparent; border: none;
   color: #27445f; font-size: 14px; height: 34px; padding: 0 12px; border-radius: 8px;
 }
 .hub-btn:hover { border-color: #9ec0de; color: #0d4e83; }
@@ -93,39 +99,62 @@ function enter(app) {
 .mona {
   background: #0d4e83; color: #fff; border-radius: 8px; padding: 6px 16px; font-size: 14px; font-weight: 600;
 }
-.p-main { max-width: 1440px; margin: 0 auto; padding: 54px 40px 48px; }
-.hero { text-align: center; margin-bottom: 36px; }
-.pill {
-  display: inline-block; border: 1px solid #d5e0ea; background: #fff; color: #5d7388;
-  border-radius: 20px; padding: 6px 16px; font-size: 13px; letter-spacing: 1px;
+.p-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 30px 40px 32px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
-.hero h1 { margin-top: 18px; font-size: 40px; color: #0d3f73; letter-spacing: 2px; font-weight: 800; }
-.hero p { margin-top: 12px; color: #7d90a3; font-size: 15px; }
+.hero { text-align: center; margin-bottom: 32px; flex: 0 0 auto; padding-top: 12px; padding-bottom: 4px; }
+.pill {
+  display: inline-block; border: 1.5px solid #1668a8; background: #e8f2fb; color: #1668a8;
+  border-radius: 20px; padding: 6px 20px; font-size: 13px; letter-spacing: 1px;
+}
+.hero h1 { margin-top: 14px; font-size: 40px; color: #0d3f73; letter-spacing: 2px; font-weight: 800; }
+.hero p { margin-top: 14px; color: #7d90a3; font-size: 15px; }
 .arch { display: flex; justify-content: center; gap: 10px; margin-top: 18px; }
 .arch span {
   background: #fff; border: 1px solid #e4edf5; color: #4d6780; border-radius: 999px;
   padding: 6px 14px; font-size: 13px;
 }
-.cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.cards {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-content: start;
+  gap: 16px;
+}
 .pcard {
   background: #fff; border-radius: 16px; padding: 22px 18px 18px; min-height: 372px;
   box-shadow: 0 10px 28px rgba(20, 60, 100, .05); border: 1px solid #e8eef5;
-  display: flex; flex-direction: column; cursor: pointer; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  display: flex; flex-direction: column; cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 .pcard:hover { transform: translateY(-4px); border-color: #c5daf0; box-shadow: 0 16px 36px rgba(13, 78, 131, .12); }
 .pcard-top { display: flex; justify-content: space-between; align-items: flex-start; }
 .pico {
-  width: 48px; height: 48px; border-radius: 12px; background: #f3f8fd; color: #0d4e83;
+  width: 56px; height: 56px; border-radius: 14px;
   display: grid; place-items: center;
+  overflow: hidden;
 }
-.pico :deep(svg) { width: 26px; height: 26px; }
+.pico :deep(svg) { width: 30px; height: 30px; }
+.pico img { width: 48px; height: 48px; object-fit: contain; }
 .pno { color: #c6a15a; font-weight: 700; letter-spacing: 1px; }
-.pcard h3 { margin-top: 18px; color: #14365c; font-size: 18px; line-height: 1.45; min-height: 78px; }
+.pcard h3 { margin-top: 18px; color: #22547e; font-size: 20px; line-height: 1.45; min-height: 78px; }
 .pcard p { color: #7b8ea1; font-size: 13px; line-height: 1.7; min-height: 88px; }
-.ptags { color: #9aaaba; font-size: 12px; line-height: 1.6; margin-top: 8px; }
+.ptags { color: #9aaaba; font-size: 12px; line-height: 1.6; margin-top: 8px; flex: 1; }
 .enter {
-  margin-top: auto; align-self: flex-start; background: #fff; color: #1a6eae; border: 1px solid #c5daf0;
-  border-radius: 8px; padding: 8px 14px; font-size: 14px;
+  margin-top: auto; width: 100%; background: #e8f2fb; color: #1a6eae; border: none;
+  border-radius: 8px; padding: 10px 14px; font-size: 14px;
+  display: flex; align-items: center; justify-content: space-between;
 }
-.pcard:hover .enter { background: #0d4e83; color: #fff; border-color: #0d4e83; }
+.ptags + .enter { margin-top: 24px; }
+.pcard:hover .enter { background: #0d4e83; color: #fff; }
 </style>

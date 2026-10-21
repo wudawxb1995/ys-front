@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- 烧杯主体 -->
+  <path d="M22 12 L22 32 L13 50 Q11 54 16 54 L44 54 Q49 54 47 50 L38 32 L38 12 Z" fill="#daeaf7" stroke="#1668a8" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- 烧杯颈部 -->
+  <rect x="20" y="10" width="20" height="4" rx="2" fill="#1668a8"/>
+  <!-- 液体 -->
+  <path d="M17 46 L14 52 Q12.5 54 16 54 L44 54 Q47.5 54 46 52 L43 46 Z" fill="#1668a8" opacity="0.85"/>
+  <!-- 气泡 -->
+  <circle cx="26" cy="42" r="2.5" fill="white" opacity="0.6"/>
+  <circle cx="33" cy="37" r="1.8" fill="white" opacity="0.5"/>
+  <circle cx="38" cy="44" r="2" fill="white" opacity="0.4"/>
+  <!-- 金色星星/亮点 -->
+  <circle cx="48" cy="14" r="10" fill="#d0ab68"/>
+  <circle cx="48" cy="14" r="7" fill="#e3c07a"/>
+  <path d="M48 8 L49.5 12.5 L54 12.5 L50.5 15.5 L52 20 L48 17 L44 20 L45.5 15.5 L42 12.5 L46.5 12.5 Z" fill="#0d4e83"/>
+</svg>

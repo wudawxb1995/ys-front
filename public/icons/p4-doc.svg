@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- 文档背景 -->
+  <rect x="10" y="6" width="36" height="46" rx="4" fill="#daeaf7" stroke="#1668a8" stroke-width="1.5"/>
+  <!-- 文档折角 -->
+  <path d="M34 6 L46 18 L34 18 Z" fill="#1668a8" opacity="0.3"/>
+  <path d="M34 6 L46 18 L34 18 Z" stroke="#1668a8" stroke-width="1.5" fill="#c2d9f0"/>
+  <!-- 文字行 -->
+  <line x1="16" y1="26" x2="38" y2="26" stroke="#1668a8" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <line x1="16" y1="32" x2="38" y2="32" stroke="#1668a8" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <line x1="16" y1="38" x2="30" y2="38" stroke="#1668a8" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <!-- 金色对勾圆 -->
+  <circle cx="46" cy="46" r="12" fill="#d0ab68"/>
+  <circle cx="46" cy="46" r="9" fill="#e3c07a"/>
+  <path d="M40 46 L44 50 L52 41" stroke="#0d4e83" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
