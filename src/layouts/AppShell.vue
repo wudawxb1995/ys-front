@@ -37,13 +37,6 @@
     </header>
     <div class="layout">
       <aside class="sidebar">
-        <div class="side-head">
-          <em>{{ platform.no }}</em>
-          <div>
-            <strong>{{ system.name }}</strong>
-            <small>{{ system.full || platform.name }}</small>
-          </div>
-        </div>
         <template v-for="item in system.menus" :key="item.id">
           <div
             v-if="item.children"

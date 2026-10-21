@@ -3,67 +3,105 @@
     <div class="page-head">
       <h2>{{ title }}</h2>
       <p>{{ page.desc }}</p>
-      <div class="deco"></div>
     </div>
-    <div v-if="schema.filters?.length" class="filter-bar filter-panel">
-      <div v-for="f in schema.filters" :key="f.key" class="field">
-        <label>{{ f.label }}</label>
-        <input v-if="f.type === 'search'" v-model="draft[f.key]" placeholder="请输入" />
-        <select v-else v-model="draft[f.key]">
-          <option value="">全部</option>
-          <option v-for="op in f.options" :key="op" :value="op">{{ op }}</option>
-        </select>
+
+    <!-- 筛选栏 + 工具栏 + 表格 + 分页 统一白色卡片 -->
+    <div class="crud-body">
+      <!-- 筛选栏 -->
+      <div v-if="schema.filters?.length" class="filter-bar filter-panel">
+        <div v-for="f in schema.filters" :key="f.key" class="field">
+          <label>{{ f.label }}</label>
+          <input v-if="f.type === 'search'" v-model="draft[f.key]" :placeholder="f.placeholder || '请输入'" />
+          <select v-else v-model="draft[f.key]">
+            <option value="">全部{{ f.label }}</option>
+            <option v-for="op in f.options" :key="op" :value="op">{{ op }}</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-primary" @click="apply">查询</button>
+          <button class="btn btn-outline" @click="reset">重置</button>
+        </div>
       </div>
-      <div class="filter-actions">
-        <button class="btn btn-primary" @click="apply">查询</button>
-        <button class="btn btn-outline" @click="reset">重置</button>
+
+      <!-- 工具栏 -->
+      <div class="toolbar">
+        <button class="btn btn-primary" @click="create">＋ 新增录入</button>
+        <button class="btn btn-outline" @click="removeSelected">批量删除</button>
+        <span class="spacer"></span>
+        <span style="color:#8a99a8;font-size:13.5px">
+          {{ checked.length ? `已选 ${checked.length} 条` : '勾选多条记录后可执行批量删除' }}
+        </span>
       </div>
-    </div>
-    <div class="toolbar">
-      <button class="btn btn-primary" @click="create">新增</button>
-      <button class="btn btn-outline" @click="toast('已按当前筛选条件生成导出文件')">导出</button>
-      <button class="btn btn-danger" @click="removeSelected">删除</button>
-      <span class="spacer"></span>
-      <span v-if="checked.length" class="count-pill">已选 {{ checked.length }}</span>
-      <span class="count-pill">共 {{ filtered.length }} 条</span>
-    </div>
-    <div class="table-card">
+
+      <!-- 表格 -->
+      <div class="table-inner">
       <table>
         <thead>
           <tr>
-            <th style="width:42px"></th>
-            <th style="width:56px">序号</th>
+            <th class="col-cb">
+              <input type="checkbox" :checked="allChecked" @change="toggleAll" />
+            </th>
+            <th class="col-idx">序号</th>
             <th v-for="col in schema.columns" :key="col.key">{{ col.label }}</th>
-            <th>操作</th>
+            <th style="text-align:center">操作</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, i) in pageRows" :key="i">
-            <td><input type="checkbox" v-model="checked" :value="row" /></td>
-            <td>{{ (pageNo - 1) * pageSize + i + 1 }}</td>
+          <tr v-for="(row, i) in pageRows" :key="i" :class="{ checked: checked.includes(row) }">
+            <td class="col-cb">
+              <input type="checkbox" v-model="checked" :value="row" />
+            </td>
+            <td class="col-idx">{{ (pageNo - 1) * pageSize + i + 1 }}</td>
             <td v-for="col in schema.columns" :key="col.key">
-              <span v-if="col.kind === 'badge'" class="badge" :class="badgeKind(row[col.key])"><i></i>{{ row[col.key] }}</span>
+              <span v-if="col.kind === 'badge'" class="badge" :class="badgeKind(row[col.key])">
+                <i></i>{{ row[col.key] }}
+              </span>
               <template v-else-if="col.kind === 'progress'">
-                <span class="progress"><span :style="{ width: row[col.key] + '%' }"></span></span>{{ row[col.key] }}%
+                <span class="prog" :class="{ done: row[col.key] >= 100 }">
+                  <i :style="{ width: row[col.key] + '%' }"></i>
+                </span>
+                {{ row[col.key] }}%
               </template>
               <template v-else>{{ row[col.key] }}</template>
             </td>
             <td>
               <div class="ops">
-                <button v-for="op in ops" :key="op" :class="{ danger: op === '删除' }" @click="act(op, row)">{{ op }}</button>
+                <a v-for="op in ops" :key="op"
+                   :class="{ danger: op === '删除' }"
+                   @click="act(op, row)">{{ op }}</a>
               </div>
             </td>
           </tr>
-          <tr v-if="!pageRows.length"><td :colspan="schema.columns.length + 3" class="empty">没有符合条件的记录。可以调整筛选条件，或新增一条。</td></tr>
+          <tr v-if="!pageRows.length">
+            <td :colspan="schema.columns.length + 3" class="empty">
+              没有符合条件的记录
+            </td>
+          </tr>
+          <!-- 补空行，固定表格高度 -->
+          <tr v-for="n in emptyRows" :key="'e'+n" class="empty-row">
+            <td :colspan="schema.columns.length + 3"></td>
+          </tr>
         </tbody>
       </table>
-    <div class="pager">
-      <span>第 {{ pageNo }} / {{ pageCount }} 页</span>
-      <button :disabled="pageNo === 1" @click="pageNo--">上一页</button>
-      <button class="on">{{ pageNo }}</button>
-      <button :disabled="pageNo === pageCount" @click="pageNo++">下一页</button>
-    </div>
-    </div>
+      </div><!-- /table-inner -->
+
+      <!-- 分页 -->
+      <div class="pager">
+        <span>共 <b>{{ filtered.length }}</b> 条记录</span>
+        <div class="pages">
+          <button class="pg" :disabled="pageNo === 1" @click="pageNo--">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button
+            v-for="n in pageCount" :key="n"
+            class="pg" :class="{ cur: n === pageNo }"
+            @click="pageNo = n">{{ n }}</button>
+          <button class="pg" :disabled="pageNo === pageCount" @click="pageNo++">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div><!-- /crud-body -->
   </div>
 </template>
 
@@ -77,12 +115,12 @@ const props = defineProps({ page: Object, title: String })
 const { toast, confirm, openForm, openDrawer } = useUi()
 const rows = useRows(props.page.dataset)
 const schema = datasetOf(props.page.dataset) || { columns: [], filters: [], rows: [] }
-const ops = schema.ops || ['详情', '编辑', '删除']
+const ops = schema.ops || ['详情', '删除']
 const draft = reactive({})
 const query = reactive({})
 const checked = ref([])
 const pageNo = ref(1)
-const pageSize = 8
+const pageSize = 10
 
 watch(() => props.page.dataset, () => { pageNo.value = 1; checked.value = [] })
 
@@ -96,8 +134,18 @@ const filtered = computed(() => rows.filter((row) => {
 }))
 const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
 const pageRows = computed(() => filtered.value.slice((pageNo.value - 1) * pageSize, pageNo.value * pageSize))
+const emptyRows = computed(() => Math.max(0, pageSize - pageRows.value.length))
+const allChecked = computed(() => pageRows.value.length > 0 && pageRows.value.every(r => checked.value.includes(r)))
+
 watch(pageCount, (n) => { if (pageNo.value > n) pageNo.value = n })
 
+function toggleAll(e) {
+  if (e.target.checked) {
+    pageRows.value.forEach(r => { if (!checked.value.includes(r)) checked.value.push(r) })
+  } else {
+    checked.value = checked.value.filter(r => !pageRows.value.includes(r))
+  }
+}
 function apply() {
   Object.keys(query).forEach((k) => delete query[k])
   Object.assign(query, draft)
@@ -110,12 +158,13 @@ function reset() {
   pageNo.value = 1
 }
 function create() {
-  const fields = schema.columns.filter((c) => c.kind !== 'progress').slice(0, 4).map((c) => ({
-    key: c.key, label: c.label, options: c.kind === 'badge' ? ['启用', '待审核', '已完成'] : undefined,
+  const fields = schema.columns.filter((c) => c.kind !== 'progress').slice(0, 5).map((c) => ({
+    key: c.key, label: c.label,
+    options: c.kind === 'badge' ? (c.options || ['启用', '待审核', '已完成']) : undefined,
   }))
   openForm('新增' + props.title, fields, (model) => {
     rows.unshift({ ...model, status: model.status || '待审核', time: nowText(), progress: 0 })
-    toast('已新增，可在列表中继续维护')
+    toast('已新增')
   })
 }
 function removeSelected() {
@@ -139,13 +188,13 @@ function act(op, row) {
     return
   }
   if (op === '编辑' || op === '修订' || op === '审核' || op === '属性') {
-    const fields = schema.columns.slice(0, 4).map((c) => ({ key: c.key, label: c.label, value: row[c.key] }))
+    const fields = schema.columns.slice(0, 5).map((c) => ({ key: c.key, label: c.label, value: row[c.key] }))
     openForm(op + '记录', fields, (model) => {
       Object.assign(row, model)
       toast('已保存')
     })
     return
   }
-  openDrawer(op.endsWith('详情') ? '记录详情' : op + '详情', schema.columns.map((c) => ({ label: c.label, value: row[c.key] })))
+  openDrawer(op + '详情', schema.columns.map((c) => ({ label: c.label, value: row[c.key] })))
 }
 </script>
