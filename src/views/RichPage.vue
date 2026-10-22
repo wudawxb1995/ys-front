@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="page-head" v-if="page.type !== 'dashboard'">
+    <div class="page-head" v-if="false">
       <h2>{{ title }}</h2>
       <p>{{ page.desc }}</p>
       <div class="deco"></div>

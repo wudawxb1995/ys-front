@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="page-head">
+    <div class="page-head" v-if="false">
       <h2>{{ title }}</h2>
       <p>{{ page.desc }}</p>
     </div>
