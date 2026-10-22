@@ -1,3 +1,5 @@
+import { cleanDocLabel, docPlatformModules } from '@/data/docPlatform'
+
 const g = (id, name, icon, children) => ({ id, name, icon, children })
 const leaf = (id, name, page) => ({ id, name, page })
 const crud = (desc, dataset) => ({ type: 'crud', desc, dataset })
@@ -13,6 +15,47 @@ function home(title, desc, steps, kpis, chartTitle = '近7日业务量') {
     kpis,
     chart: { title: chartTitle, unit: '项', data: week },
   }
+}
+
+const postTrialPages = {
+  'write/outline-design/outline': { type: 'post-trial', stage: 'outline', module: 'M23' },
+  'write/knowledge-generate/draft': { type: 'post-trial', stage: 'compose', module: 'M24' },
+  'write/generation-trace/trace': { type: 'post-trial', stage: 'trace', module: 'M25' },
+  'review/strategy-review/run': { type: 'post-trial', stage: 'review', module: 'M26 / M27' },
+  'review/review-result/issues': { type: 'post-trial', stage: 'review', entry: 'result', module: 'M27' },
+  'collect/doc-collect/document-type-archive': { type: 'post-trial', stage: 'archive', module: 'M28' },
+}
+
+function docFeaturePage(systemId, module, feature) {
+  return postTrialPages[`${systemId}/${module.id}/${feature.id}`] || {
+    type: 'doc-feature',
+    scene: module.scene,
+    moduleName: cleanDocLabel(module.name),
+    featureName: cleanDocLabel(feature.name),
+  }
+}
+
+function buildDocMenus(systemId, systemName) {
+  const modules = docPlatformModules[systemId]
+  const firstModule = modules[0]
+  return [
+    leaf('home', '首页', {
+      type: 'doc-feature',
+      scene: firstModule.scene,
+      moduleName: '首页',
+      featureName: systemName,
+    }),
+    ...modules.map((module) => g(
+      module.id,
+      cleanDocLabel(module.name),
+      undefined,
+      module.features.map((feature) => leaf(
+        feature.id,
+        cleanDocLabel(feature.name),
+        docFeaturePage(systemId, module, feature),
+      )),
+    )),
+  ]
 }
 
 export const platforms = [
@@ -594,120 +637,27 @@ export const platforms = [
     systems: [
       {
         id: 'collect',
-        name: '文档归集',
-        full: '农业机械领域文档归集系统',
-        menus: [
-          leaf('home', '首页', home(
-            '欢迎使用 农业机械领域文档归集系统',
-            '归集 Word、PDF、WPS、图片、扫描件、压缩包等资料，完成 OCR 与版式还原，并以本体、文书关系和审查规则组织领域知识。',
-            [
-              { name: '多源归集', to: 'docs', desc: '不少于 6 种格式' },
-              { name: '分类标签', to: 'docs', desc: '内容与元数据' },
-              { name: '本体关系', to: 'onto', desc: '概念、文书、实体' },
-              { name: '术语策略', to: 'terms', desc: '同义映射与消歧' },
-              { name: '知识资产', to: 'asset', desc: '规则与向量库' },
-            ],
-            [
-              { label: '归集文档', value: '8,640', unit: '份' },
-              { label: '术语', value: '10,240', unit: '条' },
-              { label: '术语库类型', value: '12', unit: '类' },
-              { label: '审查规则', value: '1,086', unit: '条' },
-            ],
-          )),
-          leaf('docs', '多源文档归集', crud('按文档类型归档，支持 OCR、版式还原和多关键词组合检索、批量调取。', 'documents')),
-          leaf('onto', '领域本体建模', crud('管理核心概念、属性与关系，形成标准化本体。', 'ontology')),
-          leaf('pass', '文书传递关系', { type: 'flow', flowKey: 'docs', desc: '配置文书类型、匹配关键词和内容传递 / 细化关系，明确审查链路。' }),
-          leaf('entity', '审查实体与约束', { type: 'canvas', canvasKey: 'entity', desc: '定义实体类型、抽取来源、章节过滤和语义策略，在画布上建立关联与约束方向。' }),
-          leaf('terms', '术语同义映射', crud('维护同义词组，减少表述差异造成的漏判和误判。', 'terms')),
-          leaf('policy', '审查策略', crud('创建、启用、停用策略，配置规则级别并关联实体与文书类型。', 'reviewRules')),
-          leaf('check-model', '建模一致性验证', { type: 'graph', graphKey: 'schema', desc: '预览领域图谱、实体与文书抽取对照、关系流向。' }),
-          leaf('asset', '审查知识资产', crud('分库管理审查规则、术语库和知识向量，支持批量导入与自动规则化。', 'reviewRules')),
-          leaf('api', '知识服务接口', { type: 'report', reportKey: 'api', desc: '提供领域知识库接口调用与数据解析说明。' }),
-        ],
+        name: '某型装备领域文档归集系统',
+        full: '某型装备领域文档归集系统',
+        menus: buildDocMenus('collect', '某型装备领域文档归集系统'),
       },
       {
         id: 'write',
-        name: '文档设计',
-        full: '农业机械试验文档设计系统',
-        menus: [
-          leaf('home', '首页', home(
-            '欢迎使用 农业机械试验文档设计系统',
-            '管理标准化模板，自动生成提纲并填充条款，按编写指南生成和润色文档，覆盖呈批件、呈报件、通知、请示、报告、信函等公文，生成过程可追溯。',
-            [
-              { name: '模板管理', to: 'tpl', desc: '规则绑定与版本' },
-              { name: '提纲设计', to: 'outline', desc: '层级可调整' },
-              { name: '智能生成', to: 'draft', desc: '领域文档与公文' },
-              { name: '溯源版本', to: 'trace', desc: '条款来源可跳转' },
-            ],
-            [
-              { label: '文档模板', value: '28', unit: '种' },
-              { label: '公文模板', value: '8', unit: '种' },
-              { label: '公文本体', value: '22', unit: '种' },
-              { label: '在编文档', value: '41', unit: '份' },
-            ],
-          )),
-          leaf('tpl', '标准化模板', crud('自定义配置、规则一键绑定、原子化条款和权限管控。模板更新可同步到关联文档。', 'schemeTpls')),
-          leaf('outline', '提纲智能设计', { type: 'report', reportKey: 'outline', desc: '基于术语库、知识库和历史案例搭建框架、填充条款、校准术语，支持要点增删改。' }),
-          leaf('draft', '知识驱动生成', { type: 'chat', chatKey: 'draft', desc: '按编写指南和公务事项生成、润色内容，并推荐标准话术。' }),
-          leaf('trace', '溯源与版本', crud('定位条款来源、引用依据和修改记录，支持一键跳转原文。', 'documents')),
-        ],
+        name: '某型装备试验文档设计系统',
+        full: '某型装备试验文档设计系统',
+        menus: buildDocMenus('write', '某型装备试验文档设计系统'),
       },
       {
         id: 'review',
-        name: '核文审查',
+        name: '领域文档核文勘误与逻辑审查系统',
         full: '领域文档核文勘误与逻辑审查系统',
-        menus: [
-          leaf('home', '首页', home(
-            '欢迎使用 领域文档核文勘误与逻辑审查系统',
-            '将审查规则与模板绑定，支持自然语言生成规则、多策略融合、跨文档联合审查和多智能体协同，结果以批注和报告输出。',
-            [
-              { name: '规则建模', to: 'rules', desc: '版本与联动更新' },
-              { name: '智能审查', to: 'run', desc: '语义、本体、图谱' },
-              { name: '跨文档', to: 'cross', desc: '不少于 6 类文书' },
-              { name: '结果处理', to: 'issues', desc: '分级、建议、批注' },
-              { name: '过程追溯', to: 'trace', desc: '理由链可复核' },
-            ],
-            [
-              { label: '规则', value: '1,086', unit: '条' },
-              { label: '规则类型', value: '12', unit: '类' },
-              { label: '覆盖农业分类', value: '6', unit: '类' },
-              { label: '审查策略', value: '6', unit: '种' },
-            ],
-          )),
-          leaf('rules', '审查规则建模', crud('跨文档关联规则、与模板联动、版本从创建、测试、发布到停用全程管控。', 'reviewRules')),
-          leaf('nl', '自然语言生成规则', { type: 'chat', chatKey: 'rule', desc: '把审查需求转成可执行规则，可关联知识库，也可手动编写。' }),
-          leaf('std', '审查标准解析', { type: 'report', reportKey: 'std', desc: '上传标准规范，解析模板结构与审查要点，生成结构化审查标准。' }),
-          leaf('run', '多策略智能审查', { type: 'flow', flowKey: 'review', desc: '融合语义规则、本体逻辑和领域图谱，按业务自适应组合。同时覆盖语言语法、标准符合、逻辑、语义和知识库增强审查。' }),
-          leaf('cross', '跨文档联合审查', crud('比对研制总要求、试验总案、性能试验大纲、性能试验报告、作战试验大纲、作战试验报告中的项目、指标、数值、条款和时间节点。', 'reviewIssues')),
-          leaf('agent', '多智能体与技能包', { type: 'canvas', canvasKey: 'review', desc: '组合专项智能体，加载专业技能包，支持人机交互式审查。' }),
-          leaf('issues', '审查结果处理', crud('问题分类分级，绑定依据与修改建议，可下载 Word 批注和审查报告。', 'reviewIssues')),
-          leaf('trace', '过程追溯', { type: 'timeline', desc: '查看审查历史、可视化理由链，并对结果复核。' }),
-          leaf('migrate', '知识数据迁移', crud('文书模板、公文模板、审查规则、术语库加密导入导出。', 'terms')),
-        ],
+        menus: buildDocMenus('review', '领域文档核文勘误与逻辑审查系统'),
       },
       {
         id: 'report',
-        name: '评审报告',
+        name: '试验评审报告智能生成系统',
         full: '试验评审报告智能生成系统',
-        menus: [
-          leaf('home', '首页', home(
-            '欢迎使用 试验评审报告智能生成系统',
-            '与审查系统联动，归集问题、分级、依据、建议和整改状态，按模板生成审查报告，并校验完整性、准确性与逻辑一致性。',
-            [
-              { name: '成果归集', to: 'map', desc: '结构化解析映射' },
-              { name: '报告生成', to: 'gen', desc: 'Word / PDF' },
-              { name: '合规溯源', to: 'gen', desc: '结论回链依据' },
-            ],
-            [
-              { label: '审查报告', value: '126', unit: '份' },
-              { label: '自动映射字段', value: '48', unit: '项' },
-              { label: '高风险问题', value: '17', unit: '项' },
-              { label: '已闭环', value: '92', unit: '%' },
-            ],
-          )),
-          leaf('map', '审查成果归集', crud('汇总问题、分类分级、规则依据、标准条款、修改建议、原文定位和整改状态。', 'reviewIssues')),
-          leaf('gen', '报告生成与溯源', { type: 'report', reportKey: 'review', desc: '按模板组装审查逻辑、结果和问题清单，校验后导出，结论可回链原文与条款。' }),
-        ],
+        menus: buildDocMenus('report', '试验评审报告智能生成系统'),
       },
     ],
   },

@@ -1,5 +1,5 @@
 <template>
-  <div class="app-shell" v-if="platform">
+  <div class="app-shell" :class="{ 'doc-platform': platform?.id === 'doc' }" v-if="platform">
     <header class="topbar">
       <!-- 装饰图层 -->
       <img class="topbar-bg" src="@/assets/topbar-bg.png" alt="" aria-hidden="true" />
