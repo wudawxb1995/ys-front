@@ -7,32 +7,109 @@
     </div>
 
     <template v-if="page.type === 'entry'">
-      <div class="split" style="grid-template-columns: 1.2fr .8fr">
+      <div class="split" style="grid-template-columns: 1fr 1.1fr; align-items: start;">
+        <!-- 左：资源信息登记 -->
         <div class="panel">
-          <h3><i></i>{{ formTitle }}</h3>
-          <div class="form-grid">
-            <div v-for="f in fields" :key="f.key" class="field" :class="{ 'span-2': f.span === 2, 'span-3': f.type === 'textarea' }">
-              <label><span v-if="f.required" class="req">*</span>{{ f.label }}</label>
-              <div v-if="f.type === 'radio'" class="radio-row">
-                <label v-for="op in f.options" :key="op"><input type="radio" :value="op" v-model="form[f.key]" /> {{ op }}</label>
-              </div>
-              <select v-else-if="f.options" v-model="form[f.key]">
-                <option v-for="op in f.options" :key="op" :value="op">{{ op }}</option>
+          <h3><i></i>资源信息登记</h3>
+
+          <!-- 资源名称（全宽） -->
+          <div class="form-row">
+            <label><span class="req">*</span>资源名称</label>
+            <input v-model="form.name" placeholder="如：东方红-LF2204轮式拖拉机定型试验报告" />
+          </div>
+
+          <!-- 资源类别 + 文件格式（两列） -->
+          <div class="form-cols">
+            <div class="form-row">
+              <label><span class="req">*</span>资源类别</label>
+              <select v-model="form.cat">
+                <option v-for="op in ['定型资料','历史试验数据','标准规范','专业文献']" :key="op">{{ op }}</option>
               </select>
-              <textarea v-else-if="f.type === 'textarea'" v-model="form[f.key]" />
-              <input v-else v-model="form[f.key]" :placeholder="f.placeholder || ''" />
+            </div>
+            <div class="form-row">
+              <label><span class="req">*</span>文件格式</label>
+              <select v-model="form.fmt">
+                <option v-for="op in ['DOCX','PDF','TXT','XLSX','JPG','PNG','MP4','MP3','CSV']" :key="op">{{ op }}</option>
+              </select>
             </div>
           </div>
-          <div style="margin-top:14px;display:flex;gap:8px">
-            <button class="btn btn-primary" @click="submitEntry">保存并提交</button>
-            <button class="btn btn-outline" @click="resetForm">清空</button>
+
+          <!-- 数据模态 + 文件大小（两列） -->
+          <div class="form-cols">
+            <div class="form-row">
+              <label>数据模态</label>
+              <select v-model="form.modal">
+                <option v-for="op in ['文本','图像','表格','音视频']" :key="op">{{ op }}</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>文件大小（MB）</label>
+              <input v-model="form.size" type="number" placeholder="如：36.5" />
+            </div>
           </div>
+
+          <!-- 页数（全宽） -->
+          <div class="form-row">
+            <label>页数</label>
+            <input v-model="form.pages" type="number" placeholder="如：128" />
+          </div>
+
+          <!-- 解析模式 -->
+          <div class="form-row">
+            <label>解析模式</label>
+            <div class="radio-row">
+              <label><input type="radio" value="即时解析" v-model="form.mode" /> 即时解析</label>
+              <label><input type="radio" value="暂存" v-model="form.mode" /> 暂存</label>
+            </div>
+            <p class="hint" style="margin-top:6px">即时解析：录入后立即调度解析引擎处理；暂存：仅入库保存，后续在解析任务管理中统一发起。</p>
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;margin-top:4px" @click="addToList">加入导入清单</button>
         </div>
+
+        <!-- 右：批量导入清单 -->
         <div class="panel">
-          <h3><i></i>处理说明</h3>
-          <p style="color:#5c7084;font-size:13.5px;line-height:1.75">{{ sideNote }}</p>
-          <div class="check-list" style="margin-top:12px">
-            <label v-for="n in notes" :key="n"><input type="checkbox" checked disabled /> {{ n }}</label>
+          <h3 style="justify-content:space-between">
+            <span style="display:flex;align-items:center;gap:8px"><i></i>批量导入清单</span>
+            <span style="font-size:13px;color:#8a99a8;font-weight:400">支持单次批量导入（≥50篇 / ≥500MB）</span>
+          </h3>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+            <button class="btn btn-primary" @click="commitList">
+              确认录入（{{ importList.length }}）
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-idx">序号</th>
+                  <th>名称</th>
+                  <th>类别</th>
+                  <th>格式</th>
+                  <th>大小(MB)</th>
+                  <th>解析模式</th>
+                  <th style="text-align:center">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="!importList.length">
+                  <td colspan="7" class="empty">清单为空，请先在左侧登记资源信息</td>
+                </tr>
+                <tr v-for="(item, i) in importList" :key="i">
+                  <td>{{ i + 1 }}</td>
+                  <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ item.name }}</td>
+                  <td>{{ item.cat }}</td>
+                  <td>{{ item.fmt }}</td>
+                  <td>{{ item.size || '—' }}</td>
+                  <td>{{ item.mode }}</td>
+                  <td style="text-align:center">
+                    <div class="ops" style="justify-content:center">
+                      <a class="danger" @click="importList.splice(i, 1)">删除</a>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -273,13 +350,13 @@
 
     <template v-else-if="page.type === 'flow'">
       <div class="chain">
-        <template v-for="(n, i) in flowNodes" :key="n.title">
-          <div class="node" :class="{ on: n.title === flowOn.title }" @click="flowOn = n">
+        <template v-for="(n, i) in flowNodes">
+          <div :key="n.title" class="node" :class="{ on: n.title === flowOn.title }" @click="flowOn = n">
             <em>{{ String(i + 1).padStart(2, '0') }}</em>
             <b>{{ n.title }}</b>
             <p>{{ n.text }}</p>
           </div>
-          <div v-if="i < flowNodes.length - 1" class="arrow">→</div>
+          <div v-if="i < flowNodes.length - 1" :key="n.title + '-arrow'" class="arrow">→</div>
         </template>
       </div>
       <div class="panel" style="margin-top:12px">
@@ -328,9 +405,9 @@
       <article class="doc-paper">
         <h3>{{ paper.title }}</h3>
         <div class="meta">{{ paper.meta }}</div>
-        <template v-for="sec in paper.sections" :key="sec.h">
-          <h4>{{ sec.h }}</h4>
-          <p>{{ sec.p }}</p>
+        <template v-for="sec in paper.sections">
+          <h4 :key="sec.h">{{ sec.h }}</h4>
+          <p :key="sec.h + '-p'">{{ sec.p }}</p>
         </template>
       </article>
     </template>
@@ -445,20 +522,56 @@ const fieldMap = {
   ],
 }
 const defaultFields = [
-  { key: 'name', label: '资源名称', required: true, placeholder: '请输入资源名称' },
+  { key: 'name', label: '资源名称', required: true, placeholder: '如：东方红-LF2204轮式拖拉机定型试验报告' },
   { key: 'cat', label: '资源类别', required: true, options: ['定型资料', '历史试验数据', '标准规范', '专业文献'] },
-  { key: 'fmt', label: '文件格式', required: true, options: ['PDF', 'DOCX', 'XLSX', 'JPG', 'MP4', 'CSV'] },
+  { key: 'fmt', label: '文件格式', required: true, options: ['DOCX', 'PDF', 'TXT', 'XLSX', 'JPG', 'PNG', 'MP4', 'MP3', 'CSV'] },
   { key: 'modal', label: '数据模态', options: ['文本', '图像', '表格', '音视频'] },
-  { key: 'size', label: '文件大小（MB）', placeholder: '例如 36.5' },
-  { key: 'pages', label: '页数', placeholder: '例如 128' },
+  { key: 'size', label: '文件大小（MB）', placeholder: '如：36.5' },
+  { key: 'pages', label: '页数', placeholder: '如：128' },
   { key: 'mode', label: '解析模式', type: 'radio', options: ['即时解析', '暂存'] },
 ]
 const fields = computed(() => fieldMap[props.page.entryKey] || defaultFields)
-const form = reactive({})
-function resetForm() { Object.keys(form).forEach((k) => delete form[k]) }
+const form = reactive({ mode: '即时解析' })
+function resetForm() { Object.keys(form).forEach((k) => delete form[k]); form.mode = '即时解析' }
 const formTitle = computed(() => props.page.entryKey === 'extract' ? '抽取条目配置' : props.page.entryKey === 'sft' ? '微调数据配置' : '资源信息登记')
 const sideNote = '提交后写入对应数据目录。即时解析会生成解析任务；暂存仅入库。批量场景支持不少于 50 篇、总容量不少于 500 MB。'
 const notes = ['单文档支持 100 MB、1000 页以上', '图片支持 30 MB 以上', '音视频支持 100 MB 以上', '中英文双语解析']
+
+// 批量导入清单
+const importList = ref([])
+
+function addToList() {
+  if (fields.value.some((f) => f.required && !form[f.key])) { toast('请填写必填项'); return }
+  importList.value.push({
+    name: form.name,
+    cat: form.cat || '定型资料',
+    fmt: form.fmt || 'PDF',
+    modal: form.modal || '文本',
+    size: form.size || '—',
+    pages: form.pages || '—',
+    mode: form.mode || '即时解析',
+  })
+  toast('已加入导入清单')
+  resetForm()
+}
+
+function commitList() {
+  if (!importList.value.length) { toast('导入清单为空'); return }
+  if (props.page.dataset) {
+    const rows = useRows(props.page.dataset)
+    importList.value.forEach((item) => {
+      rows.unshift({
+        name: item.name, cat: item.cat, fmt: item.fmt, modal: item.modal,
+        size: item.size === '—' ? '—' : item.size + ' MB',
+        pages: item.pages, status: item.mode === '即时解析' ? '解析中' : '暂存',
+        by: 'Mona', time: nowText(),
+      })
+    })
+  }
+  toast(`成功录入 ${importList.value.length} 项资源，已进入数据资源目录`)
+  importList.value = []
+}
+
 function submitEntry() {
   if (fields.value.some((f) => f.required && !form[f.key])) { toast('请填写必填项'); return }
   if (props.page.dataset) {

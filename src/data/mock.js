@@ -984,3 +984,69 @@ export const datasets = {
 export function cloneRows(id) {
   return (datasets[id]?.rows || []).map((row) => ({ ...row }))
 }
+
+// ── 镜头一：资源处理结果详情（key = 资源名称）────────────────────────
+export const resourceDetails = {
+  '东方红-LF2204轮式拖拉机定型试验报告': {
+    name: '东方红-LF2204轮式拖拉机定型试验报告',
+    fmt: 'DOCX', size: '36.5 MB', pages: 128,
+    parsedAt: '2026-10-08 09:26:47',
+    tableCount: 12, imageCount: 9, paraCount: 326,
+    indexStatus: '已建立', indexName: 'idx-lf2204-20261008', indexAt: '2026-10-08 09:27:03',
+    chapters: [
+      { id: 'c1', title: '1 概述', level: 1, children: [
+        { id: 'c1-1', title: '1.1 试验目的', level: 2 },
+        { id: 'c1-2', title: '1.2 试验依据', level: 2 },
+      ]},
+      { id: 'c2', title: '2 试验条件与仪器设备', level: 1 },
+      { id: 'c3', title: '3 性能试验结果', level: 1, children: [
+        { id: 'c3-1', title: '3.1 动力输出轴试验', level: 2 },
+        { id: 'c3-2', title: '3.2 牵引性能试验', level: 2 },
+        { id: 'c3-3', title: '3.3 制动试验', level: 2 },
+        { id: 'c3-4', title: '3.4 驾驶员耳旁噪声', level: 2 },
+      ]},
+      { id: 'c4', title: '4 可靠性试验', level: 1 },
+      { id: 'c5', title: '5 安全性检查', level: 1 },
+      { id: 'c6', title: '6 结论', level: 1 },
+      { id: 'c7', title: '附录 A 试验数据汇总表', level: 1 },
+    ],
+  },
+  '雷沃谷神4LZ-8谷物联合收割机鉴定大纲': {
+    name: '雷沃谷神4LZ-8谷物联合收割机鉴定大纲',
+    fmt: 'PDF', size: '18.2 MB', pages: 86,
+    parsedAt: '2026-10-09 10:12:40',
+    tableCount: 8, imageCount: 5, paraCount: 214,
+    indexStatus: '已建立', indexName: 'idx-4lz8-20261009', indexAt: '2026-10-09 10:13:02',
+    chapters: [
+      { id: 'c1', title: '1 适用范围', level: 1 },
+      { id: 'c2', title: '2 规范性引用文件', level: 1 },
+      { id: 'c3', title: '3 术语与定义', level: 1 },
+      { id: 'c4', title: '4 试验条件', level: 1 },
+      { id: 'c5', title: '5 试验项目与方法', level: 1, children: [
+        { id: 'c5-1', title: '5.1 收获性能试验', level: 2 },
+        { id: 'c5-2', title: '5.2 可靠性试验', level: 2 },
+        { id: 'c5-3', title: '5.3 安全性检查', level: 2 },
+      ]},
+      { id: 'c6', title: '6 判定规则', level: 1 },
+    ],
+  },
+  'NY/T 2090-2025 农业机械试验鉴定通则': {
+    name: 'NY/T 2090-2025 农业机械试验鉴定通则',
+    fmt: 'PDF', size: '6.8 MB', pages: 42,
+    parsedAt: '2026-09-28 14:03:31',
+    tableCount: 4, imageCount: 2, paraCount: 118,
+    indexStatus: '已建立', indexName: 'idx-nyt2090-20260928', indexAt: '2026-09-28 14:03:52',
+    chapters: [
+      { id: 'c1', title: '1 范围', level: 1 },
+      { id: 'c2', title: '2 规范性引用文件', level: 1 },
+      { id: 'c3', title: '3 术语和定义', level: 1 },
+      { id: 'c4', title: '4 基本要求', level: 1 },
+      { id: 'c5', title: '5 鉴定程序', level: 1, children: [
+        { id: 'c5-1', title: '5.1 申请与受理', level: 2 },
+        { id: 'c5-2', title: '5.2 试验实施', level: 2 },
+        { id: 'c5-3', title: '5.3 结果评定', level: 2 },
+      ]},
+      { id: 'c6', title: '附录 A 鉴定数据记录表', level: 1 },
+    ],
+  },
+}

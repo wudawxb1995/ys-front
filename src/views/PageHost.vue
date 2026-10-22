@@ -2,6 +2,7 @@
   <div class="page-host">
     <DashboardPage v-if="page?.type === 'dashboard'" :page="page" @open="open" />
     <CrudPage v-else-if="page?.type === 'crud'" :key="pageKey" :page="page" :title="title" />
+    <M01Page v-else-if="page?.type === 'm01'" :key="pageKey" :page="page" :title="title" />
     <RichPage v-else-if="page" :key="pageKey" :page="page" :title="title" />
   </div>
 </template>
@@ -11,6 +12,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DashboardPage from '@/components/pages/DashboardPage.vue'
 import CrudPage from '@/components/pages/CrudPage.vue'
+import M01Page from '@/components/pages/M01Page.vue'
 import RichPage from '@/views/RichPage.vue'
 
 const props = defineProps({ page: Object, title: String })
