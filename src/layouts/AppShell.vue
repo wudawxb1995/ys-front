@@ -56,7 +56,6 @@
               :class="{ active: child.id === menu.id }"
               @click="go(child.id)"
             >
-              <Icon class="mi" :name="iconFor(child)" />
               <span>{{ child.name }}</span>
             </div>
           </div>
