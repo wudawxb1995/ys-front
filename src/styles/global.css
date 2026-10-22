@@ -50,6 +50,19 @@ button { cursor: pointer; }
   flex: 0 0 auto;
   z-index: 20;
 }
+.app-shell.doc-platform .topbar { background: #004878; }
+.app-shell.doc-platform .brand h1 { font-size: 20px; letter-spacing: 1px; }
+.app-shell.doc-platform .topnav { margin-left: 18px; }
+.app-shell.doc-platform .topnav a { padding: 0 10px; font-size: 14px; }
+.app-shell.doc-platform .topnav a.active::after { left: 10px; right: 10px; }
+.app-shell.doc-platform .sidebar { width: 248px; }
+.app-shell.doc-platform .menu-item { min-height: 42px; height: auto; padding-top: 10px; padding-bottom: 10px; line-height: 1.35; }
+.app-shell.doc-platform .menu-item.parent { font-size: 14px; font-weight: 600; }
+.app-shell.doc-platform .submenu .menu-item { min-height: 38px; padding: 8px 12px 8px 48px; font-size: 13px; }
+.app-shell.doc-platform .page-head,
+.app-shell.doc-platform .post-head { display: none; }
+.app-shell.doc-platform .main { padding-left: 18px; padding-right: 18px; background: #eef5fb; }
+.app-shell.doc-platform .crumb { padding: 13px 2px; }
 /* topbar 装饰图 */
 .topbar-bg {
   position: absolute;
