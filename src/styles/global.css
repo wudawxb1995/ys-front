@@ -385,11 +385,11 @@ button { cursor: pointer; }
   border-radius: 0;
   box-shadow: none;
   margin-bottom: 0;
-  padding-bottom: 16px;
+  padding-bottom: 8px;
 }
 /* 工具栏 */
 .crud-body .toolbar {
-  padding: 8px 16px 16px;
+  padding: 16px 16px 16px;
 }
 /* 表格区域 */
 .crud-body .table-inner {

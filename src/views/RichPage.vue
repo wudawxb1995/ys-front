@@ -1777,15 +1777,25 @@
       <template v-else>
         <div style="height:8px"></div>
         <div class="crud-body">
-          <div class="toolbar" style="padding-top:16px">
-            <button class="btn btn-primary" @click="$emit('toast','新建对接任务功能即将上线')">＋ 新建对接任务</button>
+          <div class="filter-bar filter-panel">
+            <div class="field" style="width:160px">
+              <label>批次</label>
+              <select-field v-model="m15FilterBatch"
+                :options="[{value:'',label:'全部批次'},{value:'D-07',label:'D-07'}]"
+                placeholder="全部批次" />
+            </div>
+            <div class="field" style="width:150px">
+              <label>状态</label>
+              <select-field v-model="m15FilterStatus"
+                :options="[{value:'',label:'全部状态'},{value:'成功',label:'成功'},{value:'进行中',label:'进行中'}]"
+                placeholder="全部状态" />
+            </div>
+            <div class="filter-actions">
+              <button class="btn btn-primary" @click="$emit('toast','查询条件已应用')">查询</button>
+              <button class="btn btn-outline" @click="m15FilterBatch='';m15FilterStatus=''">重置</button>
+            </div>
             <span class="spacer"></span>
-            <select style="padding:6px 12px;border:1px solid #d6e4f0;border-radius:6px;font-size:13px;color:#5a6978;outline:none">
-              <option>全部批次</option><option>D-07</option>
-            </select>
-            <select style="margin-left:8px;padding:6px 12px;border:1px solid #d6e4f0;border-radius:6px;font-size:13px;color:#5a6978;outline:none">
-              <option>全部状态</option><option>成功</option><option>进行中</option>
-            </select>
+            <button class="btn btn-primary" style="align-self:flex-end" @click="$emit('toast','新建对接任务功能即将上线')">＋ 新建对接任务</button>
           </div>
           <div class="table-inner">
             <table>
@@ -3397,9 +3407,11 @@ const m14PageNo = ref(1)
 const m14PageSize = 10
 
 // ── M15 数据对接与融合监测 ──────────────────────────────────────────────
-const m15Detail   = ref(null)  // null=列表页；Object=融合监测视图
-const scanCol     = ref(-1)    // -1=未开始；0~5=当前扫描列；6=完成
+const m15Detail    = ref(null)  // null=列表页；Object=融合监测视图
+const scanCol      = ref(-1)    // -1=未开始；0~5=当前扫描列；6=完成
 const alertVisible = ref(false)
+const m15FilterBatch  = ref('')
+const m15FilterStatus = ref('')
 let scanTimer = null
 
 // echarts 初速时序曲线
