@@ -311,14 +311,20 @@ button { cursor: pointer; }
 .filter-panel { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 16px; }
 .field label { display: block; font-size: 13.5px; color: #4a5a6a; font-weight: 600; margin-bottom: 6px; }
 .field .req { color: #d4380d; margin-right: 2px; }
-.control, .field input, .field select, .field textarea {
+.control, .field input, .field textarea {
   height: 36px; border: 1px solid #d5e0ea; border-radius: 6px; background: #fff;
   padding: 0 10px; color: var(--text-2); font-size: 14px; outline: none; width: 100%;
 }
 .field textarea { height: 88px; padding: 8px 10px; resize: vertical; }
-.field input:focus, .field select:focus, .field textarea:focus, .control:focus {
-  border-color: #d5e0ea;
+.field input:focus, .field textarea:focus, .control:focus {
+  border-color: #7eadd4;
   box-shadow: none;
+  outline: none;
+}
+
+/* 原生 select 保留样式（仅兜底，推荐用 SelectField 组件替代） */
+.field select {
+  display: none;
 }
 
 /* 表单行 —— 独立于筛选栏的通用表单布局 */
@@ -327,13 +333,14 @@ button { cursor: pointer; }
   display: block; font-size: 14px; color: #4a5a6a; font-weight: 600; margin-bottom: 7px;
 }
 .form-row label .req { color: #f5222d; font-style: normal; margin-right: 2px; }
-.form-row input, .form-row select, .form-row textarea {
+.form-row input, .form-row textarea {
   width: 100%; height: 36px; border: 1px solid #d5e0ea; border-radius: 6px;
   background: #fff; padding: 0 12px; font-size: 14px; color: #3f5062;
   outline: none; font-family: inherit;
 }
+.form-row select { display: none; }
 .form-row textarea { height: 120px; padding: 10px 12px; resize: vertical; line-height: 1.8; }
-.form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: #7eadd4; }
+.form-row input:focus, .form-row textarea:focus { border-color: #7eadd4; outline: none; }
 .form-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .radio-row { display: flex; gap: 20px; align-items: center; height: 36px; }
 .radio-row label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; color: #3f5062; cursor: pointer; margin: 0; white-space: nowrap; }
@@ -373,15 +380,16 @@ button { cursor: pointer; }
   border-radius: 0;
   box-shadow: none;
   margin-bottom: 0;
+  padding-bottom: 8px;
 }
 /* 工具栏 */
 .crud-body .toolbar {
-  padding: 12px 16px;
+  padding: 8px 16px 16px;
 }
 /* 表格区域 */
 .crud-body .table-inner {
   overflow-x: auto;
-  padding: 0 16px;
+  padding: 0 16px 16px;
 }
 .crud-body .table-inner table {
   border: 1px solid var(--line);
@@ -429,8 +437,8 @@ tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover { background: #f6fafd; }
 tbody tr.checked { background: #eef6fc; }
 tbody tr.checked td { border-bottom-color: #dceef8; }
-.ops { display: flex; align-items: center; gap: 18px; }
-.ops a { color: var(--blue); font-size: 14.5px; cursor: pointer; }
+.ops { display: flex; align-items: center; gap: 16px; }
+.ops a { color: var(--blue); font-size: 14.5px; cursor: pointer; display: inline-flex; align-items: center; }
 .ops a:hover { color: #0d4e83; text-decoration: underline; }
 .ops a.danger { color: var(--danger); }
 .ops a.danger:hover { color: #b02a08; }
@@ -635,3 +643,170 @@ input[type="checkbox"], input[type="radio"] { accent-color: #0d4e83; }
 .g-search { height: 36px; border: 1px solid #d5e0ea; border-radius: 6px; padding: 0 10px; width: 220px; color: var(--text-2); outline: none; }
 .g-search:focus { border-color: #7eadd4; box-shadow: 0 0 0 3px rgba(22, 104, 168, .12); }
 .node-card .actions { margin-top: 12px; }
+
+/* ── 镜头二（M02）置信度色块 & 低置信行高亮 ── */
+.conf-bar {
+  display: inline-block; width: 36px; height: 8px; border-radius: 4px; vertical-align: middle;
+}
+.conf-high { background: linear-gradient(90deg, #2fbf4a, #22913c); }
+.conf-mid  { background: linear-gradient(90deg, #faad14, #d48806); }
+.conf-low  { background: linear-gradient(90deg, #ff7875, #f5222d); }
+.m02-low   { background: #fffbe6 !important; }
+.m02-active td { background: #f0f8ff !important; }
+
+/* ── 镜头四（M08）步骤条 ── */
+.m08-steps {
+  display: flex; align-items: center; position: relative;
+  margin-bottom: 16px; padding: 0 4px;
+}
+.m08-step-line {
+  position: absolute; left: 24px; right: 24px; top: 50%;
+  height: 2px; background: #d5e4f2; z-index: 0; transform: translateY(-50%);
+  pointer-events: none;
+}
+.m08-step {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  flex: 1; position: relative; z-index: 1; cursor: pointer;
+}
+.m08-step-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: #fff; border: 2px solid #c5d9ea;
+  font-size: 13px; font-weight: 600; color: #8a99a8;
+  transition: background .18s, border-color .18s, color .18s;
+}
+.m08-step.active .m08-step-dot {
+  background: linear-gradient(135deg, #1668a8, #0d4e83);
+  border-color: #0d4e83; color: #fff;
+}
+.m08-step.done .m08-step-dot {
+  background: #22913c; border-color: #22913c; color: #fff;
+}
+.m08-step-label {
+  font-size: 12.5px; color: #8a99a8; white-space: nowrap;
+}
+.m08-step.active .m08-step-label { color: #0d4e83; font-weight: 600; }
+.m08-step.done .m08-step-label   { color: #22913c; }
+
+/* ── 镜头四 因子卡片 ── */
+.m08-factor {
+  border: 1px solid #dce8f2; border-radius: 8px; padding: 10px 12px;
+  cursor: pointer; transition: border-color .15s, box-shadow .15s;
+  position: relative;
+}
+.m08-factor:hover { border-color: #8eb4d4; box-shadow: 0 4px 12px rgba(13,78,131,.06); }
+.m08-factor.sel   { border-color: #1668a8; box-shadow: 0 0 0 3px rgba(22,104,168,.12); background: #f3f8fd; }
+.m08-factor-no    { font-size: 11px; color: #c6a15a; font-weight: 700; letter-spacing: 1px; }
+.m08-factor-name  { font-size: 13px; font-weight: 600; color: #1f3d5a; margin-top: 4px; line-height: 1.35; }
+.m08-factor-range { font-size: 12px; color: #7c8fa2; margin-top: 4px; }
+.m08-factor-tag   {
+  position: absolute; top: 8px; right: 8px;
+  font-size: 11px; padding: 2px 7px; border-radius: 8px;
+  background: #e8f3fb; color: #1668a8;
+}
+
+/* ── 镜头五（M11）推荐行 & 匹配进度条 ── */
+.m11-rec-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px; border-radius: 8px; cursor: pointer;
+  border: 1px solid #e8f2fb; margin-bottom: 8px;
+  transition: border-color .15s, box-shadow .15s, background .12s;
+}
+.m11-rec-row:hover { border-color: #a8c8e8; box-shadow: 0 4px 12px rgba(13,78,131,.06); }
+.m11-rec-row.sel  { border-color: #1668a8; background: #f3f8fd; box-shadow: 0 0 0 2px rgba(22,104,168,.12); }
+.m11-rank {
+  width: 28px; height: 28px; border-radius: 50%; flex: 0 0 28px;
+  display: grid; place-items: center; font-size: 13px; font-weight: 700;
+  background: #f0f4f8; color: #8a99a8;
+}
+.m11-rank.top { background: linear-gradient(135deg, #d0ab68, #c8953a); color: #fff; }
+.m11-bar {
+  height: 100%; border-radius: 6px;
+  background: linear-gradient(90deg, #4b95cc, #0d4e83);
+  transition: width .5s ease;
+}
+
+/* ── 镜头二（M02）专用样式 ── */
+
+/* 性能域筛选标签 */
+.m02-domain-tag {
+  height: 28px; padding: 0 12px; border-radius: 14px;
+  border: 1px solid #d5e0ea; background: #f5f8fb;
+  color: #5d7388; font-size: 13px; cursor: pointer;
+  transition: all .14s;
+}
+.m02-domain-tag:hover { border-color: #9ec8e8; color: #1668a8; }
+.m02-domain-tag.on {
+  background: #e8f3fb; border-color: #9ec8e8;
+  color: #1668a8; font-weight: 600;
+}
+
+/* 性能域小标签（表格内） */
+.m02-domain-pill {
+  display: inline-flex; align-items: center; height: 22px;
+  padding: 0 9px; border-radius: 11px; font-size: 12px;
+  background: #e8f3fb; color: #1668a8; font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 整行麦金高亮（置信度 < 0.80） */
+.m02-gold-row { background: #fffaed !important; }
+.m02-gold-row:hover { background: #fff4d6 !important; }
+.m02-gold-row td { border-bottom-color: #f5dfa0 !important; }
+
+/* ── 镜头三（M03）标准化数据建模 专用样式 ── */
+
+/* 属性字段卡片 */
+.m03-field {
+  background: #f8fbfe;
+  border: 1px solid #e8f2fb;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.m03-field-label {
+  font-size: 12px;
+  color: #7c8fa2;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+.m03-field-value {
+  font-size: 13.5px;
+  color: #1f3d5a;
+  line-height: 1.4;
+}
+
+/* 返回按钮链接样式 */
+.btn-link {
+  background: none;
+  border: none;
+  color: #1668a8;
+  font-size: 13.5px;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-decoration: none;
+}
+.btn-link:hover {
+  text-decoration: underline;
+  color: #0d4e83;
+}
+
+/* ── 镜头四（M08）步骤条全部完成态 ── */
+.m08-step-done .m08-step-dot {
+  background: #22913c;
+  border-color: #22913c;
+  color: #fff;
+}
+.m08-step-done .m08-step-label {
+  color: #22913c;
+}
+
+/* ── 镜头一（M01）章节结构树面板 ── */
+.chapter-panel {
+  background: #fff;
+  border: 1px solid #e4ecf4;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}

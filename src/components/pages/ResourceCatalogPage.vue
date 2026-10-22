@@ -40,10 +40,24 @@
               @click="activeStatus = s.key"
             >{{ s.label }}</button>
           </div>
-          <button class="btn btn-primary import-btn" @click="toast('导入功能可在「数据资源录入」页面操作')">
+          <button class="btn btn-primary import-btn" @click="goResAdd">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             导入资料
           </button>
+        </div>
+
+        <!-- 工具栏：批量操作 -->
+        <div class="res-toolbar">
+          <button
+            class="btn btn-danger batch-del-btn"
+            :disabled="!checkedNames.size"
+            @click="batchDelete"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            批量删除
+          </button>
+          <span v-if="checkedNames.size" class="sel-hint">已选 {{ checkedNames.size }} 条</span>
+          <span v-else class="sel-hint muted">勾选条目后可执行批量删除</span>
         </div>
 
         <!-- 资料列表 -->
@@ -52,31 +66,44 @@
             v-for="row in filtered"
             :key="row.name"
             class="res-item"
-            @click="openDetail(row)"
+            :class="{ checked: checkedNames.has(row.name) }"
           >
-            <div class="res-fmt-icon" :class="fmtClass(row.fmt)">
-              {{ row.fmt }}
-            </div>
-            <div class="res-info">
-              <div class="res-name">{{ row.name }}</div>
-              <div class="res-meta">
-                <span>{{ row.cat }}</span>
-                <span class="dot">·</span>
-                <span>{{ row.modal }}</span>
-                <span class="dot">·</span>
-                <span>{{ row.size }}</span>
-                <template v-if="row.pages !== '—'">
+            <!-- checkbox 列：阻止冒泡，只处理勾选 -->
+            <label class="res-cb" @click.stop>
+              <input
+                type="checkbox"
+                :checked="checkedNames.has(row.name)"
+                @change="toggleRow(row.name)"
+              />
+            </label>
+
+            <!-- 格式图标 + 资源信息：点击进详情 -->
+            <div class="res-clickable" @click="openDetail(row)">
+              <div class="res-fmt-icon" :class="fmtClass(row.fmt)">
+                {{ row.fmt }}
+              </div>
+              <div class="res-info">
+                <div class="res-name">{{ row.name }}</div>
+                <div class="res-meta">
+                  <span>{{ row.cat }}</span>
                   <span class="dot">·</span>
-                  <span>{{ row.pages }} 页</span>
-                </template>
-                <span class="dot">·</span>
-                <span>{{ row.by }} 录入于 {{ row.time }}</span>
+                  <span>{{ row.modal }}</span>
+                  <span class="dot">·</span>
+                  <span>{{ row.size }}</span>
+                  <template v-if="row.pages !== '—'">
+                    <span class="dot">·</span>
+                    <span>{{ row.pages }} 页</span>
+                  </template>
+                  <span class="dot">·</span>
+                  <span>{{ row.by }} 录入于 {{ row.time }}</span>
+                </div>
               </div>
             </div>
+
             <div class="res-status">
               <span class="badge" :class="badgeKind(row.status)"><i></i>{{ row.status }}</span>
             </div>
-            <div class="res-actions" @click.stop>
+            <div class="res-actions">
               <button class="act-btn" @click="openDetail(row)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
                 处理结果
@@ -86,6 +113,7 @@
                 class="act-btn primary"
                 @click="toast('已加入解析队列：' + row.name)"
               >发起解析</button>
+              <button class="act-btn danger" @click="deleteRow(row)">删除</button>
             </div>
           </div>
 
@@ -106,6 +134,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useUi } from '@/composables/ui'
 import { useRows } from '@/composables/tables'
 import { badgeKind } from '@/utils/format'
@@ -113,10 +142,13 @@ import Icon from '@/components/Icon.vue'
 
 const props = defineProps({ page: Object, title: String })
 const emit = defineEmits(['open-detail'])
-const { toast } = useUi()
+const { toast, confirm } = useUi()
+const route = useRoute()
+const router = useRouter()
 
 const rows = useRows('resources')
 
+// ── 筛选状态 ──────────────────────────────────────────────────────────
 const keyword = ref('')
 const activeCat = ref('all')
 const activeStatus = ref('all')
@@ -128,6 +160,53 @@ const statusOptions = [
   { key: '暂存', label: '暂存' },
   { key: '解析失败', label: '解析失败' },
 ]
+
+// ── 勾选状态 ──────────────────────────────────────────────────────────
+const checkedNames = ref(new Set())
+
+const isAllChecked = computed(
+  () => filtered.value.length > 0 && filtered.value.every((r) => checkedNames.value.has(r.name))
+)
+const isSomeChecked = computed(() => filtered.value.some((r) => checkedNames.value.has(r.name)))
+
+function toggleRow(name) {
+  const s = new Set(checkedNames.value)
+  s.has(name) ? s.delete(name) : s.add(name)
+  checkedNames.value = s
+}
+
+function toggleAll(e) {
+  const s = new Set(checkedNames.value)
+  if (e.target.checked) {
+    filtered.value.forEach((r) => s.add(r.name))
+  } else {
+    filtered.value.forEach((r) => s.delete(r.name))
+  }
+  checkedNames.value = s
+}
+
+// ── 删除逻辑 ──────────────────────────────────────────────────────────
+function deleteRow(row) {
+  confirm(`确认删除「${row.name}」？此操作不可撤销。`, () => {
+    const idx = rows.findIndex((r) => r.name === row.name)
+    if (idx !== -1) rows.splice(idx, 1)
+    checkedNames.value.delete(row.name)
+    toast(`已删除：${row.name}`)
+  })
+}
+
+function batchDelete() {
+  const names = [...checkedNames.value]
+  if (!names.length) return
+  confirm(`确认删除选中的 ${names.length} 条资料？此操作不可撤销。`, () => {
+    names.forEach((name) => {
+      const idx = rows.findIndex((r) => r.name === name)
+      if (idx !== -1) rows.splice(idx, 1)
+    })
+    checkedNames.value = new Set()
+    toast(`已删除 ${names.length} 条资料`)
+  }, true)
+}
 
 // 分类目录树，带计数
 const catTree = computed(() => {
@@ -160,6 +239,11 @@ function fmtClass(fmt) {
 
 function openDetail(row) {
   emit('open-detail', row)
+}
+
+// 导入资料 → 跳转到数据资源录入（res-add）
+function goResAdd() {
+  router.push({ name: 'app', params: { pid: route.params.pid, sid: route.params.sid, mid: 'res-add' } })
 }
 </script>
 
@@ -280,11 +364,19 @@ function openDetail(row) {
   gap: 14px;
   padding: 14px 16px;
   border-bottom: 1px solid #eef3f8;
-  cursor: pointer;
   transition: background .12s;
 }
 .res-item:last-child { border-bottom: none; }
-.res-item:hover { background: #f6fafd; }
+/* 可点击区域：格式图标 + 资源信息 */
+.res-clickable {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.res-clickable:hover .res-name { color: #1668a8; text-decoration: underline; }
 
 /* 格式图标 */
 .res-fmt-icon {
@@ -336,4 +428,50 @@ function openDetail(row) {
 .empty-tip { padding: 48px; text-align: center; color: #9fb0c0; font-size: 14px; }
 
 .res-foot { font-size: 13.5px; color: #7c8fa2; padding: 2px 0; }
+
+/* 工具栏 */
+.res-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 2px;
+}
+.cb-all {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+.cb-all input { accent-color: #0d4e83; width: 15px; height: 15px; cursor: pointer; }
+.batch-del-btn {
+  height: 32px; padding: 0 14px; gap: 6px; font-size: 13.5px;
+}
+.batch-del-btn:disabled { opacity: .45; cursor: not-allowed; }
+.sel-hint { font-size: 13px; color: #1668a8; font-weight: 500; }
+.sel-hint.muted { color: #a0aab4; font-weight: 400; }
+
+/* 列表行 checkbox */
+.res-cb {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.res-cb input { accent-color: #0d4e83; width: 15px; height: 15px; cursor: pointer; }
+
+/* 勾选行高亮 */
+.res-item.checked { background: #eef6fc; }
+.res-item.checked:hover { background: #e6f2f9; }
+
+/* 删除按钮 */
+.act-btn.danger {
+  color: #d4380d;
+  border-color: #f0c2b8;
+}
+.act-btn.danger:hover {
+  background: #fdeceb;
+  border-color: #f5a090;
+  color: #b02a08;
+}
 </style>

@@ -1,5 +1,5 @@
 const resources = [
-  ['东方红-LF2204轮式拖拉机定型试验报告', '定型资料', 'DOCX', '文本', '36.5 MB', '128', '已解析', '张明远', '2026-10-08 09:24'],
+  ['某型装备研制总要求（D-01）', '定型资料', 'PDF', '文本', '12.4 MB', '48', '已解析', '张明远', '2026-10-08 09:24'],
   ['雷沃谷神4LZ-8谷物联合收割机鉴定大纲', '定型资料', 'PDF', '文本', '18.2 MB', '86', '已解析', '李慧敏', '2026-10-09 10:11'],
   ['NY/T 2090-2025 农业机械试验鉴定通则', '标准规范', 'PDF', '文本', '6.8 MB', '42', '已解析', '王建国', '2026-09-28 14:02'],
   ['2BMQ-6气力式免耕播种机田间试验数据', '历史试验数据', 'XLSX', '表格', '12.4 MB', '—', '解析中', '陈思远', '2026-10-14 16:40'],
@@ -56,7 +56,7 @@ export const datasets = {
       { key: 'time', label: '创建时间' },
     ],
     rows: [
-      { name: '东方红-LF2204定型试验报告全文解析', mode: '即时解析', engine: '领域多模态大模型', progress: 100, count: '1286/1286', status: '已完成', cost: '156s', time: '2026-10-08 09:24' },
+      { name: '某型装备研制总要求（D-01）全文解析', mode: '即时解析', engine: '领域多模态大模型', progress: 100, count: '1286/1286', status: '已完成', cost: '156s', time: '2026-10-08 09:24' },
       { name: '雷沃谷神4LZ-8鉴定大纲解析', mode: '即时解析', engine: '文档OCR识别引擎', progress: 100, count: '642/642', status: '已完成', cost: '98s', time: '2026-10-09 10:11' },
       { name: '2BMQ-6免耕播种机田间数据解析', mode: '批量调度', engine: '表格结构识别引擎', progress: 64, count: '328/512', status: '进行中', cost: '—', time: '2026-10-14 16:41' },
       { name: '播种机历史影像资料批量解析', mode: '批量调度', engine: '语音转写ASR引擎', progress: 0, count: '0/96', status: '排队中', cost: '—', time: '2026-10-16 11:05' },
@@ -132,7 +132,7 @@ export const datasets = {
       { key: 'time', label: '创建时间' },
     ],
     rows: [
-      { name: '东方红-LF2204轮式拖拉机定型试验报告', progress: 100, status: '已完成', dim: '1024', chunks: '96', cost: '11.2s', ok: '达标（≤15s）', time: '2026-10-09 14:20' },
+      { name: '某型装备研制总要求（D-01）', progress: 100, status: '已完成', dim: '1024', chunks: '96', cost: '11.2s', ok: '达标（≤15s）', time: '2026-10-09 14:20' },
       { name: '雷沃谷神4LZ-8谷物联合收割机鉴定大纲', progress: 100, status: '已完成', dim: '1024', chunks: '64', cost: '8.6s', ok: '达标', time: '2026-10-10 09:32' },
       { name: 'NY/T 2090-2025 农业机械试验鉴定通则', progress: 100, status: '已完成', dim: '1024', chunks: '32', cost: '5.1s', ok: '达标', time: '2026-10-10 10:15' },
       { name: '五征4YZP-4可靠性试验报告', progress: 46, status: '进行中', dim: '1024', chunks: '—', cost: '—', ok: '—', time: '2026-10-16 15:02' },
@@ -170,7 +170,7 @@ export const datasets = {
       { key: 'time', label: '完成时间' },
     ],
     rows: [
-      { name: '东方红-LF2204定型试验报告解析成果', fmt: 'JSON', count: '1', status: '已完成', time: '2026-10-10 11:22' },
+      { name: '某型装备研制总要求解析成果', fmt: 'JSON', count: '1', status: '已完成', time: '2026-10-10 11:22' },
       { name: '标准规范类资源批量导出', fmt: 'Markdown', count: '6', status: '已完成', time: '2026-10-12 16:08' },
       { name: '历史试验表格结构化导出', fmt: 'TXT', count: '4', status: '进行中', time: '—' },
     ],
@@ -987,28 +987,38 @@ export function cloneRows(id) {
 
 // ── 镜头一：资源处理结果详情（key = 资源名称）────────────────────────
 export const resourceDetails = {
-  '东方红-LF2204轮式拖拉机定型试验报告': {
-    name: '东方红-LF2204轮式拖拉机定型试验报告',
-    fmt: 'DOCX', size: '36.5 MB', pages: 128,
+  '某型装备研制总要求（D-01）': {
+    name: '某型装备研制总要求（D-01）',
+    fmt: 'PDF', size: '12.4 MB', pages: 48,
     parsedAt: '2026-10-08 09:26:47',
-    tableCount: 12, imageCount: 9, paraCount: 326,
-    indexStatus: '已建立', indexName: 'idx-lf2204-20261008', indexAt: '2026-10-08 09:27:03',
+    tableCount: 6, imageCount: 3, paraCount: 186,
+    indexStatus: '已建立', indexName: 'idx-d01-20261008', indexAt: '2026-10-08 09:27:03',
+    entities: [
+      { label: '农业机械型号', count: 8 },
+      { label: '性能指标', count: 26 },
+      { label: '指标数值', count: 34 },
+      { label: '试验项目', count: 12 },
+      { label: '标准编号', count: 6 },
+      { label: '试验机构', count: 3 },
+    ],
     chapters: [
-      { id: 'c1', title: '1 概述', level: 1, children: [
-        { id: 'c1-1', title: '1.1 试验目的', level: 2 },
-        { id: 'c1-2', title: '1.2 试验依据', level: 2 },
+      { id: 'c1', title: '1 总则', level: 1, children: [
+        { id: 'c1-1', title: '1.1 任务来源', level: 2 },
+        { id: 'c1-2', title: '1.2 研制依据', level: 2 },
       ]},
-      { id: 'c2', title: '2 试验条件与仪器设备', level: 1 },
-      { id: 'c3', title: '3 性能试验结果', level: 1, children: [
-        { id: 'c3-1', title: '3.1 动力输出轴试验', level: 2 },
-        { id: 'c3-2', title: '3.2 牵引性能试验', level: 2 },
-        { id: 'c3-3', title: '3.3 制动试验', level: 2 },
-        { id: 'c3-4', title: '3.4 驾驶员耳旁噪声', level: 2 },
+      { id: 'c2', title: '2 战术技术指标', level: 1, children: [
+        { id: 'c2-1', title: '2.1 机动性能', level: 2 },
+        { id: 'c2-2', title: '2.2 火力性能', level: 2 },
+        { id: 'c2-3', title: '2.3 防护性能', level: 2 },
       ]},
-      { id: 'c4', title: '4 可靠性试验', level: 1 },
-      { id: 'c5', title: '5 安全性检查', level: 1 },
-      { id: 'c6', title: '6 结论', level: 1 },
-      { id: 'c7', title: '附录 A 试验数据汇总表', level: 1 },
+      { id: 'c3', title: '3 可靠性与维修性', level: 1, children: [
+        { id: 'c3-1', title: '3.1 可靠性指标', level: 2 },
+        { id: 'c3-2', title: '3.2 维修性指标', level: 2 },
+      ]},
+      { id: 'c4', title: '4 环境适应性', level: 1 },
+      { id: 'c5', title: '5 电磁兼容性', level: 1 },
+      { id: 'c6', title: '6 信息能力', level: 1 },
+      { id: 'c7', title: '附录 A 指标汇总表', level: 1 },
     ],
   },
   '雷沃谷神4LZ-8谷物联合收割机鉴定大纲': {
@@ -1017,6 +1027,14 @@ export const resourceDetails = {
     parsedAt: '2026-10-09 10:12:40',
     tableCount: 8, imageCount: 5, paraCount: 214,
     indexStatus: '已建立', indexName: 'idx-4lz8-20261009', indexAt: '2026-10-09 10:13:02',
+    entities: [
+      { label: '农业机械型号', count: 5 },
+      { label: '性能指标', count: 18 },
+      { label: '指标数值', count: 29 },
+      { label: '试验项目', count: 22 },
+      { label: '标准编号', count: 9 },
+      { label: '试验机构', count: 2 },
+    ],
     chapters: [
       { id: 'c1', title: '1 适用范围', level: 1 },
       { id: 'c2', title: '2 规范性引用文件', level: 1 },
@@ -1036,6 +1054,14 @@ export const resourceDetails = {
     parsedAt: '2026-09-28 14:03:31',
     tableCount: 4, imageCount: 2, paraCount: 118,
     indexStatus: '已建立', indexName: 'idx-nyt2090-20260928', indexAt: '2026-09-28 14:03:52',
+    entities: [
+      { label: '农业机械型号', count: 3 },
+      { label: '性能指标', count: 11 },
+      { label: '指标数值', count: 16 },
+      { label: '试验项目', count: 8 },
+      { label: '标准编号', count: 14 },
+      { label: '试验机构', count: 1 },
+    ],
     chapters: [
       { id: 'c1', title: '1 范围', level: 1 },
       { id: 'c2', title: '2 规范性引用文件', level: 1 },

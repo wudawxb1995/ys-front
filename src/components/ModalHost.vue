@@ -6,9 +6,11 @@
       <div v-if="state.modal.fields" class="form-grid" style="grid-template-columns:1fr">
         <div v-for="f in state.modal.fields" :key="f.key" class="field">
           <label>{{ f.label }}</label>
-          <select v-if="f.options" v-model="state.modal.model[f.key]">
-            <option v-for="op in f.options" :key="op" :value="op">{{ op }}</option>
-          </select>
+          <select-field
+            v-if="f.options"
+            v-model="state.modal.model[f.key]"
+            :options="f.options"
+          />
           <textarea v-else-if="f.type === 'textarea'" v-model="state.modal.model[f.key]" />
           <input v-else v-model="state.modal.model[f.key]" :placeholder="f.placeholder || ''" />
         </div>
@@ -39,6 +41,7 @@
 
 <script setup>
 import { useUi } from '@/composables/ui'
+import SelectField from '@/components/SelectField.vue'
 const { state, closeModal, closeDrawer } = useUi()
 function ok() {
   const modal = state.modal

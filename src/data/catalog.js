@@ -111,12 +111,12 @@ export const platforms = [
             leaf('cats', '文档分类管理', crud('分类信息可增删改查。系统按配置对章节自动打标，用户可审核修改。', 'categories')),
           ]),
           g('rev-g', '抽取结果审核', 'audit', [
-            leaf('preview', '结果预览与审核', { type: 'workbench', desc: '预览模式查看自动解析结果；审核模式对结果增删改。支持多类别农机的精细化人工核验。' }),
+            leaf('preview', '结果预览与审核', { type: 'm02', desc: '预览模式查看自动解析结果；审核模式对结果增删改。支持多类别农机的精细化人工核验。' }),
             leaf('multi-rev', '多类别农机核验', crud('针对不同农业机械类别分别核验抽取结果，确保分类准确性。', 'indicators')),
             leaf('trace', '指标原文追溯', crud('由指标项定位并展示源文件，辅助人工核验。', 'indicators')),
           ]),
-          g('model-g', '数据建模与标注', 'model', [
-            leaf('models', '数据模型与元数据', crud('依据试验鉴定数据标准建立统一模型与元数据，完成语义标注、分类编码和结构化生成。', 'dataModels')),
+          g('model-g', '标准化数据建模', 'model', [
+            leaf('models', '指标树管理', { type: 'm03', desc: '依据试验鉴定数据标准建立统一指标树，完成语义标注、分类编码和结构化生成。' }),
             leaf('auto-label', '自动标注与编码', crud('对抽取结果执行自动标注与分类编码，支持批量处理与人工复核。', 'entities')),
           ]),
         ],
@@ -390,7 +390,7 @@ export const platforms = [
               { label: '最大因子数', value: '24', unit: '个' },
             ],
           )),
-          leaf('gen', '方案辅助生成', { type: 'report', reportKey: 'scheme', desc: '生成新方案初稿并支持人工编辑。当前示例方案包含 24 个试验因子。' }),
+          leaf('gen', '试验方案辅助生成', { type: 'm08', desc: '生成新方案初稿并支持人工编辑。当前示例方案包含 24 个试验因子。' }),
           leaf('cases', '案例与资源库', crud('历史试验案例与试验资源的入库、关键词检索和多条件查阅。', 'cases')),
           leaf('ver', '版本管理', crud('案例与资源版本管理，历史版本可在线查看。', 'schemes')),
           leaf('tpl', '标准模板库', crud('管理资源库中的试验方案模板，支持上传、更新与删除。', 'schemeTpls')),
@@ -469,7 +469,7 @@ export const platforms = [
               { label: '可溯源案例', value: '240', unit: '个' },
             ],
           )),
-          leaf('rec', '匹配推荐', crud('对比历史资源的设备、操作参数等详细信息。算法包含余弦相似度、欧氏距离和加权杰卡德。', 'recommends')),
+          leaf('rec', '匹配推荐', { type: 'm11', desc: '对比历史资源的设备、操作参数等详细信息。算法包含余弦相似度、欧氏距离和加权杰卡德。' }),
           leaf('chat', '多轮交互推荐', { type: 'chat', chatKey: 'recommend', desc: '用自然语言补充约束，提高匹配准确性。' }),
         ],
       },

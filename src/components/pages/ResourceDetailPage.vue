@@ -24,8 +24,8 @@
         </div>
       </div>
       <div class="fi-actions">
-        <button class="act-btn" @click="toast('已打开解析任务详情')">查看解析日志</button>
-        <button class="act-btn primary" @click="toast('已跳转至指标抽取')">发起指标抽取</button>
+        <button class="act-btn" @click="goParseTask">查看解析日志</button>
+        <button class="act-btn primary" @click="goExtract">发起指标抽取</button>
       </div>
     </div>
 
@@ -105,8 +105,8 @@
               <div><span class="meta-key">建立时间</span><span class="meta-val">{{ detail.indexAt }}</span></div>
             </div>
             <div class="index-actions">
-              <button class="act-btn" @click="toast('已打开语义检索')">语义检索</button>
-              <button class="act-btn" @click="toast('已打开向量化任务')">查看向量化</button>
+              <button class="act-btn" @click="goVecSearch">语义检索</button>
+              <button class="act-btn" @click="goVecTask">查看向量化</button>
             </div>
           </div>
         </div>
@@ -131,6 +131,7 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useUi } from '@/composables/ui'
 
 const props = defineProps({
@@ -138,6 +139,30 @@ const props = defineProps({
 })
 const emit = defineEmits(['back'])
 const { toast } = useUi()
+const route = useRoute()
+const router = useRouter()
+
+// ── 路由跳转函数 ──────────────────────────────────────────────────────
+
+// 查看解析日志 → 解析任务管理（parse-task），同系统
+function goParseTask() {
+  router.push({ name: 'app', params: { pid: route.params.pid, sid: route.params.sid, mid: 'parse-task' } })
+}
+
+// 发起指标抽取 → S2 系统（extract）的结果预览与审核（preview = 镜头二）
+function goExtract() {
+  router.push({ name: 'app', params: { pid: route.params.pid, sid: 'extract', mid: 'preview' } })
+}
+
+// 语义检索 → 向量化任务（vec-task，已向量化的资源才可检索）
+function goVecSearch() {
+  router.push({ name: 'app', params: { pid: route.params.pid, sid: route.params.sid, mid: 'vec-task' } })
+}
+
+// 查看向量化 → 向量成果管理（vec-chunks，查看分块文本与向量预览）
+function goVecTask() {
+  router.push({ name: 'app', params: { pid: route.params.pid, sid: route.params.sid, mid: 'vec-chunks' } })
+}
 
 // 章节展开状态，默认全部展开
 const expanded = reactive({})

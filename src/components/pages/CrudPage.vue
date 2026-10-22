@@ -12,10 +12,12 @@
         <div v-for="f in schema.filters" :key="f.key" class="field">
           <label>{{ f.label }}</label>
           <input v-if="f.type === 'search'" v-model="draft[f.key]" :placeholder="f.placeholder || '请输入'" />
-          <select v-else v-model="draft[f.key]">
-            <option value="">全部{{ f.label }}</option>
-            <option v-for="op in f.options" :key="op" :value="op">{{ op }}</option>
-          </select>
+          <select-field
+            v-else
+            v-model="draft[f.key]"
+            :options="[{ value: '', label: '全部' + f.label }, ...f.options.map(op => ({ value: op, label: op }))]"
+            :placeholder="'全部' + f.label"
+          />
         </div>
         <div class="filter-actions">
           <button class="btn btn-primary" @click="apply">查询</button>
@@ -64,8 +66,8 @@
               </template>
               <template v-else>{{ row[col.key] }}</template>
             </td>
-            <td>
-              <div class="ops">
+            <td style="text-align:center">
+              <div class="ops" style="justify-content:center">
                 <a v-for="op in ops" :key="op"
                    :class="{ danger: op === '删除' }"
                    @click="act(op, row)">{{ op }}</a>
@@ -110,6 +112,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { datasetOf, useRows } from '@/composables/tables'
 import { useUi } from '@/composables/ui'
 import { badgeKind, nowText } from '@/utils/format'
+import SelectField from '@/components/SelectField.vue'
 
 const props = defineProps({ page: Object, title: String })
 const { toast, confirm, openForm, openDrawer } = useUi()
