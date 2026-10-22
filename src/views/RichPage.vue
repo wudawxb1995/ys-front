@@ -1366,11 +1366,1017 @@
         </div>
       </div>
     </template>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         M14  探针配置管理
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template v-else-if="page.type === 'm14'">
+
+      <!-- 详情页 -->
+      <template v-if="m14Detail">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+          <span @click="m14Detail=null" style="cursor:pointer;color:#1668a8;font-size:13px;display:flex;align-items:center;gap:4px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><polyline points="15 18 9 12 15 6"/></svg>
+            返回探针列表
+          </span>
+          <span style="color:#c4cdd6;font-size:13px">/</span>
+          <span style="font-size:13px;color:#5a6978">{{ m14Detail.name }}</span>
+        </div>
+
+        <!-- 三行布局：上（基础信息+监测参数）/ 中（判据配置）/ 下（告警级别+图谱信息卡） -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+
+          <!-- 上部：探针基础信息（左）+ 监测参数绑定（右） -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <!-- 基础信息卡 -->
+            <div class="panel">
+              <h3><i></i>探针基础信息</h3>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-top:8px">
+                <div><div style="font-size:12px;color:#8a99a8;margin-bottom:3px">探针名称</div><div style="font-weight:600;color:#1a2b3c">{{ m14Detail.name }}</div></div>
+                <div><div style="font-size:12px;color:#8a99a8;margin-bottom:3px">状态</div><span class="badge on"><i></i>已启用</span></div>
+                <div><div style="font-size:12px;color:#8a99a8;margin-bottom:3px">探针编号</div><div style="color:#333">{{ m14Detail.id }}</div></div>
+                <div><div style="font-size:12px;color:#8a99a8;margin-bottom:3px">监测对象</div><div style="color:#333">{{ m14Detail.obj }}</div></div>
+                <div><div style="font-size:12px;color:#8a99a8;margin-bottom:3px">监测参数数</div><div style="color:#333">{{ m14Detail.metrics }} 个</div></div>
+                <div><div style="font-size:12px;color:#8a99a8;margin-bottom:3px">最近更新</div><div style="color:#333">{{ m14Detail.updated }}</div></div>
+              </div>
+            </div>
+            <!-- 监测参数绑定 -->
+            <div class="panel">
+              <h3><i></i>监测参数绑定</h3>
+              <div style="margin-top:10px;display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;background:#f4f8fc;border-radius:6px">
+                  <span style="font-size:13px;color:#5a6978;font-weight:500">绑定参数</span>
+                  <span style="font-size:13px;color:#1a2b3c;font-weight:600">立靶高低偏差</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;background:#f4f8fc;border-radius:6px">
+                  <span style="font-size:13px;color:#5a6978;font-weight:500">数据来源</span>
+                  <span style="font-size:13px;color:#1a2b3c">弹道测量文件</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;background:#f4f8fc;border-radius:6px">
+                  <span style="font-size:13px;color:#5a6978;font-weight:500">采集频率</span>
+                  <span style="font-size:13px;color:#1a2b3c">每发一次</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 中部：判据配置区（全宽） -->
+          <div class="panel">
+            <h3><i></i>判据配置</h3>
+            <div class="table-wrap" style="margin-top:10px">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:120px">判据名称</th>
+                    <th style="width:200px">阈值</th>
+                    <th>来源</th>
+                    <th style="width:100px">执行动作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-weight:500">主判据</td>
+                    <td style="font-size:13.5px;font-weight:700;color:#0d4e83">
+                      立靶高低偏差 ≤ 0.30 mil
+                    </td>
+                    <td>
+                      <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#1668a8;background:#e8f2fb;border:1px solid #b8d9f4;padding:3px 10px;border-radius:8px;cursor:pointer"
+                        @click="$emit('toast','预览：散布精度指标 → 试验大纲第3章3.1.1条')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;flex-shrink:0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        引自 指标树V1.0 · {{ m14Detail.srcNode }}
+                      </span>
+                    </td>
+                    <td style="color:#d48806;font-size:13px">触发告警</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:500">方向偏差</td>
+                    <td style="font-size:13.5px;font-weight:700;color:#0d4e83">
+                      立靶方向偏差 ≤ 0.30 mil
+                    </td>
+                    <td>
+                      <span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#1668a8;background:#e8f2fb;border:1px solid #b8d9f4;padding:3px 10px;border-radius:8px;cursor:pointer"
+                        @click="$emit('toast','预览：散布精度指标 → 试验大纲第3章3.1.1条')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;flex-shrink:0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        引自 指标树V1.0 · {{ m14Detail.srcNode }}
+                      </span>
+                    </td>
+                    <td style="color:#d48806;font-size:13px">触发告警</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight:500">统计窗口</td>
+                    <td style="color:#5a6978">单发判定</td>
+                    <td><span style="font-size:12px;color:#8a99a8">系统默认</span></td>
+                    <td style="color:#8a99a8;font-size:13px">—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 下部：告警级别配置（左）+ 图谱引用信息卡（右） -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+            <!-- 告警级别配置 -->
+            <div class="panel">
+              <h3><i></i>告警级别配置</h3>
+              <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border:1px solid #e8f2fb;border-radius:6px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="width:10px;height:10px;border-radius:50%;background:#d4380d;display:inline-block"></span>
+                    <span style="font-size:13px;font-weight:500;color:#1a2b3c">一级告警</span>
+                  </div>
+                  <span style="font-size:13px;color:#5a6978">任一分量超限 → 立即上报</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border:1px solid #e8f2fb;border-radius:6px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="width:10px;height:10px;border-radius:50%;background:#d48806;display:inline-block"></span>
+                    <span style="font-size:13px;font-weight:500;color:#1a2b3c">二级预警</span>
+                  </div>
+                  <span style="font-size:13px;color:#5a6978">偏差 &gt; 0.25 mil → 记录关注</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border:1px solid #e8f2fb;border-radius:6px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="width:10px;height:10px;border-radius:50%;background:#22913c;display:inline-block"></span>
+                    <span style="font-size:13px;font-weight:500;color:#1a2b3c">正常</span>
+                  </div>
+                  <span style="font-size:13px;color:#5a6978">偏差 ≤ 0.25 mil → 正常通过</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 图谱引用信息卡（只读） -->
+            <div style="background:#f8fbff;border-left:3px solid #1668a8;border-radius:0 8px 8px 0;padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <span style="font-size:14px;font-weight:600;color:#1a2b3c;display:flex;align-items:center;gap:6px">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="1.8" style="width:17px;height:17px">
+                    <circle cx="12" cy="5"  r="2.2"/>
+                    <circle cx="5"  cy="19" r="2.2"/>
+                    <circle cx="19" cy="19" r="2.2"/>
+                    <line x1="12" y1="7.2"  x2="5.8"  y2="17"/>
+                    <line x1="12" y1="7.2"  x2="18.2" y2="17"/>
+                    <line x1="7.2" y1="19"  x2="16.8" y2="19"/>
+                  </svg>
+                  探针推理图谱引用信息
+                </span>
+                <span style="font-size:12px;color:#8a99a8;background:#eef4fa;padding:2px 8px;border-radius:4px">只读</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 20px">
+                <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#8a99a8">图谱名称</span><span style="font-size:13px;font-weight:500;color:#1a2b3c">精度试验故障模式图谱</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#8a99a8">图谱版本</span><span style="font-size:13px;color:#1a2b3c">V1.0</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#8a99a8">节点总数</span><span style="font-size:13px;font-weight:500;color:#1a2b3c">120 余个</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#8a99a8">关系总数</span><span style="font-size:13px;font-weight:500;color:#1a2b3c">200 余条</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#8a99a8">最近更新</span><span style="font-size:13px;color:#1a2b3c">2024-10-15</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="font-size:13px;color:#8a99a8">来源</span><span style="font-size:13px;color:#1a2b3c">第一部分</span></div>
+              </div>
+              <div style="margin-top:12px;padding:8px 10px;background:#fffbe6;border-radius:4px;font-size:12px;color:#7a5a10">
+                ⚠ 此图谱为只读背景资产，如需查看完整图谱请切换至增量式智能探针推理图谱构建系统
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </template>
+
+      <!-- 列表页 -->
+      <template v-else>
+        <div style="height:8px"></div>
+        <div class="crud-body">
+          <!-- 工具栏 -->
+          <div class="toolbar" style="padding-top:16px">
+            <button class="btn btn-primary" @click="$emit('toast','新建探针功能即将上线')">＋ 新建探针</button>
+            <button class="btn btn-outline" @click="$emit('toast','已批量启用全部探针')">批量启用</button>
+            <span class="spacer"></span>
+            <input placeholder="搜索探针名称…" style="width:200px;padding:6px 12px;border:1px solid #d6e4f0;border-radius:6px;font-size:13px;outline:none;color:#3f5062" />
+          </div>
+          <!-- 表格 -->
+          <div class="table-inner">
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-idx">序号</th>
+                  <th>探针名称</th>
+                  <th style="width:130px">监测对象</th>
+                  <th style="width:220px">判据阈值</th>
+                  <th style="width:90px">状态</th>
+                  <th style="width:150px">判据来源</th>
+                  <th style="width:110px">最近更新</th>
+                  <th style="width:110px;text-align:center">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(p, i) in probeList.slice((m14PageNo-1)*m14PageSize, m14PageNo*m14PageSize)" :key="p.id">
+                  <td class="col-idx">{{ String((m14PageNo-1)*m14PageSize+i+1).padStart(2,'0') }}</td>
+                  <td>
+                    <span style="color:#1668a8;cursor:pointer;font-weight:500" @click="m14Detail=p">{{ p.name }}</span>
+                  </td>
+                  <td>{{ p.obj }}</td>
+                  <td style="font-family:monospace;font-size:13px;color:#0d4e83">{{ p.criteria }}</td>
+                  <td><span class="badge on"><i></i>已启用</span></td>
+                  <td>
+                    <span style="display:inline-flex;align-items:center;gap:3px;font-size:11.5px;color:#1668a8;background:#e8f2fb;border:1px solid #b8d9f4;padding:2px 7px;border-radius:8px;white-space:nowrap">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px;flex-shrink:0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                      引自指标树V1.0
+                    </span>
+                  </td>
+                  <td style="color:#8a99a8">{{ p.updated }}</td>
+                  <td style="text-align:center">
+                    <div class="ops" style="justify-content:center">
+                      <button @click="m14Detail=p">配置</button>
+                      <button @click="$emit('toast','已停用：'+p.name)">停用</button>
+                    </div>
+                  </td>
+                </tr>
+                <!-- 补空行保持表格高度一致 -->
+                <tr v-for="n in Math.max(0, m14PageSize - probeList.slice((m14PageNo-1)*m14PageSize, m14PageNo*m14PageSize).length)" :key="'e'+n" class="empty-row">
+                  <td colspan="8"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 分页 -->
+          <div class="pager">
+            <span>共 <b>{{ probeList.length }}</b> 条记录</span>
+            <div class="pages">
+              <button class="pg" :disabled="m14PageNo===1" @click="m14PageNo--">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+              </button>
+              <button v-for="n in Math.ceil(probeList.length/m14PageSize)" :key="n"
+                class="pg" :class="{ cur: n===m14PageNo }" @click="m14PageNo=n">{{ n }}</button>
+              <button class="pg" :disabled="m14PageNo===Math.ceil(probeList.length/m14PageSize)" @click="m14PageNo++">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </template>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         M15  数据对接任务 + 融合监测视图
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template v-else-if="page.type === 'm15'">
+
+      <!-- 融合监测视图 -->
+      <template v-if="m15Detail">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span @click="m15Detail=null;scanCol=-1;alertVisible=false" style="cursor:pointer;color:#1668a8;font-size:13px;display:flex;align-items:center;gap:4px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><polyline points="15 18 9 12 15 6"/></svg>
+            返回任务列表
+          </span>
+          <span style="color:#c4cdd6;font-size:13px">/</span>
+          <span style="font-size:13px;color:#5a6978">{{ m15Detail.name }}</span>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;color:#8a99a8">30发 · 2024-10-18 · 异常1发</span>
+            <button class="btn btn-primary" :disabled="scanCol>=0" @click="startScan()"
+              :style="scanCol>=0?'opacity:.5;cursor:not-allowed':''">
+              {{ scanCol<0?'启动智能检测':scanCol<6?'检测中…':'检测完成' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- 告警横幅 -->
+        <div v-if="alertVisible" style="background:#fff8e0;border-left:4px solid #d0ab68;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#d48806" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div>
+            <div style="font-weight:600;color:#7a5a10;margin-bottom:4px">告警 · 第 19 发 · 立靶高低偏差超限</div>
+            <div style="font-size:13px;color:#7a5a10">探针：弹着点散布探针 P01　检测值：<b>+0.42 mil</b>（判据：≤0.30 mil）</div>
+            <div style="font-size:13px;color:#9a7a30;margin-top:3px">触发时间：11:22:07　建议：标记为异常，进入根因分析流程</div>
+          </div>
+        </div>
+
+        <!-- 四分区 grid 2×2 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:12px;align-items:stretch">
+
+          <!-- 左上：发次样本列表 -->
+          <div class="panel" style="overflow:auto;height:360px;display:flex;flex-direction:column">
+            <h3 style="margin-bottom:8px;flex-shrink:0"><i></i>发次样本列表</h3>
+            <div class="table-wrap" style="flex:1;overflow:auto">
+              <table style="font-size:12.5px">
+                <thead>
+                  <tr>
+                    <th style="width:44px">发次</th>
+                    <th style="width:72px">时间</th>
+                    <th style="width:72px">初速(m/s)</th>
+                    <th style="width:80px">高低偏(mil)</th>
+                    <th style="width:80px">方向偏(mil)</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="s in shots30" :key="s.id"
+                    :style="s.anomaly?'background:rgba(212,56,13,.04);border-left:3px solid #d48806':''">
+                    <td class="col-idx">{{ String(s.id).padStart(2,'0') }}</td>
+                    <td>{{ s.ts }}</td>
+                    <td :style="s.anomaly?'color:#d4380d;font-weight:700':''">{{ s.v0 }}</td>
+                    <td :style="s.anomaly?'color:#d4380d;font-weight:700':''">{{ s.dH>0?'+':'' }}{{ s.dH }}</td>
+                    <td>{{ s.dL>0?'+':'' }}{{ s.dL }}</td>
+                    <td>
+                      <span v-if="s.anomaly" class="badge warn"><i></i>异常</span>
+                      <span v-else class="badge on"><i></i>正常</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 右上：初速时序曲线 -->
+          <div class="panel" style="height:360px;display:flex;flex-direction:column">
+            <h3 style="margin-bottom:8px;flex-shrink:0"><i></i>初速时序曲线</h3>
+            <div ref="v0ChartEl" style="width:100%;flex:1"></div>
+          </div>
+
+          <!-- 左下：探针状态矩阵 -->
+          <div class="panel">
+            <h3 style="margin-bottom:10px"><i></i>探针扫描矩阵</h3>
+            <div style="font-size:12px;color:#8a99a8;margin-bottom:8px">12探针 × 6批次（每批5发）</div>
+            <div style="overflow-x:auto">
+              <table style="border-collapse:separate;border-spacing:3px;font-size:11.5px">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;font-size:11px;color:#8a99a8;padding:0 4px;font-weight:400;width:120px">探针</th>
+                    <th v-for="c in 6" :key="c" style="width:42px;text-align:center;font-size:11px;color:#8a99a8;font-weight:400">第{{c*5-4}}-{{c*5}}发</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(p,pi) in probeList" :key="p.id">
+                    <td style="padding:2px 4px;color:#5a6978;font-size:11.5px;white-space:nowrap">{{ p.name.replace('探针','') }}</td>
+                    <td v-for="c in 6" :key="c" style="width:42px;height:26px;border-radius:4px;text-align:center;font-size:11px;font-weight:600;transition:background .3s"
+                      :style="scanCol<0 ? 'background:#e4ecf4;color:#b0bcc8'
+                        : c-1<scanCol ? (pi===0 && c===4 ? 'background:#d0ab68;color:#fff' : 'background:#1668a8;color:#fff')
+                        : c-1===scanCol ? 'background:#9ec8e8;color:#fff'
+                        : 'background:#e4ecf4;color:#b0bcc8'"
+                    >
+                      <template v-if="pi===0 && c===4 && scanCol>=4">!</template>
+                      <template v-else-if="c-1<scanCol && scanCol>=0">✓</template>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 右下：弹着点散布图 -->
+          <div class="panel">
+            <h3 style="margin-bottom:8px"><i></i>弹着点散布图</h3>
+            <svg width="100%" viewBox="0 0 380 280" style="display:block">
+              <!-- 坐标轴 -->
+              <line x1="190" y1="20" x2="190" y2="260" stroke="#dce8f2" stroke-width="1"/>
+              <line x1="30" y1="140" x2="360" y2="140" stroke="#dce8f2" stroke-width="1"/>
+              <!-- ±0.30mil 判据虚线框 -->
+              <rect x="110" y="60" width="160" height="160" fill="none" stroke="#d4380d" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.7"/>
+              <text x="193" y="57" font-size="10" fill="#d4380d">+0.30</text>
+              <text x="193" y="230" font-size="10" fill="#d4380d">-0.30</text>
+              <text x="270" y="143" font-size="10" fill="#d4380d">+0.30</text>
+              <text x="28" y="143" font-size="10" fill="#d4380d">-0.30</text>
+              <!-- 正常29发散点（坐标已固化，原点190,140，1mil≈53px） -->
+              <circle cx="193" cy="136" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="184" cy="143" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="197" cy="134" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="186" cy="137" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="200" cy="135" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="182" cy="140" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="202" cy="132" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="185" cy="146" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="196" cy="136" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="183" cy="135" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="199" cy="133" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="187" cy="148" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="194" cy="137" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="179" cy="141" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="203" cy="130" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="185" cy="149" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="198" cy="134" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="181" cy="135" r="4" fill="#1668a8" opacity="0.65"/>
+              <!-- 第20~30发 -->
+              <circle cx="195" cy="137" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="184" cy="134" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="200" cy="141" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="186" cy="137" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="198" cy="133" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="182" cy="145" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="196" cy="136" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="201" cy="132" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="188" cy="147" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="184" cy="138" r="4" fill="#1668a8" opacity="0.65"/>
+              <circle cx="195" cy="138" r="4" fill="#1668a8" opacity="0.65"/>
+              <!-- 第19发异常点：190+0.42*53≈212, 140-0.18*53≈130 -->
+              <circle cx="212" cy="130" r="8" fill="none" stroke="#d4380d" stroke-width="2"/>
+              <line x1="207" y1="125" x2="217" y2="135" stroke="#d4380d" stroke-width="2"/>
+              <line x1="217" y1="125" x2="207" y2="135" stroke="#d4380d" stroke-width="2"/>
+              <text x="220" y="122" font-size="10" fill="#d4380d" font-weight="600">+0.42, +0.18</text>
+              <text x="220" y="133" font-size="9" fill="#d4380d">第19发</text>
+              <!-- 轴标签 -->
+              <text x="190" y="275" text-anchor="middle" font-size="10" fill="#8a99a8">方向偏差(mil)</text>
+              <text x="14" y="140" text-anchor="middle" font-size="10" fill="#8a99a8" transform="rotate(-90,14,140)">高低偏差(mil)</text>
+            </svg>
+          </div>
+        </div>
+      </template>
+
+      <!-- 任务列表页 -->
+      <template v-else>
+        <div style="height:8px"></div>
+        <div class="crud-body">
+          <div class="toolbar" style="padding-top:16px">
+            <button class="btn btn-primary" @click="$emit('toast','新建对接任务功能即将上线')">＋ 新建对接任务</button>
+            <span class="spacer"></span>
+            <select style="padding:6px 12px;border:1px solid #d6e4f0;border-radius:6px;font-size:13px;color:#5a6978;outline:none">
+              <option>全部批次</option><option>D-07</option>
+            </select>
+            <select style="margin-left:8px;padding:6px 12px;border:1px solid #d6e4f0;border-radius:6px;font-size:13px;color:#5a6978;outline:none">
+              <option>全部状态</option><option>成功</option><option>进行中</option>
+            </select>
+          </div>
+          <div class="table-inner">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:220px">任务名称</th>
+                  <th style="width:180px">数据源类型</th>
+                  <th style="width:80px">数据量</th>
+                  <th style="width:80px">状态</th>
+                  <th style="width:160px">执行时间</th>
+                  <th style="width:100px;text-align:center">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="t in dockTasks" :key="t.id">
+                  <td>
+                    <span style="color:#1668a8;cursor:pointer;font-weight:500" @click="m15Open(t)">{{ t.name }}</span>
+                  </td>
+                  <td>{{ t.srcType }}</td>
+                  <td>{{ t.count }}</td>
+                  <td><span class="badge on"><i></i>{{ t.status }}</span></td>
+                  <td style="color:#8a99a8">{{ t.time }}</td>
+                  <td style="text-align:center">
+                    <div class="ops" style="justify-content:center">
+                      <button @click="m15Open(t)">查看详情</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pager">
+            <span>共 <b>{{ dockTasks.length }}</b> 条记录</span>
+          </div>
+        </div>
+      </template>
+    </template>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         M19  根因分析工作台
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template v-else-if="page.type === 'm19'">
+
+      <!-- 根因分析四分屏 -->
+      <template v-if="m19Detail">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span @click="m19Detail=null" style="cursor:pointer;color:#1668a8;font-size:13px;display:flex;align-items:center;gap:4px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><polyline points="15 18 9 12 15 6"/></svg>
+            返回事件列表
+          </span>
+          <span style="color:#c4cdd6;font-size:13px">/</span>
+          <span style="font-size:13px;font-weight:600;color:#1a2b3c">{{ m19Detail.name }}</span>
+        </div>
+
+        <!-- 四分屏：2×2 网格，上行（摘要｜候选根因）下行（三图联动｜思维链+证据） -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:12px;align-items:stretch">
+
+          <!-- 左上：异常事件摘要卡 -->
+          <div class="panel">
+            <h3 style="margin-bottom:10px"><i></i>异常事件摘要</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;background:#f4f8fc;border-radius:6px;padding:12px;font-size:13px">
+              <div><span style="color:#8a99a8">事件名称</span><div style="font-weight:600;color:#1a2b3c;margin-top:2px">{{ m19Detail.name }}</div></div>
+              <div><span style="color:#8a99a8">状态</span><div style="margin-top:2px"><span :class="'badge '+m19Detail.statusClass"><i></i>{{ m19Detail.status }}</span></div></div>
+              <div><span style="color:#8a99a8">触发探针</span><div style="color:#333;margin-top:2px">{{ m19Detail.probe }}</div></div>
+              <div><span style="color:#8a99a8">关联批次</span><div style="color:#333;margin-top:2px">D-07（30发）</div></div>
+              <div><span style="color:#8a99a8">发生时间</span><div style="color:#333;margin-top:2px">{{ m19Detail.time }}</div></div>
+              <div><span style="color:#8a99a8">异常发次</span><div style="color:#d4380d;font-weight:600;margin-top:2px">第 19 发</div></div>
+            </div>
+          </div>
+
+          <!-- 右上：候选根因置信度列表 -->
+          <div class="panel">
+            <h3 style="margin-bottom:10px"><i></i>候选根因排序</h3>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div v-for="c in candidates" :key="c.rank"
+                :style="c.rank===1
+                  ?'background:rgba(208,171,104,.10);border-left:3px solid #d0ab68;border-radius:0 8px 8px 0;padding:12px 14px'
+                  :'padding:12px 14px;border:1px solid #e8f2fb;border-radius:8px'">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span :style="c.rank===1?'background:#d0ab68;color:#fff':'background:#e4ecf4;color:#5a6978'"
+                      style="width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">{{ c.rank }}</span>
+                    <span style="font-weight:600;color:#1a2b3c;font-size:13.5px">{{ c.name }}</span>
+                  </div>
+                  <span :style="c.confidence>=0.7?'color:#0d4e83':c.confidence>=0.4?'color:#d0ab68':'color:#8a99a8'"
+                    style="font-size:16px;font-weight:700">{{ c.confidence }}</span>
+                </div>
+                <!-- 置信度进度条 -->
+                <div style="background:#e8eef4;border-radius:4px;height:6px;margin-bottom:8px">
+                  <div :style="'width:'+Math.round(c.confidence*100)+'%;height:100%;border-radius:4px;background:'+(c.confidence>=0.7?'#1668a8':c.confidence>=0.4?'#d0ab68':'#c4cdd6')"></div>
+                </div>
+                <!-- 排序依据 -->
+                <div style="font-size:12px;color:#6d8092;line-height:1.6;padding:6px 8px;background:#f8fbff;border-radius:4px">
+                  <span style="color:#8a99a8">排序依据：</span>{{ c.basis }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 左下：多图联动区（三图 ECharts） -->
+          <div class="panel">
+            <h3 style="margin-bottom:6px"><i></i>多参数可视化联动
+              <span style="margin-left:auto;font-size:12px;color:#8a99a8;font-weight:400">
+                高亮第 <span style="color:#d4380d;font-weight:600">19</span> 发
+              </span>
+            </h3>
+            <div style="font-size:12px;color:#5a6978;margin:6px 0 2px;font-weight:500">① 姿态角 pitch 时序</div>
+            <div :ref="el=>{ pitchChartEl=el; el&&!pitchChart&&initM19Charts() }" style="width:100%;height:160px"></div>
+            <div style="font-size:12px;color:#5a6978;margin:6px 0 2px;font-weight:500">② 各发次初速分布</div>
+            <div :ref="el=>{ scatterChartEl=el; el&&!scatterChart&&initM19Charts() }" style="width:100%;height:160px"></div>
+            <div style="font-size:12px;color:#5a6978;margin:6px 0 2px;font-weight:500">③ 定位定向系统内部温度</div>
+            <div :ref="el=>{ tempChartEl=el; el&&!tempChart&&initM19Charts() }" style="width:100%;height:160px"></div>
+          </div>
+
+          <!-- 右下：思维链画布 + 证据面板 -->
+          <div class="panel">
+            <h3 style="margin-bottom:10px"><i></i>推理思维链</h3>
+            <div style="position:relative;height:200px;overflow:auto;margin-bottom:14px">
+              <svg style="position:absolute;top:0;left:0;width:100%;height:200px;pointer-events:none" viewBox="0 0 580 200">
+                <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#b7cbe0"/></marker></defs>
+                <line x1="113" y1="50" x2="150" y2="50" stroke="#b7cbe0" stroke-width="1.5" marker-end="url(#arr)"/>
+                <line x1="113" y1="50" x2="150" y2="130" stroke="#b7cbe0" stroke-width="1.5" marker-end="url(#arr)"/>
+                <line x1="273" y1="50" x2="310" y2="50" stroke="#b7cbe0" stroke-width="2" marker-end="url(#arr)"/>
+                <line x1="273" y1="130" x2="310" y2="50" stroke="#b7cbe0" stroke-width="1.5" marker-end="url(#arr)"/>
+                <line x1="433" y1="50" x2="470" y2="50" stroke="#b7cbe0" stroke-width="2" marker-end="url(#arr)"/>
+              </svg>
+              <!-- 层一 -->
+              <div style="position:absolute;left:0;top:18px;width:110px" class="chain-node"
+                :class="m19ActiveNode==='C1'?'chain-node-active':''"
+                @click="m19ActiveNode='C1'">
+                <div class="chain-layer">现象</div>
+                <div class="chain-label">弹着点散布异常</div>
+                <div class="chain-val red">超判据40%</div>
+              </div>
+              <!-- 层二上 -->
+              <div style="position:absolute;left:153px;top:18px;width:116px" class="chain-node"
+                :class="m19ActiveNode==='C2'?'chain-node-active':''"
+                @click="m19ActiveNode='C2'">
+                <div class="chain-layer">特征</div>
+                <div class="chain-label">立靶偏差超限</div>
+                <div class="chain-val red">+0.42 mil</div>
+              </div>
+              <!-- 层二下 -->
+              <div style="position:absolute;left:153px;top:106px;width:116px" class="chain-node"
+                :class="m19ActiveNode==='C3'?'chain-node-active':''"
+                @click="m19ActiveNode='C3'">
+                <div class="chain-layer">特征</div>
+                <div class="chain-label">前18发正常</div>
+                <div class="chain-val blue">排除批次因素</div>
+              </div>
+              <!-- 层三上 -->
+              <div style="position:absolute;left:312px;top:18px;width:116px" class="chain-node"
+                :class="m19ActiveNode==='C4'?'chain-node-active':''"
+                @click="m19ActiveNode='C4'">
+                <div class="chain-layer">中间因</div>
+                <div class="chain-label">姿态角漂移</div>
+                <div class="chain-val red">+0.38°超阈值</div>
+              </div>
+              <!-- 层三下 -->
+              <div style="position:absolute;left:312px;top:106px;width:116px" class="chain-node"
+                :class="m19ActiveNode==='C5'?'chain-node-active':''"
+                @click="m19ActiveNode='C5'">
+                <div class="chain-layer">中间因</div>
+                <div class="chain-label">温度跳变</div>
+                <div class="chain-val red">TH-03 +2.1℃</div>
+              </div>
+              <!-- 层四（根因） -->
+              <div style="position:absolute;left:472px;top:18px;width:104px;background:#fff8e6;border:2px solid #d0ab68 !important" class="chain-node"
+                :class="m19ActiveNode==='C6'?'chain-node-active':''"
+                @click="m19ActiveNode='C6'">
+                <div class="chain-layer" style="color:#d0ab68">根因</div>
+                <div class="chain-label">温补失效</div>
+                <div style="font-size:11px;color:#d48806;margin-top:2px">置信度 0.86</div>
+              </div>
+            </div>
+
+            <!-- 证据面板 -->
+            <div style="border-top:1px solid #eef3f8;padding-top:12px">
+              <h3 style="margin-bottom:8px;font-size:13px"><i></i>证据面板
+                <span style="margin-left:auto;font-size:12px;color:#8a99a8;font-weight:400">{{ evidence.length }} 条</span>
+              </h3>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+                <div v-for="e in evidence" :key="e.id"
+                  @click="focusEvidence=e.id"
+                  :style="focusEvidence===e.id?'border-color:#1668a8;background:#f0f7ff':''"
+                  style="display:flex;gap:10px;padding:8px 10px;border:1px solid #e8f2fb;border-radius:6px;cursor:pointer;transition:all .15s">
+                  <span style="flex-shrink:0;width:22px;height:22px;background:#eef4fa;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#5a6978">{{ e.id }}</span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;color:#1a2b3c;margin-bottom:2px">{{ e.text }}</div>
+                    <div style="font-size:11.5px;color:#8a99a8">
+                      来源：<span :style="e.source.includes('D-06')?'color:#1668a8;font-weight:500':''">{{ e.source }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-outline" @click="$emit('toast','导入证据功能即将上线')">导入证据</button>
+                <button class="btn btn-primary" @click="$emit('toast','正在生成解读报告…')">生成报告</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </template>
+
+      <!-- 异常事件列表页 -->
+      <template v-else>
+        <div style="height:8px"></div>
+        <div class="crud-body">
+          <!-- 筛选栏 -->
+          <div class="filter-bar filter-panel">
+            <div class="field" style="width:200px">
+              <label>事件名称</label>
+              <input v-model="m19FilterName" placeholder="请输入" />
+            </div>
+            <div class="field" style="width:200px">
+              <label>触发探针</label>
+              <select-field v-model="m19FilterProbe"
+                :options="[{value:'',label:'全部探针'},{value:'P01',label:'弹着点散布探针 P01'},{value:'P07',label:'遥测信号探针 P07'},{value:'P04',label:'身管温度探针 P04'}]"
+                placeholder="全部探针" />
+            </div>
+            <div class="field" style="width:150px">
+              <label>状态</label>
+              <select-field v-model="m19FilterStatus"
+                :options="[{value:'',label:'全部状态'},{value:'已分析',label:'已分析'},{value:'已关闭',label:'已关闭'},{value:'分析中',label:'分析中'}]"
+                placeholder="全部状态" />
+            </div>
+            <div class="filter-actions">
+              <button class="btn btn-primary" @click="$emit('toast','查询条件已应用')">查询</button>
+              <button class="btn btn-outline" @click="m19FilterName='';m19FilterProbe='';m19FilterStatus=''">重置</button>
+            </div>
+          </div>
+
+          <!-- 表格 -->
+          <div class="table-inner">
+            <table style="table-layout:fixed;width:100%">
+              <thead>
+                <tr>
+                  <th>事件名称</th>
+                  <th>触发探针</th>
+                  <th>发生时间</th>
+                  <th>状态</th>
+                  <th style="text-align:center">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="ev in m19Events" :key="ev.id">
+                  <td>
+                    <span :style="ev.statusClass!=='hold'?'color:#1668a8;cursor:pointer;font-weight:500':'font-weight:500;color:#3f5062'"
+                      @click="ev.statusClass!=='hold'&&(m19Detail=ev,initM19Charts())">{{ ev.name }}</span>
+                  </td>
+                  <td style="color:#5a6978">{{ ev.probe }}</td>
+                  <td style="color:#8a99a8">{{ ev.time }}</td>
+                  <td><span :class="'badge '+ev.statusClass"><i></i>{{ ev.status }}</span></td>
+                  <td style="text-align:center">
+                    <div class="ops" style="justify-content:center">
+                      <button :style="ev.statusClass==='hold'?'opacity:.4;cursor:not-allowed':''"
+                        @click="ev.statusClass!=='hold'&&(m19Detail=ev,initM19Charts())">查看分析</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pager">
+            <span>共 <b>{{ m19Events.length }}</b> 条记录</span>
+          </div>
+        </div>
+      </template>
+    </template>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         M22  智能解读报告
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template v-else-if="page.type === 'm22'">
+
+      <!-- 报告预览页 -->
+      <template v-if="m22Detail">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span @click="m22Detail=null" style="cursor:pointer;color:#1668a8;font-size:13px;display:flex;align-items:center;gap:4px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><polyline points="15 18 9 12 15 6"/></svg>
+            返回报告列表
+          </span>
+          <span style="color:#c4cdd6;font-size:13px">/</span>
+          <span style="font-size:13px;font-weight:600;color:#1a2b3c">{{ m22Detail.title }}</span>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn btn-primary" @click="$emit('toast','正在导出报告…')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              导出
+            </button>
+            <button class="btn btn-outline" style="opacity:.45;cursor:not-allowed" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              已归档
+            </button>
+          </div>
+        </div>
+
+        <!-- 状态横幅 -->
+        <div style="background:#fff8e6;border-left:4px solid #d0ab68;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#d0ab68" stroke-width="2" style="width:18px;height:18px;flex-shrink:0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <div>
+            <span style="font-weight:600;color:#7a5a10;margin-right:12px">已归档 · 待试验后引用</span>
+            <span style="font-size:13px;color:#9a7a30">本报告已归档，等待后续验证试验结果引用。</span>
+          </div>
+        </div>
+
+        <!-- 双栏：左导航 + 右正文 -->
+        <div style="display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start">
+
+          <!-- 章节导航 -->
+          <div class="panel" style="position:sticky;top:12px">
+            <div style="font-size:12px;color:#8a99a8;margin-bottom:10px;font-weight:500;text-transform:uppercase">章节导航</div>
+            <div v-for="sec in m22Sections" :key="sec.no"
+              @click="activeSection=sec.no"
+              :style="activeSection===sec.no?'color:#1668a8;background:#edf5fc;border-radius:6px':'color:#5a6978'"
+              style="padding:7px 10px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;margin-bottom:2px">
+              <span :style="activeSection===sec.no?'background:#1668a8;color:#fff':'background:#e4ecf4;color:#8a99a8'" style="width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">{{ sec.no }}</span>
+              {{ sec.title }}
+            </div>
+          </div>
+
+          <!-- 正文 -->
+          <div class="panel" style="line-height:1.8">
+
+            <!-- 第1节 -->
+            <div v-show="activeSection===1">
+              <h3 style="margin-bottom:14px"><i></i>1 事件概述</h3>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;background:#f4f8fc;border-radius:6px;padding:14px;font-size:13px">
+                <div><span style="color:#8a99a8">装备型号：</span><span style="font-weight:500">某型精度武器系统</span></div>
+                <div><span style="color:#8a99a8">试验批次：</span><span>D-07</span></div>
+                <div><span style="color:#8a99a8">试验时间：</span><span>2024-10-18</span></div>
+                <div><span style="color:#8a99a8">试验场地：</span><span>某综合试验场寒区</span></div>
+                <div><span style="color:#8a99a8">总发次：</span><span>30 发</span></div>
+                <div><span style="color:#8a99a8">异常发次：</span><span style="color:#d4380d;font-weight:600">第 19 发</span></div>
+                <div><span style="color:#8a99a8">触发探针：</span><span>弹着点散布探针 P01</span></div>
+              </div>
+            </div>
+
+            <!-- 第2节 -->
+            <div v-show="activeSection===2">
+              <h3 style="margin-bottom:12px"><i></i>2 异常特征</h3>
+              <p style="font-size:13.5px;color:#333;margin-bottom:14px;line-height:1.8">
+                第 19 发立靶高低偏差 <b style="color:#d4380d">+0.42 mil</b>，超出判据阈值 ≤0.30 mil（超出 40%），触发立靶精度探针 P01 告警，判定为异常发次。同批次前 18 发偏差均在 ±0.25 mil 以内，排除弹药批次因素。
+              </p>
+              <!-- 散布图 + 告警记录 并排 -->
+              <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start">
+                <!-- 散布图 -->
+                <div style="border:1px solid #e8f2fb;border-radius:8px;padding:10px;background:#fafcff">
+                  <div style="font-size:11px;color:#8a99a8;margin-bottom:6px;text-align:center;font-weight:500">弹着点散布图（第19发）</div>
+                  <svg width="220" viewBox="0 0 260 210" style="display:block">
+                    <!-- 坐标轴 -->
+                    <line x1="130" y1="10" x2="130" y2="195" stroke="#dce8f2" stroke-width="1"/>
+                    <line x1="20" y1="105" x2="245" y2="105" stroke="#dce8f2" stroke-width="1"/>
+                    <!-- 判据框 -->
+                    <rect x="78" y="52" width="108" height="108" fill="none" stroke="#d4380d" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>
+                    <text x="133" y="48" font-size="9" fill="#d4380d">+0.30 mil</text>
+                    <text x="133" y="172" font-size="9" fill="#d4380d">-0.30 mil</text>
+                    <!-- 正常弹点（蓝） -->
+                    <circle cx="128" cy="102" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="133" cy="98" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="126" cy="107" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="135" cy="100" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="130" cy="95" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="124" cy="103" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="138" cy="97" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="127" cy="99" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="132" cy="104" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="136" cy="96" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="123" cy="101" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="131" cy="108" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="129" cy="94" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="134" cy="106" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="137" cy="101" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="125" cy="97" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="139" cy="103" r="3" fill="#1668a8" opacity="0.55"/>
+                    <circle cx="122" cy="105" r="3" fill="#1668a8" opacity="0.55"/>
+                    <!-- 第19发（红叉） -->
+                    <circle cx="158" cy="83" r="6" fill="none" stroke="#d4380d" stroke-width="1.8"/>
+                    <line x1="153" y1="78" x2="163" y2="88" stroke="#d4380d" stroke-width="1.8"/>
+                    <line x1="163" y1="78" x2="153" y2="88" stroke="#d4380d" stroke-width="1.8"/>
+                    <text x="166" y="82" font-size="8.5" fill="#d4380d" font-weight="bold">⑲ +0.42</text>
+                    <!-- 图例 -->
+                    <circle cx="30" cy="190" r="3" fill="#1668a8" opacity="0.6"/>
+                    <text x="36" y="193" font-size="9" fill="#5a6978">正常（1-18发）</text>
+                    <line x1="140" y1="187" x2="146" y2="193" stroke="#d4380d" stroke-width="1.5"/>
+                    <line x1="146" y1="187" x2="140" y2="193" stroke="#d4380d" stroke-width="1.5"/>
+                    <text x="150" y="193" font-size="9" fill="#d4380d">第19发</text>
+                  </svg>
+                </div>
+                <!-- 告警记录 -->
+                <div>
+                  <div style="font-size:13px;font-weight:600;color:#1a2b3c;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#d4380d;display:inline-block"></span>
+                    探针告警记录
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="padding:10px 12px;background:#fff5f5;border:1px solid #ffd6cc;border-radius:6px;font-size:13px">
+                      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                        <span style="font-weight:600;color:#c0392b">P01 立靶精度告警</span>
+                        <span style="color:#8a99a8;font-size:12px">2024-10-18 14:32:07</span>
+                      </div>
+                      <div style="color:#5a6978">高低偏差 <b style="color:#d4380d">+0.42 mil</b>，超出判据 ≤0.30 mil（超出 40%），触发一级告警</div>
+                    </div>
+                    <div style="padding:10px 12px;background:#fff8e6;border:1px solid #ffe4a0;border-radius:6px;font-size:13px">
+                      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                        <span style="font-weight:600;color:#a07020">P04 身管温度预警</span>
+                        <span style="color:#8a99a8;font-size:12px">2024-10-18 14:31:52</span>
+                      </div>
+                      <div style="color:#5a6978">TH-03 传感器温度跳变 <b style="color:#d48806">+2.1℃</b>，超出正常波动阈值，触发预警</div>
+                    </div>
+                    <div style="padding:10px 12px;background:#f4f8fc;border:1px solid #d6e8f6;border-radius:6px;font-size:13px">
+                      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                        <span style="font-weight:600;color:#1a2b3c">P07 遥测信号</span>
+                        <span style="color:#8a99a8;font-size:12px">2024-10-18 14:32:10</span>
+                      </div>
+                      <div style="color:#5a6978">姿态角 pitch 偏移 <b style="color:#d48806">+0.38°</b>，超出阈值 ±0.25°</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 第3节 -->
+            <div v-show="activeSection===3">
+              <h3 style="margin-bottom:12px"><i></i>3 根因分析过程</h3>
+              <!-- 思维链缩略 -->
+              <div style="border:1px solid #e8f2fb;border-radius:8px;padding:14px;margin-bottom:16px;background:#fafcff">
+                <div style="font-size:12px;color:#8a99a8;margin-bottom:10px;font-weight:500">推理思维链（四层推导）</div>
+                <div style="display:flex;align-items:center;gap:0;overflow-x:auto">
+                  <template v-for="(node, ni) in [{id:'C1',layer:'现象',label:'弹着点散布异常',val:'超判据40%',color:''},{id:'C2',layer:'特征',label:'立靶偏差超限',val:'+0.42 mil',color:''},{id:'C4',layer:'中间因',label:'姿态角漂移 + 温度跳变',val:'+0.38° / +2.1℃',color:''},{id:'C6',layer:'根因',label:'温补系数失效',val:'置信度 0.86',color:'gold'}]" :key="node.id">
+                    <div :style="node.color==='gold'?'border-color:#d0ab68;background:#fffbe6':''"
+                      style="flex:1;padding:10px 12px;border:1px solid #d0e6f4;border-radius:8px;font-size:12px;text-align:center;min-width:110px">
+                      <div style="font-size:10px;color:#8a99a8;margin-bottom:3px">{{ node.layer }}</div>
+                      <div style="font-weight:600;color:#1a2b3c;line-height:1.4">{{ node.label }}</div>
+                      <div :style="node.color==='gold'?'color:#d48806':'color:#d4380d'" style="font-size:11px;margin-top:3px">{{ node.val }}</div>
+                    </div>
+                    <div v-if="ni<3" style="padding:0 6px;color:#b7cbe0;font-size:18px;flex-shrink:0">→</div>
+                  </template>
+                </div>
+              </div>
+              <!-- 候选根因表 -->
+              <div style="font-size:13px;font-weight:600;color:#1a2b3c;margin-bottom:8px">候选根因置信度排序</div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr><th style="width:50px">排名</th><th>候选根因</th><th style="width:90px">置信度</th><th style="width:80px">结论</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="c in candidates" :key="c.rank">
+                      <td class="col-idx">{{ c.rank }}</td>
+                      <td style="font-weight:500">{{ c.name }}</td>
+                      <td :style="c.rank===1?'color:#0d4e83;font-weight:700':'color:#8a99a8'">{{ c.confidence }}</td>
+                      <td>
+                        <span v-if="c.rank===1" class="badge on"><i></i>采纳</span>
+                        <span v-else-if="c.rank===2" class="badge hold"><i></i>参考</span>
+                        <span v-else style="font-size:12px;color:#8a99a8">排除</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 第4节 -->
+            <div v-show="activeSection===4">
+              <h3 style="margin-bottom:12px"><i></i>4 结论与处置建议</h3>
+              <div style="background:#f4f8fc;border-radius:6px;padding:14px;margin-bottom:16px;font-size:13.5px;color:#1a2b3c;line-height:1.8">
+                <b>结论：</b>本批次弹道试验共 30 发，第 19 发出现弹着点散布异常（超判据 40%），根因推断为定位定向系统温补系数失效（置信度 0.86），前 18 发均正常，排除弹药批次性因素。
+              </div>
+              <div style="background:#fff8e6;border-left:4px solid #d0ab68;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:16px;font-size:13.5px;color:#7a5a10;line-height:1.8">
+                <b style="color:#1a2b3c">核心建议：</b>建议对定位定向系统执行温补校准后，复测第 19 发工况，以验证温补系数修正效果。
+              </div>
+              <div style="font-size:13.5px;color:#1a2b3c;line-height:1.8">
+                <b>详细处置步骤：</b>
+                <ol style="margin:10px 0 0 20px;display:flex;flex-direction:column;gap:8px">
+                  <li>对该装备定位定向系统重新进行温补系数标定，参照出厂校准规程执行；</li>
+                  <li>扩大 TH-03 传感器检测范围，在现有采样基础上增加温度梯度采样点（建议不少于 3 个）；</li>
+                  <li>下批次试验前完成上述修正后，在相同工况下对第 19 发场景执行复测验证；</li>
+                  <li>复测结果纳入 D-07 批次试验数据库，更新探针 P01 判据基线。</li>
+                </ol>
+              </div>
+            </div>
+
+            <!-- 第5节 -->
+            <div v-show="activeSection===5">
+              <h3 style="margin-bottom:12px"><i></i>5 证据清单</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width:50px">编号</th>
+                      <th>证据内容</th>
+                      <th style="width:200px">来源</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td style="font-family:monospace;color:#5a6978;font-weight:600">E1</td>
+                      <td style="font-size:13px">第19发飞行段 pitch 角偏差 0.38°，超出阈值 0.20°</td>
+                      <td><span style="font-size:12px;color:#5a6978">遥测数据 D-07</span></td>
+                    </tr>
+                    <tr>
+                      <td style="font-family:monospace;color:#5a6978;font-weight:600">E2</td>
+                      <td style="font-size:13px">温度传感器 TH-03 在第 4.2s 出现 2.1℃ 跳变</td>
+                      <td><span style="font-size:12px;color:#5a6978">装备监控仪</span></td>
+                    </tr>
+                    <tr>
+                      <td style="font-family:monospace;color:#5a6978;font-weight:600">E3</td>
+                      <td style="font-size:13px">2019年同型装备某次试验出现相同温补失效案例，处置后复测达标</td>
+                      <td><span style="font-size:12px;color:#1668a8;font-weight:500">历史案例库 D-06 · 某型装甲车A精度试验2019</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </template>
+
+      <!-- 报告列表页 -->
+      <template v-else>
+        <div style="height:8px"></div>
+        <div class="crud-body">
+          <!-- 筛选栏 -->
+          <div class="filter-bar filter-panel">
+            <div class="field" style="width:220px">
+              <label>报告名称</label>
+              <input v-model="m22FilterName" placeholder="请输入" />
+            </div>
+            <div class="field" style="width:160px">
+              <label>状态</label>
+              <select-field v-model="m22FilterStatus"
+                :options="[{value:'',label:'全部状态'},{value:'archive',label:'已归档'},{value:'hold',label:'草稿'}]"
+                placeholder="全部状态" />
+            </div>
+            <div class="filter-actions">
+              <button class="btn btn-primary" @click="$emit('toast','查询条件已应用')">查询</button>
+              <button class="btn btn-outline" @click="m22FilterName='';m22FilterStatus=''">重置</button>
+            </div>
+            <span class="spacer"></span>
+            <button class="btn btn-primary" style="align-self:flex-end" @click="$emit('toast','正在生成报告…')">生成报告</button>
+          </div>
+
+          <!-- 表格 -->
+          <div class="table-inner">
+            <table style="table-layout:fixed;width:100%">
+              <thead>
+                <tr>
+                  <th>报告名称</th>
+                  <th>关联事件</th>
+                  <th>生成时间</th>
+                  <th>状态</th>
+                  <th style="text-align:center">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in m22Reports" :key="r.id">
+                  <td>
+                    <span style="color:#1668a8;cursor:pointer;font-weight:500" @click="m22Detail=r;activeSection=1">{{ r.title }}</span>
+                  </td>
+                  <td style="color:#5a6978">{{ r.event }}</td>
+                  <td style="color:#8a99a8">{{ r.time }}</td>
+                  <td>
+                    <span v-if="r.statusClass==='archive'" style="background:#fff6e0;color:#a07020;border:1px solid #e3c96e;padding:2px 10px;border-radius:9px;font-size:12px;font-weight:600">
+                      {{ r.statusLabel }}
+                    </span>
+                    <span v-else :class="'badge '+r.statusClass"><i></i>{{ r.statusLabel }}</span>
+                  </td>
+                  <td style="text-align:center">
+                    <div class="ops" style="justify-content:center">
+                      <button @click="m22Detail=r;activeSection=1">预览</button>
+                      <button @click="$emit('toast','正在导出…')">导出</button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pager">
+            <span>共 <b>{{ m22Reports.length }}</b> 条记录</span>
+          </div>
+        </div>
+      </template>
+    </template>
+
   </div>
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUi } from '@/composables/ui'
 import { useRows } from '@/composables/tables'
@@ -2381,5 +3387,241 @@ const m11Results = {
 const m11CurrentTab = computed(() => m11Tabs.find((t) => t.key === m11Tab.value))
 const m11CurrentResults = computed(() => m11Results[m11Tab.value] || m11Results.hybrid)
 const m11SelIdx = ref(0)
+
+
+// ── M14 探针配置管理 ────────────────────────────────────────────────────
+import { probes as probeList, shots30, dockTasks, causeChain, evidence, candidates } from '@/data/mock'
+
+const m14Detail = ref(null)   // null=列表页；Object=详情页
+const m14PageNo = ref(1)
+const m14PageSize = 10
+
+// ── M15 数据对接与融合监测 ──────────────────────────────────────────────
+const m15Detail   = ref(null)  // null=列表页；Object=融合监测视图
+const scanCol     = ref(-1)    // -1=未开始；0~5=当前扫描列；6=完成
+const alertVisible = ref(false)
+let scanTimer = null
+
+// echarts 初速时序曲线
+import * as echarts from 'echarts/core'
+import { LineChart, ScatterChart } from 'echarts/charts'
+import { GridComponent, MarkLineComponent, MarkPointComponent, TooltipComponent } from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+echarts.use([LineChart, ScatterChart, GridComponent, MarkLineComponent, MarkPointComponent, TooltipComponent, CanvasRenderer])
+
+const v0ChartEl = ref(null)
+let v0Chart = null
+
+function initV0Chart() {
+  if (!v0ChartEl.value) return
+  if (v0Chart) { v0Chart.dispose(); v0Chart = null }
+  v0Chart = echarts.init(v0ChartEl.value)
+  const xData = shots30.map(s => s.id)
+  const yData = shots30.map(s => s.v0)
+  v0Chart.setOption({
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'cross', lineStyle: { color: '#1668a8', width: 1 } },
+      formatter: (params) => {
+        const p = params[0]
+        const shot = shots30[p.dataIndex]
+        const color = shot.anomaly ? '#d4380d' : '#1668a8'
+        return `<div style="font-size:13px">
+          <b style="color:${color}">第 ${shot.id} 发</b><br/>
+          初速：<b style="color:${color}">${shot.v0} m/s</b><br/>
+          高低偏：${shot.dH > 0 ? '+' : ''}${shot.dH} mil<br/>
+          方向偏：${shot.dL > 0 ? '+' : ''}${shot.dL} mil
+        </div>`
+      },
+    },
+    grid: { top: 36, right: 60, bottom: 36, left: 52 },
+    xAxis: {
+      type: 'category', data: xData,
+      name: '发次', nameLocation: 'end', nameGap: 8,
+      nameTextStyle: { color: '#8a99a8', fontSize: 12 },
+      axisLine: { lineStyle: { color: '#dce8f2' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#8a99a8', fontSize: 12,
+        interval: (i) => [0,5,10,15,18,20,25,29].includes(i),
+        formatter: (v) => v,
+      },
+      splitLine: { show: false },
+    },
+    yAxis: {
+      type: 'value', min: 815, max: 830,
+      name: 'm/s', nameLocation: 'end', nameGap: 8,
+      nameTextStyle: { color: '#8a99a8', fontSize: 12 },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: '#8a99a8', fontSize: 12 },
+      splitLine: { lineStyle: { color: '#eef3f8' } },
+    },
+    series: [{
+      type: 'line', data: yData,
+      lineStyle: { color: '#1668a8', width: 2 },
+      symbol: 'circle', symbolSize: 4,
+      itemStyle: { color: '#1668a8' },
+      markLine: {
+        silent: true,
+        lineStyle: { color: '#d4380d', type: 'dashed', width: 1.2, opacity: 0.6 },
+        data: [{ yAxis: 820, label: { formatter: '820', color: '#d4380d', fontSize: 11 } }],
+      },
+      markPoint: {
+        data: [{ coord: [18, 818.3] }],
+        symbol: 'circle', symbolSize: 14,
+        itemStyle: { color: '#d4380d' },
+        label: { formatter: '818.3', color: '#d4380d', fontSize: 12, fontWeight: 'bold', position: 'top' },
+      },
+    }],
+  })
+}
+
+function startScan() {
+  if (scanCol.value >= 0) return
+  scanCol.value = 0
+  scanTimer = setInterval(() => {
+    scanCol.value++
+    if (scanCol.value >= 6) {
+      clearInterval(scanTimer)
+      scanTimer = null
+      alertVisible.value = true
+    }
+  }, 800)
+}
+
+function m15Open(task) {
+  m15Detail.value = task
+  scanCol.value = -1
+  alertVisible.value = false
+  nextTick(() => initV0Chart())
+}
+
+// ── M19 根因分析工作台 ──────────────────────────────────────────────────
+const m19Detail      = ref(null)
+const focusShotId    = ref(19)
+const m19ActiveNode  = ref('C6')
+const focusEvidence  = ref(null)
+const m19FilterName   = ref('')
+const m19FilterProbe  = ref('')
+const m19FilterStatus = ref('')
+
+// m19 三图 ECharts
+const pitchChartEl   = ref(null)
+const scatterChartEl = ref(null)
+const tempChartEl    = ref(null)
+let pitchChart = null, scatterChart = null, tempChart = null
+
+function initM19Charts() {
+  nextTick(() => {
+    // ① 姿态角 pitch 时序
+    if (pitchChartEl.value) {
+      pitchChart && pitchChart.dispose()
+      pitchChart = echarts.init(pitchChartEl.value)
+      const pitchData = Array.from({length:30}, (_,i) => {
+        if (i === 18) return [i+1, 0.38]
+        return [i+1, +(Math.sin(i*0.8)*0.06 + 0.04).toFixed(3)]
+      })
+      pitchChart.setOption({
+        grid: { top:28, right:16, bottom:28, left:44 },
+        tooltip: { trigger:'axis', formatter: p => `第 ${p[0].data[0]} 发<br/>pitch偏差：<b>${p[0].data[1]}°</b>` },
+        xAxis: { type:'value', min:1, max:30, name:'发次', nameLocation:'end', nameGap:6,
+          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
+          axisLine:{lineStyle:{color:'#dce8f2'}}, axisTick:{show:false}, splitLine:{show:false} },
+        yAxis: { type:'value', name:'°', nameLocation:'end', nameGap:6,
+          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
+          axisLine:{show:false}, axisTick:{show:false}, splitLine:{lineStyle:{color:'#eef3f8'}} },
+        series:[{
+          type:'line', data: pitchData,
+          lineStyle:{color:'#1668a8',width:1.8}, symbol:'none',
+          markLine:{ silent:true, lineStyle:{color:'#d4380d',type:'dashed',width:1,opacity:.6},
+            data:[{yAxis:0.20, label:{formatter:'阈值0.20°',color:'#d4380d',fontSize:10}}] },
+          markPoint:{ data:[{coord:[19,0.38]}], symbol:'circle', symbolSize:10,
+            itemStyle:{color:'#d4380d'},
+            label:{formatter:'漂移起点',color:'#d4380d',fontSize:10,fontWeight:'bold',position:'top'} },
+        }],
+      })
+    }
+    // ② 身管温度与初速散点
+    if (scatterChartEl.value) {
+      scatterChart && scatterChart.dispose()
+      scatterChart = echarts.init(scatterChartEl.value)
+      const normalData = shots30.filter(s=>!s.anomaly).map(s=>[s.id, s.v0])
+      const anomalyData = shots30.filter(s=>s.anomaly).map(s=>[s.id, s.v0])
+      scatterChart.setOption({
+        grid:{ top:28, right:16, bottom:28, left:44 },
+        tooltip:{ trigger:'item', formatter:p=>`第 ${p.data[0]} 发<br/>初速：<b>${p.data[1]} m/s</b>` },
+        xAxis:{ type:'value', min:1, max:30, name:'发次', nameLocation:'end', nameGap:6,
+          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
+          axisLine:{lineStyle:{color:'#dce8f2'}}, axisTick:{show:false}, splitLine:{show:false} },
+        yAxis:{ type:'value', min:815, max:830, name:'m/s', nameLocation:'end', nameGap:6,
+          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
+          axisLine:{show:false}, axisTick:{show:false}, splitLine:{lineStyle:{color:'#eef3f8'}} },
+        series:[
+          { type:'scatter', data:normalData, symbolSize:6, itemStyle:{color:'#1668a8',opacity:.7} },
+          { type:'scatter', data:anomalyData, symbolSize:10, itemStyle:{color:'#d4380d'},
+            label:{show:true, formatter:'818.3', color:'#d4380d', fontSize:10, fontWeight:'bold', position:'top'} },
+        ],
+      })
+    }
+    // ③ 定位定向系统内部温度
+    if (tempChartEl.value) {
+      tempChart && tempChart.dispose()
+      tempChart = echarts.init(tempChartEl.value)
+      const tempData = [
+        [0,23.1],[1,23.2],[2,23.1],[3,23.2],[4.2,25.3],[5,25.1],[6,25.2],[7,25.1],[8,25.2],[9,25.1],
+      ]
+      tempChart.setOption({
+        grid:{ top:28, right:16, bottom:28, left:44 },
+        tooltip:{ trigger:'axis', formatter: p=>`T+${p[0].data[0]}s<br/>温度：<b>${p[0].data[1]}℃</b>` },
+        xAxis:{ type:'value', name:'秒', nameLocation:'end', nameGap:6,
+          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
+          axisLine:{lineStyle:{color:'#dce8f2'}}, axisTick:{show:false}, splitLine:{show:false} },
+        yAxis:{ type:'value', min:22, max:27, name:'℃', nameLocation:'end', nameGap:6,
+          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
+          axisLine:{show:false}, axisTick:{show:false}, splitLine:{lineStyle:{color:'#eef3f8'}} },
+        series:[{
+          type:'line', data:tempData,
+          lineStyle:{color:'#1668a8',width:1.8}, symbol:'none',
+          markPoint:{ data:[{coord:[4.2,25.3]}], symbol:'circle', symbolSize:10,
+            itemStyle:{color:'#d4380d'},
+            label:{formatter:'T+4.2s\n+2.1℃',color:'#d4380d',fontSize:10,fontWeight:'bold',position:'top'} },
+        }],
+      })
+    }
+  })
+}
+
+const m19Events = [
+  { id:'EVT-001', name:'第19发超差事件',  probe:'弹着点散布探针 P01', time:'2024-10-18', status:'已分析', statusClass:'on'  },
+  { id:'EVT-002', name:'信号偶发丢包',    probe:'遥测信号探针 P07',   time:'2024-10-18', status:'已关闭', statusClass:'hold' },
+  { id:'EVT-003', name:'温度传感器跳变',  probe:'身管温度探针 P04',   time:'2024-10-18', status:'分析中', statusClass:'warn' },
+]
+
+// ── M22 智能解读报告 ────────────────────────────────────────────────────
+const m22Detail      = ref(null)
+const activeSection  = ref(1)
+const m22FilterName  = ref('')
+const m22FilterStatus = ref('')
+
+const m22Reports = [
+  { id:'RPT-001', title:'第19发超差事件解读报告', event:'第19发超差事件', statusLabel:'已归档·待试验后引用', statusClass:'archive', batch:'D-07', time:'2024-10-18' },
+  { id:'RPT-002', title:'D-06批次例行报告',        event:'D-06批次例行分析',  statusLabel:'草稿',               statusClass:'hold',    batch:'D-06', time:'2024-10-17' },
+]
+
+const m22Sections = [
+  { no:1, title:'事件概述' },
+  { no:2, title:'异常特征' },
+  { no:3, title:'根因分析过程' },
+  { no:4, title:'结论与处置建议' },
+  { no:5, title:'证据清单' },
+]
+
+onBeforeUnmount(() => {
+  if (scanTimer) clearInterval(scanTimer)
+  if (v0Chart) { v0Chart.dispose(); v0Chart = null }
+  if (pitchChart)   { pitchChart.dispose();   pitchChart   = null }
+  if (scatterChart) { scatterChart.dispose(); scatterChart = null }
+  if (tempChart)    { tempChart.dispose();    tempChart    = null }
+})
 
 </script>

@@ -1076,3 +1076,83 @@ export const resourceDetails = {
     ],
   },
 }
+
+// ── D-08：探针配置包（12个探针，全部已启用） ──────────────────────────
+export const probes = [
+  { id:'P01', name:'弹着点散布探针',   obj:'立靶偏差',      criteria:'|dH|≤0.30mil & |dL|≤0.30mil', srcNode:'散布精度指标', metrics:5, updated:'2024-10-10' },
+  { id:'P02', name:'初速一致性探针',   obj:'炮口初速',      criteria:'v0 ≥ 820 m/s',                 srcNode:'初速指标',     metrics:3, updated:'2024-10-10' },
+  { id:'P03', name:'姿态角漂移探针',   obj:'飞行姿态角',    criteria:'|Δpitch|≤0.20°',              srcNode:'姿态稳定性',   metrics:4, updated:'2024-10-10' },
+  { id:'P04', name:'身管温度探针',     obj:'身管温度',      criteria:'ΔT≤15℃',                      srcNode:'热变形指标',   metrics:2, updated:'2024-10-10' },
+  { id:'P05', name:'温补系数探针',     obj:'定位定向温补',  criteria:'偏差≤5%',                      srcNode:'温补系数',     metrics:2, updated:'2024-10-10' },
+  { id:'P06', name:'气象修正探针',     obj:'气象修正有效性',criteria:'修正残差≤0.05mil',              srcNode:'气象修正',     metrics:3, updated:'2024-10-11' },
+  { id:'P07', name:'遥测信号探针',     obj:'遥测链路',      criteria:'丢包率≤0.1%',                  srcNode:'信号完整性',   metrics:3, updated:'2024-10-11' },
+  { id:'P08', name:'定向精度探针',     obj:'方位定向',      criteria:'方位误差≤0.15mil',             srcNode:'定向精度',     metrics:3, updated:'2024-10-11' },
+  { id:'P09', name:'时统精度探针',     obj:'时间同步',      criteria:'时差≤10μs',                   srcNode:'时间同步',     metrics:2, updated:'2024-10-11' },
+  { id:'P10', name:'惯导精度探针',     obj:'惯导漂移',      criteria:'漂移≤0.01°/h',                srcNode:'惯导误差',     metrics:4, updated:'2024-10-12' },
+  { id:'P11', name:'供电稳定性探针',   obj:'弹载供电',      criteria:'电压波动≤±5%',                 srcNode:'供电指标',     metrics:2, updated:'2024-10-12' },
+  { id:'P12', name:'弹道偏差探针',     obj:'弹道CEP',       criteria:'CEP≤0.50mil',                  srcNode:'弹道偏差',     metrics:4, updated:'2024-10-12' },
+]
+
+// ── D-07：精度试验数据集（30发弹道数据，第19发预置异常） ────────────────
+export const shots30 = [
+  { id:1,  ts:'09:04:12', v0:822.1, dH: 0.08, dL:-0.05, anomaly:false },
+  { id:2,  ts:'09:06:38', v0:821.8, dH:-0.11, dL: 0.03, anomaly:false },
+  { id:3,  ts:'09:09:15', v0:823.4, dH: 0.14, dL:-0.08, anomaly:false },
+  { id:4,  ts:'09:12:02', v0:820.9, dH:-0.07, dL: 0.12, anomaly:false },
+  { id:5,  ts:'09:15:44', v0:822.6, dH: 0.19, dL:-0.10, anomaly:false },
+  { id:6,  ts:'09:19:31', v0:821.3, dH:-0.15, dL: 0.08, anomaly:false },
+  { id:7,  ts:'09:23:07', v0:823.1, dH: 0.22, dL:-0.14, anomaly:false },
+  { id:8,  ts:'09:27:52', v0:820.5, dH:-0.09, dL: 0.06, anomaly:false },
+  { id:9,  ts:'09:32:18', v0:822.8, dH: 0.17, dL:-0.11, anomaly:false },
+  { id:10, ts:'09:36:44', v0:821.6, dH:-0.13, dL: 0.09, anomaly:false },
+  { id:11, ts:'09:41:29', v0:823.0, dH: 0.20, dL:-0.07, anomaly:false },
+  { id:12, ts:'09:46:03', v0:820.7, dH:-0.18, dL: 0.15, anomaly:false },
+  { id:13, ts:'09:51:37', v0:822.3, dH: 0.12, dL:-0.09, anomaly:false },
+  { id:14, ts:'09:56:12', v0:821.1, dH:-0.21, dL: 0.13, anomaly:false },
+  { id:15, ts:'10:02:44', v0:823.7, dH: 0.25, dL:-0.06, anomaly:false },
+  { id:16, ts:'10:08:19', v0:820.4, dH:-0.10, dL: 0.17, anomaly:false },
+  { id:17, ts:'10:14:55', v0:822.5, dH: 0.16, dL:-0.12, anomaly:false },
+  { id:18, ts:'10:21:08', v0:821.9, dH:-0.23, dL: 0.10, anomaly:false },
+  { id:19, ts:'11:22:07', v0:818.3, dH: 0.42, dL: 0.18, anomaly:true  },
+  { id:20, ts:'11:28:41', v0:822.0, dH:-0.08, dL: 0.05, anomaly:false },
+  { id:21, ts:'11:34:16', v0:821.4, dH: 0.13, dL:-0.10, anomaly:false },
+  { id:22, ts:'11:40:52', v0:823.2, dH:-0.17, dL: 0.08, anomaly:false },
+  { id:23, ts:'11:47:28', v0:820.8, dH: 0.21, dL:-0.13, anomaly:false },
+  { id:24, ts:'11:54:03', v0:822.7, dH:-0.12, dL: 0.16, anomaly:false },
+  { id:25, ts:'12:01:39', v0:821.5, dH: 0.18, dL:-0.07, anomaly:false },
+  { id:26, ts:'12:08:14', v0:823.3, dH:-0.14, dL: 0.11, anomaly:false },
+  { id:27, ts:'12:15:50', v0:820.6, dH: 0.09, dL:-0.15, anomaly:false },
+  { id:28, ts:'12:23:26', v0:822.4, dH:-0.20, dL: 0.07, anomaly:false },
+  { id:29, ts:'12:31:01', v0:821.2, dH: 0.15, dL:-0.09, anomaly:false },
+  { id:30, ts:'14:05:44', v0:821.5, dH:-0.07, dL: 0.04, anomaly:false },
+]
+
+// D-07：对接任务列表（3条）
+export const dockTasks = [
+  { id:'T01', name:'精度试验数据回传接入', srcType:'弹道测量+遥测文件', count:'30发', status:'成功', time:'2024-10-18 14:30' },
+  { id:'T02', name:'气象数据同步接入',     srcType:'气象站接口',         count:'30组', status:'成功', time:'2024-10-18 08:00' },
+  { id:'T03', name:'标定台检测数据接入',   srcType:'标定台导出文件',     count:'12项', status:'成功', time:'2024-10-17 16:20' },
+]
+
+// ── D-11：异常事件与证据链 ──────────────────────────────────────────────
+export const causeChain = [
+  { id:'C1', level:0, label:'弹着点散布异常',       type:'effect',       confidence:0.86, detail:'第19发立靶高低偏差+0.42 mil，触发弹着点散布探针P01告警' },
+  { id:'C2', level:1, label:'立靶高低偏差超限',     type:'feature',      confidence:0.86, detail:'偏差值+0.42 mil，超判据≤0.30 mil，超出40%' },
+  { id:'C3', level:1, label:'初速偏低',             type:'feature',      confidence:0.72, detail:'初速818.3 m/s，低于下限820 m/s' },
+  { id:'C4', level:2, label:'姿态角pitch漂移',      type:'intermediate', confidence:0.86, detail:'飞行段pitch偏差+0.38°，超阈值0.20°' },
+  { id:'C5', level:2, label:'温度传感器跳变',       type:'intermediate', confidence:0.86, detail:'TH-03在T+4.2s出现+2.1℃跳变' },
+  { id:'C6', level:3, label:'定位定向系统温补失效', type:'root',         confidence:0.86, detail:'温补系数与出厂标定值偏差12.4%，超容差5%' },
+]
+
+export const evidence = [
+  { id:'E1', text:'第19发飞行段pitch角偏差0.38°，超出阈值0.20°', source:'遥测通道T-07',    relNode:'C4' },
+  { id:'E2', text:'温度传感器TH-03在T+4.2s后出现2.1℃跳变',      source:'弹载记录仪',      relNode:'C5' },
+  { id:'E3', text:'温补系数与出厂标定值偏差12.4%，超出容差5%',   source:'标定台检测报告',  relNode:'C6' },
+  { id:'E4', text:'2019年同型装备某次试验同类温补失效案例',       source:'历史案例库D-06 · 某型装甲车A精度试验2019',  relNode:'C6' },
+]
+
+export const candidates = [
+  { rank:1, name:'定位定向系统温补失效', confidence:0.86, basis:'温度跳变记录+姿态角时序异常+历史案例吻合' },
+  { rank:2, name:'惯导传感器偏置误差',   confidence:0.41, basis:'姿态角偏差但无温度异常支撑' },
+  { rank:3, name:'弹体初始扰动过大',     confidence:0.22, basis:'前18发正常，排除批次因素' },
+]

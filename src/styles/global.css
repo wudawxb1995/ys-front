@@ -49,7 +49,6 @@ button { cursor: pointer; }
   border-bottom: 2px solid rgba(208, 171, 104, 0.45);
   flex: 0 0 auto;
   z-index: 20;
-  overflow: hidden;
 }
 /* topbar 装饰图 */
 .topbar-bg {
@@ -109,10 +108,16 @@ button { cursor: pointer; }
   height: 100%;
   position: relative;
   z-index: 2;
+  flex: 1;
+  min-width: 0;
   overflow-x: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.18) transparent;
 }
-.topnav::-webkit-scrollbar { display: none; }
+.topnav::-webkit-scrollbar { height: 3px; }
+.topnav::-webkit-scrollbar-track { background: transparent; }
+.topnav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 2px; }
+.topnav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.35); }
 .topnav a {
   display: inline-flex;
   align-items: center;
@@ -380,7 +385,7 @@ button { cursor: pointer; }
   border-radius: 0;
   box-shadow: none;
   margin-bottom: 0;
-  padding-bottom: 8px;
+  padding-bottom: 16px;
 }
 /* 工具栏 */
 .crud-body .toolbar {
@@ -809,4 +814,41 @@ input[type="checkbox"], input[type="radio"] { accent-color: #0d4e83; }
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+/* 思维链节点 */
+.chain-node {
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid #d0e6f4;
+  border-radius: 8px;
+  font-size: 11.5px;
+  text-align: center;
+  cursor: pointer;
+  transition: box-shadow .15s;
+}
+.chain-node:hover { box-shadow: 0 2px 8px rgba(22,104,168,.12); }
+.chain-node-active { border-left: 3px solid #d0ab68 !important; background: #fffbe6; }
+.chain-layer { font-size: 10px; color: #8a99a8; margin-bottom: 3px; }
+.chain-label { font-weight: 600; color: #1a2b3c; line-height: 1.4; }
+.chain-val { font-size: 10.5px; margin-top: 2px; }
+.chain-val.red { color: #d4380d; }
+.chain-val.blue { color: #1668a8; }
+
+/* ── 筛选条件 select 下拉框通用样式 ── */
+.filter-select {
+  height: 34px;
+  padding: 0 28px 0 12px;
+  border: 1px solid #d6e4f0;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  color: #3f5062;
+  background: #fff url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a99a8'/%3E%3C/svg%3E") no-repeat right 10px center;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.filter-select:focus {
+  border-color: #1668a8;
 }
