@@ -1,11 +1,12 @@
 <template>
   <div class="app-shell" v-if="platform">
     <header class="topbar">
+      <!-- 装饰图层 -->
+      <img class="topbar-bg" src="@/assets/topbar-bg.png" alt="" aria-hidden="true" />
       <div class="brand" @click="$router.push('/')">
         <div class="emblem"><Mark /></div>
         <div class="brand-text">
-          <h1>试验鉴定智能服务平台</h1>
-          <p :title="platform.name">{{ platform.name }}</p>
+          <h1>{{ platform.name }}</h1>
         </div>
       </div>
       <nav class="topnav">
@@ -17,7 +18,6 @@
         >{{ sys.name }}</a>
       </nav>
       <div class="topbar-right">
-        <router-link class="back-link" to="/">返回门户</router-link>
         <button class="icon-btn bell" title="通知" @click="showNotice = !showNotice">
           <Icon name="bell" />
         </button>
@@ -74,16 +74,10 @@
       <main class="main">
         <div class="crumb">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20H4z"/></svg>
-          <a @click="$router.push('/')">门户</a>
-          <span class="sep">/</span>
-          <span>{{ platform.name.replace('平台', '') }}</span>
-          <span class="sep">/</span>
-          <span>{{ system.name }}</span>
           <template v-if="groupName !== menu.name">
-            <span class="sep">/</span>
             <span>{{ groupName }}</span>
+            <span class="sep">/</span>
           </template>
-          <span class="sep">/</span>
           <span class="current">{{ menu.name }}</span>
         </div>
         <PageHost :page="menu.page" :title="menu.name" />

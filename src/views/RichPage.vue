@@ -350,14 +350,19 @@
 
     <template v-else-if="page.type === 'flow'">
       <div class="chain">
-        <template v-for="(n, i) in flowNodes">
-          <div :key="n.title" class="node" :class="{ on: n.title === flowOn.title }" @click="flowOn = n">
-            <em>{{ String(i + 1).padStart(2, '0') }}</em>
-            <b>{{ n.title }}</b>
-            <p>{{ n.text }}</p>
-          </div>
-          <div v-if="i < flowNodes.length - 1" :key="n.title + '-arrow'" class="arrow">→</div>
-        </template>
+        <div
+          v-for="item in flowChain"
+          :key="item.key"
+          :class="item.isArrow ? 'arrow' : ['node', { on: item.title === flowOn.title }]"
+          @click="!item.isArrow && (flowOn = item)"
+        >
+          <template v-if="!item.isArrow">
+            <em>{{ String(item.idx + 1).padStart(2, '0') }}</em>
+            <b>{{ item.title }}</b>
+            <p>{{ item.text }}</p>
+          </template>
+          <template v-else>→</template>
+        </div>
       </div>
       <div class="panel" style="margin-top:12px">
         <h3><i></i>{{ flowOn.title }}</h3>
@@ -405,10 +410,10 @@
       <article class="doc-paper">
         <h3>{{ paper.title }}</h3>
         <div class="meta">{{ paper.meta }}</div>
-        <template v-for="sec in paper.sections">
-          <h4 :key="sec.h">{{ sec.h }}</h4>
-          <p :key="sec.h + '-p'">{{ sec.p }}</p>
-        </template>
+        <div v-for="sec in paper.sections" :key="sec.h" class="paper-sec">
+          <h4>{{ sec.h }}</h4>
+          <p>{{ sec.p }}</p>
+        </div>
       </article>
     </template>
 
@@ -798,6 +803,15 @@ const flows = {
 }
 const flowNodes = computed(() => flows[props.page.flowKey] || flows.probe)
 const flowOn = ref(flowNodes.value[0])
+const flowChain = computed(() => {
+  const nodes = flowNodes.value
+  const result = []
+  nodes.forEach((n, i) => {
+    result.push({ ...n, idx: i, isArrow: false, key: n.title })
+    if (i < nodes.length - 1) result.push({ isArrow: true, key: n.title + '-arrow' })
+  })
+  return result
+})
 
 const canvases = {
   agent: [

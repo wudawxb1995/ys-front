@@ -132,7 +132,6 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { useUi } from '@/composables/ui'
-import { badgeKind } from '@/utils/format'
 
 const props = defineProps({
   detail: { type: Object, required: true },

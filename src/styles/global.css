@@ -51,17 +51,16 @@ button { cursor: pointer; }
   z-index: 20;
   overflow: hidden;
 }
-.topbar::after {
-  content: "";
+/* topbar 装饰图 */
+.topbar-bg {
   position: absolute;
-  right: 180px;
-  top: -30px;
-  width: 420px;
-  height: 140px;
-  background:
-    radial-gradient(circle at 30% 60%, rgba(208,171,104,.28), transparent 55%),
-    radial-gradient(circle at 70% 40%, rgba(255,255,255,.08), transparent 50%);
+  right: 200px; top: 0;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
   pointer-events: none;
+  opacity: 0.9;
+  z-index: 1;
 }
 .brand {
   display: flex;
@@ -82,13 +81,14 @@ button { cursor: pointer; }
   box-shadow: 0 0 0 1px rgba(227, 197, 138, .55);
 }
 .brand h1 {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
-  letter-spacing: 1px;
-  background: linear-gradient(#f7e2a8, #e3bd6a 55%, #caa04e);
+  letter-spacing: 2px;
+  background: linear-gradient(180deg, #f7e2a8 0%, #e3bd6a 55%, #caa04e 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  text-shadow: 0 1px 2px rgba(0,0,0,.25);
   white-space: nowrap;
   line-height: 1.2;
 }
@@ -336,8 +336,7 @@ button { cursor: pointer; }
 .form-row input:focus, .form-row select:focus, .form-row textarea:focus { border-color: #7eadd4; }
 .form-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .radio-row { display: flex; gap: 20px; align-items: center; height: 36px; }
-.radio-row label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; color: #3f5062; cursor: pointer; margin: 0; }
-}
+.radio-row label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; color: #3f5062; cursor: pointer; margin: 0; white-space: nowrap; }
 .filter-bar .field { width: 200px; }
 .filter-actions { display: flex; gap: 10px; }
 
@@ -478,7 +477,7 @@ tbody tr:has(input:checked) { background: #eef6fc; }
 .form-grid .span-2 { grid-column: span 2; }
 .form-grid .span-3 { grid-column: span 3; }
 .radio-row { display: flex; gap: 16px; align-items: center; height: 36px; color: var(--text-2); font-size: 14px; }
-.radio-row label { font-weight: 400; display: flex; gap: 6px; align-items: center; }
+.radio-row label { font-weight: 400; display: flex; gap: 6px; align-items: center; white-space: nowrap; }
 
 .workbench { display: grid; grid-template-columns: 240px 1fr 320px; gap: 12px; min-height: 560px; }
 .wb-col { background: #fff; border: 1px solid var(--line); border-radius: 10px; overflow: auto; max-height: 680px; }
