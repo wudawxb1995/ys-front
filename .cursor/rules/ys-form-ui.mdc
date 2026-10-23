@@ -178,9 +178,15 @@ alwaysApply: false
 - 报告表首行《定位定向技术发展方向研判报告》状态已生成；点查看进预览（四节 + 在线编辑/导出 + 页底查重入口）
 - 首页「报告生成」跳 `rpt` 后侧栏父级必须展开
 
+### P. 试验后文书（PostTrial / post-trial）
+- 文档平台顶栏：某型装备试验文档设计系统、领域文档核文勘误与逻辑审查系统、某型装备领域文档归集系统、试验评审报告智能生成系统
+- 镜头一：知识驱动文档生成 = 白底卡片 + 虚线框；四步用 `el-steps`（完成态鉴定蓝）；三张素材卡 16px 间距、12px 圆角；提纲虚线框 +「生成初稿」即时进入报告预览（28 项判定、复测后符合、溯源徽标、V1 版本条）
+- 镜头二：多策略融合智能审查任务列表（试验报告V1审查 意见 7 / 已完成）→ 审查结果三类分组可定位高亮 → 文档归集列表首行「试验报告V2（定稿）」已入库
+- EP：`el-button` / `el-input` / `el-select` / `el-table`；虚线框标题在框内；并排按钮 `gap: 8px`
+
 ## 3. 接线
 
-- 专用页独立 `type`（`case-in` / `tpl-in` / `need-cfg` / `scheme-review` / `code-check` / `code-note` / `code-need` / `graph-map` / `res-up` / `struct-dev` / `vec-parse` / `cls-feat` / `res-doc` / `parse-preview` / `m02`），勿与 `m08`/`crud`/`chat`/`code`/`graph` 混用
+- 专用页独立 `type`（`case-in` / `tpl-in` / `need-cfg` / `scheme-review` / `code-check` / `code-note` / `code-need` / `graph-map` / `res-up` / `struct-dev` / `vec-parse` / `cls-feat` / `res-doc` / `parse-preview` / `m02` / `post-trial`），勿与 `m08`/`crud`/`chat`/`code`/`graph` 混用
 - `page-registry.js` 映射；勿把专用叶子塞进 `reuse(crud(...))` / `reuse({ type:'chat' })`
 
 ## 4. 禁止

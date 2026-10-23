@@ -159,7 +159,7 @@ function go(mid) {
 }
 function toggleMenu(item) {
   const target = platform.value?.id === 'doc' ? demoEntry[item.id] : null
-  if (target && !open[item.id]) {
+  if (target) {
     open[item.id] = true
     go(target)
     return

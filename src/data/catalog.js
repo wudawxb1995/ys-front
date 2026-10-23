@@ -112,15 +112,15 @@ const platformsRaw = [
     systems: [
       {
         id: 'collect',
-        name: '某型领域文档归集系统',
-        full: '某型领域文档归集系统',
-        menus: buildDocMenus('collect', '某型领域文档归集系统'),
+        name: '某型装备领域文档归集系统',
+        full: '某型装备领域文档归集系统',
+        menus: buildDocMenus('collect', '某型装备领域文档归集系统'),
       },
       {
         id: 'write',
-        name: '某型试验文档设计系统',
-        full: '某型试验文档设计系统',
-        menus: buildDocMenus('write', '某型试验文档设计系统'),
+        name: '某型装备试验文档设计系统',
+        full: '某型装备试验文档设计系统',
+        menus: buildDocMenus('write', '某型装备试验文档设计系统'),
       },
       {
         id: 'review',
