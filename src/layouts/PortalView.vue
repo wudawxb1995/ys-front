@@ -3,7 +3,7 @@
     <header class="p-header">
       <div class="p-header-inner">
         <div class="p-brand">
-          <div class="p-logo"><img src="@/assets/logo.png" alt="logo" /></div>
+          <div class="p-logo"><img src="@/assets/logo.webp" alt="" /></div>
           <div>
             <div class="p-title">试验鉴定综合服务平台</div>
             <div class="p-en">AGRI-MACHINERY TEST & APPRAISAL SERVICE PLATFORM</div>
@@ -90,8 +90,8 @@ function enter(app) {
   display: flex; align-items: center; justify-content: space-between;
 }
 .p-brand { display: flex; align-items: center; gap: 12px; }
-.p-logo { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px rgba(13,78,131,.12); }
-.p-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.p-logo { width: 40px; height: 40px; flex: 0 0 auto; }
+.p-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .p-title { font-size: 22px; font-weight: 800; color: #1e6fa8; letter-spacing: .5px; }
 .p-en { font-size: 11px; color: #8aa0b5; letter-spacing: .6px; margin-top: 2px; }
 .p-user { display: flex; align-items: center; gap: 16px; }

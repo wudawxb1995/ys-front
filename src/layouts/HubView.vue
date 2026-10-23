@@ -66,7 +66,7 @@ function enter(app) {
   padding: 0 36px; border-bottom: 1px solid #e8eef5;
 }
 .p-brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-.p-logo { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px rgba(13,78,131,.08); }
+.p-logo { width: 40px; height: 40px; flex: 0 0 auto; }
 .p-title { font-size: 18px; font-weight: 700; color: #16324f; }
 .pcard { cursor: pointer; }
 .pcard:hover .enter { background: #0d4e83; color: #fff; border-color: #0d4e83; }

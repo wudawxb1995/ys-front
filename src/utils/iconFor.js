@@ -1,3 +1,17 @@
+const byId = {
+  'doc-collect': 'archive',
+  'doc-classify': 'tag',
+  'ontology-model': 'ontology',
+  'doc-transfer': 'transfer',
+  'entity-extract': 'extract',
+  'entity-constraint': 'link',
+  'term-map': 'swap',
+  'review-policy': 'sliders',
+  'model-validate': 'eye',
+  'knowledge-asset': 'database',
+  'knowledge-service': 'api',
+}
+
 const rules = [
   [/首页|综合态势/, 'home'],
   [/工作台/, 'chart'],
@@ -31,6 +45,7 @@ const rules = [
 ]
 
 export function iconFor(item = {}) {
+  if (byId[item.id]) return byId[item.id]
   const name = `${item.name || ''}${item.id || ''}`
   if (item.id === 'home') return 'home'
   for (const [re, icon] of rules) {
