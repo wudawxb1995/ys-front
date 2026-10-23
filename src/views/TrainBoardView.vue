@@ -5,13 +5,13 @@
         <div class="logo"><Mark /></div>
         <div>
           <b>试验鉴定领域大模型训推平台</b>
-          <span>专域预训练 · 训练监控态势</span>
+          <span>四类基座同时微调 · 参数量均不小于 32B</span>
         </div>
       </div>
       <div class="task">
         <i :class="{ live: running }"></i>
-        <strong>鉴定-Qwen32B 专域预训练</strong>
-        <em>{{ running ? '训练中 · 第 8/12 轮' : '已暂停' }}</em>
+        <strong>{{ activeModel.full }}</strong>
+        <em>{{ activeModel.task }} · {{ activeModel.epoch }}</em>
       </div>
       <div class="top-actions">
         <span class="clock">{{ clock }}</span>
@@ -19,6 +19,29 @@
         <button class="ghost" @click="router.push('/hub')">返回</button>
       </div>
     </header>
+
+    <section class="models">
+      <button
+        v-for="model in models"
+        :key="model.id"
+        :class="{ on: model.id === activeId }"
+        @click="focusModel(model.id)"
+      >
+        <i :style="{ background: model.color }"></i>
+        <div>
+          <b>{{ model.full }}</b>
+          <span>{{ model.kind }} · {{ model.task }}</span>
+        </div>
+        <em>32B</em>
+        <small :class="model.state">{{ model.status }}</small>
+      </button>
+    </section>
+
+    <div class="ticker" :class="{ paused: !running }">
+      <div class="ticker-track">
+        <span v-for="(item, index) in tickerLoop" :key="index">{{ item }}</span>
+      </div>
+    </div>
 
     <section class="kpis">
       <article v-for="item in kpis" :key="item.label">
@@ -30,26 +53,40 @@
 
     <section class="body">
       <aside class="panel flow">
+        <div class="gif" aria-hidden="true">
+          <span class="ring a"></span>
+          <span class="ring b"></span>
+          <span class="ring c"></span>
+          <span class="sweep"></span>
+          <b>32B</b>
+          <i class="orb q">Q</i>
+          <i class="orb g">G</i>
+          <i class="orb n">I</i>
+        </div>
         <h3>训练全流程</h3>
-        <button
-          v-for="(stage, index) in stages"
-          :key="stage.name"
-          :class="['stage', stage.state, { on: activeStage === index }]"
-          @click="focusStage(index)"
-        >
-          <i>{{ String(index + 1).padStart(2, '0') }}</i>
-          <div>
-            <b>{{ stage.name }}</b>
-            <span>{{ stage.detail }}</span>
+        <div class="stage-list" :class="{ paused: !running }">
+          <div class="roll">
+            <button
+              v-for="(stage, index) in stageLoop"
+              :key="`${stage.name}-${index}`"
+              :class="['stage', stage.state, { on: activeStage === index % stages.length }]"
+              @click="focusStage(index % stages.length)"
+            >
+              <i>{{ String((index % stages.length) + 1).padStart(2, '0') }}</i>
+              <div>
+                <b>{{ stage.name }}</b>
+                <span>{{ stage.detail }}</span>
+              </div>
+            </button>
           </div>
-        </button>
+        </div>
       </aside>
 
       <div class="center">
         <div class="panel chart-panel">
           <header>
-            <h3>训练损失曲线</h3>
-            <span>步 {{ step.toLocaleString() }} · 学习率 1.2e-5</span>
+            <h3>四类 32B 微调损失</h3>
+            <span>步 {{ step.toLocaleString() }} · {{ activeModel.name }}</span>
           </header>
           <div ref="lossEl" class="chart tall"></div>
         </div>
@@ -67,19 +104,23 @@
 
       <aside class="panel gpus">
         <h3>GPU 利用率</h3>
-        <button
-          v-for="gpu in gpus"
-          :key="gpu.id"
-          :class="{ on: selected === gpu.id }"
-          @click="selected = gpu.id"
-        >
-          <div class="gpu-h">
-            <b>{{ gpu.id }}</b>
-            <span>{{ gpu.util }}%</span>
+        <div class="gpu-list" :class="{ paused: !running }">
+          <div class="roll">
+            <button
+              v-for="(gpu, index) in gpuLoop"
+              :key="`${gpu.id}-${index}`"
+              :class="{ on: selected === gpu.id }"
+              @click="selected = gpu.id"
+            >
+              <div class="gpu-h">
+                <b>{{ gpu.id }} · {{ gpu.family }}</b>
+                <span>{{ gpu.util }}%</span>
+              </div>
+              <div class="bar"><i :style="{ width: gpu.util + '%' }"></i></div>
+              <div class="gpu-m">显存 {{ gpu.mem }} GB · {{ gpu.temp }}°C</div>
+            </button>
           </div>
-          <div class="bar"><i :style="{ width: gpu.util + '%' }"></i></div>
-          <div class="gpu-m">显存 {{ gpu.mem }} GB · {{ gpu.temp }}°C</div>
-        </button>
+        </div>
         <div v-if="currentGpu" class="gpu-detail">
           <b>{{ currentGpu.id }} 节点</b>
           <p>利用率 {{ currentGpu.util }}% · 显存 {{ currentGpu.mem }}/80 GB</p>
@@ -111,32 +152,39 @@ const clock = ref('')
 const step = ref(18420)
 const selected = ref('GPU0')
 const activeStage = ref(2)
+const activeId = ref('qwen')
 const lossEl = ref(null)
 const evalEl = ref(null)
 const memEl = ref(null)
 
+const models = ref([
+  { id: 'qwen', name: 'Qwen2.5', full: '鉴定-Qwen2.5-32B', kind: '生成式', task: '专域微调', color: '#3ec6ff', area: 'rgba(62,198,255,.18)', status: '训练中', state: 'run', epoch: '第 8/12 轮', loss: [2.84, 2.21, 1.76, 1.42, 1.18, 1.02, 0.91, 0.83] },
+  { id: 'glm', name: 'GLM-4', full: '鉴定-GLM-4-32B', kind: '语言理解', task: '对齐微调', color: '#d0ab68', area: 'rgba(208,171,104,.18)', status: '训练中', state: 'run', epoch: '第 5/8 轮', loss: [2.62, 2.08, 1.71, 1.39, 1.16, 0.99, 0.88, 0.79] },
+  { id: 'intern', name: 'InternLM2.5', full: '鉴定-InternLM2.5-32B', kind: '知识增强', task: '知识注入', color: '#49d39a', area: 'rgba(73,211,154,.16)', status: '训练中', state: 'run', epoch: '第 3/6 轮', loss: [2.91, 2.34, 1.88, 1.55, 1.29, 1.11, 0.98, 0.90] },
+  { id: 'deepseek', name: 'DeepSeek', full: '鉴定-DeepSeek-32B', kind: '推理增强', task: '指令微调', color: '#7aa2ff', area: 'rgba(122,162,255,.16)', status: '训练中', state: 'run', epoch: '第 4/8 轮', loss: [2.73, 2.15, 1.69, 1.36, 1.14, 0.97, 0.86, 0.77] },
+])
+
 const stages = [
   { name: '数据接入', state: 'done', detail: '42 个源数据集已入库' },
   { name: '清洗提炼', state: 'done', detail: '8.6 万问答对已打包' },
-  { name: '专域预训练', state: 'run', detail: '第 8/12 轮进行中' },
+  { name: '专域微调', state: 'run', detail: '4 类 32B 基座并行训练' },
   { name: '置信评估', state: 'run', detail: '准确率 0.88 · 召回 0.85' },
-  { name: '量化压缩', state: 'wait', detail: '待本轮训练结束' },
+  { name: '量化压缩', state: 'wait', detail: '待本轮微调结束' },
   { name: '服务部署', state: 'wait', detail: '待评估通过后发布' },
 ]
 
 const gpus = ref([
-  { id: 'GPU0', util: 87, mem: 62, temp: 68, power: 286 },
-  { id: 'GPU1', util: 92, mem: 64, temp: 71, power: 302 },
-  { id: 'GPU2', util: 85, mem: 61, temp: 67, power: 274 },
-  { id: 'GPU3', util: 89, mem: 63, temp: 69, power: 291 },
-  { id: 'GPU4', util: 91, mem: 65, temp: 72, power: 308 },
-  { id: 'GPU5', util: 84, mem: 60, temp: 66, power: 268 },
-  { id: 'GPU6', util: 88, mem: 62, temp: 68, power: 283 },
-  { id: 'GPU7', util: 86, mem: 61, temp: 67, power: 277 },
+  { id: 'GPU0', family: 'Qwen', util: 87, mem: 62, temp: 68, power: 286 },
+  { id: 'GPU1', family: 'Qwen', util: 92, mem: 64, temp: 71, power: 302 },
+  { id: 'GPU2', family: 'GLM', util: 85, mem: 61, temp: 67, power: 274 },
+  { id: 'GPU3', family: 'GLM', util: 89, mem: 63, temp: 69, power: 291 },
+  { id: 'GPU4', family: 'Intern', util: 91, mem: 65, temp: 72, power: 308 },
+  { id: 'GPU5', family: 'Intern', util: 84, mem: 60, temp: 66, power: 268 },
+  { id: 'GPU6', family: 'DeepSeek', util: 88, mem: 62, temp: 68, power: 283 },
+  { id: 'GPU7', family: 'DeepSeek', util: 86, mem: 61, temp: 67, power: 277 },
 ])
 
 const lossX = ref(['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8'])
-const lossY = ref([2.84, 2.21, 1.76, 1.42, 1.18, 1.02, 0.91, 0.83])
 const evalX = ref(['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8'])
 const accuracy = ref([0.72, 0.76, 0.79, 0.82, 0.84, 0.86, 0.87, 0.88])
 const recall = ref([0.68, 0.71, 0.74, 0.77, 0.80, 0.82, 0.83, 0.85])
@@ -154,20 +202,29 @@ let lossChart = null
 let evalChart = null
 let memChart = null
 
+const activeModel = computed(() => models.value.find((item) => item.id === activeId.value) || models.value[0])
 const currentGpu = computed(() => gpus.value.find((item) => item.id === selected.value))
+const stageLoop = computed(() => [...stages, ...stages])
+const gpuLoop = computed(() => [...gpus.value, ...gpus.value])
+const tickerLoop = computed(() => {
+  const lines = models.value.map((model) => `${model.full}  ${model.task}  loss ${model.loss.at(-1).toFixed(3)}  ${model.epoch}  参数量 32B`)
+  lines.push('集群 8×80GB  已并行接入 4 类基座  参数量均不小于 32B')
+  return [...lines, ...lines]
+})
 const kpis = computed(() => {
-  const loss = lossY.value[lossY.value.length - 1]
+  const loss = activeModel.value.loss.at(-1)
   const acc = accuracy.value[accuracy.value.length - 1]
   const rec = recall.value[recall.value.length - 1]
   const util = Math.round(gpus.value.reduce((sum, item) => sum + item.util, 0) / gpus.value.length)
   const mem = Math.round(gpus.value.reduce((sum, item) => sum + item.mem, 0) / gpus.value.length)
+  const tok = 1680 + (step.value % 240)
   return [
-    { label: '当前损失', value: loss.toFixed(3), unit: '', hint: '持续下降', tone: 'ok' },
+    { label: '当前损失', value: loss.toFixed(3), unit: '', hint: activeModel.value.name, tone: 'ok' },
     { label: '评估准确率', value: acc.toFixed(3), unit: '', hint: '较上轮 +0.004', tone: 'ok' },
     { label: '召回率', value: rec.toFixed(3), unit: '', hint: '鉴定问答集', tone: '' },
     { label: 'GPU 均值', value: String(util), unit: '%', hint: '8 卡在训', tone: 'ok' },
     { label: '显存占用', value: String(mem), unit: '/80 GB', hint: '无溢出', tone: 'ok' },
-    { label: '吞吐', value: '1,860', unit: ' tok/s', hint: '全局批次 128', tone: '' },
+    { label: '吞吐', value: tok.toLocaleString(), unit: ' tok/s', hint: '4 类并行', tone: '' },
   ]
 })
 
@@ -191,14 +248,26 @@ function base(x, yAxis = {}) {
   }
 }
 
+function focusModel(id) {
+  activeId.value = id
+  const model = models.value.find((item) => item.id === id)
+  pushLog(`切换监控 ${model.full}  ${model.task}  参数量 32B`)
+  paint()
+}
+
 function paint() {
   lossChart?.setOption({
     ...base(lossX.value),
-    series: [{
-      type: 'line', data: plain(lossY.value), smooth: true, symbol: 'none',
-      lineStyle: { color: '#3ec6ff', width: 2 },
-      areaStyle: { color: 'rgba(62,198,255,.16)' },
-    }],
+    legend: { top: 0, right: 8, textStyle: { color: '#9eb4c8', fontSize: 11 }, itemWidth: 12, itemHeight: 8 },
+    series: models.value.map((model) => ({
+      name: `${model.name}-32B`,
+      type: 'line',
+      data: plain(model.loss),
+      smooth: true,
+      symbol: 'none',
+      lineStyle: { color: model.color, width: model.id === activeId.value ? 2.6 : 1.4 },
+      areaStyle: model.id === activeId.value ? { color: model.area } : undefined,
+    })),
   })
   evalChart?.setOption({
     ...base(evalX.value, { min: 0.6, max: 1 }),
@@ -233,10 +302,13 @@ function pushLog(text) {
 function tick() {
   if (!running.value) return
   step.value += 20
-  const last = lossY.value[lossY.value.length - 1]
-  const next = Math.max(0.46, +(last * 0.997 + (Math.random() - 0.62) * 0.018).toFixed(3))
   lossX.value = [...lossX.value.slice(-15), String(step.value)]
-  lossY.value = [...lossY.value.slice(-15), next]
+  models.value.forEach((model) => {
+    const last = model.loss.at(-1)
+    const next = Math.max(0.42, +(last * 0.997 + (Math.random() - 0.62) * 0.018).toFixed(3))
+    model.loss = [...model.loss.slice(-15), next]
+  })
+  const next = activeModel.value.loss.at(-1)
   gpus.value = gpus.value.map((gpu) => ({
     ...gpu,
     util: Math.min(97, Math.max(78, gpu.util + Math.round((Math.random() - 0.5) * 4))),
@@ -307,8 +379,8 @@ onBeforeUnmount(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px 16px 12px;
+  gap: 8px;
+  padding: 12px 14px 10px;
   color: #d7e6f2;
   background:
     radial-gradient(900px 280px at 50% -80px, rgba(22, 104, 168, .35), transparent 70%),
@@ -324,7 +396,18 @@ onBeforeUnmount(() => {
   background-size: 48px 48px;
   mask-image: linear-gradient(180deg, #000, transparent 88%);
 }
-.top, .kpis, .body, .log { position: relative; z-index: 1; }
+.board::after {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 140px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(62, 198, 255, .09), transparent);
+  animation: scan 7s linear infinite;
+  z-index: 3;
+}
+.top, .models, .ticker, .kpis, .body, .log { position: relative; z-index: 1; }
 .top { display: flex; align-items: center; gap: 18px; }
 .brand { display: flex; align-items: center; gap: 10px; cursor: pointer; min-width: 320px; }
 .logo { width: 36px; height: 36px; flex: 0 0 36px; }
@@ -343,7 +426,41 @@ onBeforeUnmount(() => {
 }
 .top-actions button { height: 32px; padding: 0 12px; }
 .top-actions .ghost { background: transparent; }
-.kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.models { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.models button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(80, 150, 196, .28);
+  background: rgba(8, 22, 38, .78);
+  color: #d7e6f2;
+  text-align: left;
+  cursor: pointer;
+}
+.models button.on { border-color: rgba(62, 198, 255, .75); box-shadow: 0 0 18px rgba(62, 198, 255, .16); }
+.models i { width: 4px; height: 28px; border-radius: 4px; flex: none; }
+.models div { min-width: 0; flex: 1; }
+.models b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.models span, .models small { color: #8eabc2; font-size: 12px; }
+.models em { font-style: normal; font-weight: 700; color: #3ec6ff; font-size: 13px; }
+.models small.run { color: #49d39a; }
+.ticker {
+  height: 28px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(80, 150, 196, .28);
+  background: rgba(6, 18, 32, .88);
+}
+.ticker-track { display: flex; width: max-content; animation: marquee 32s linear infinite; }
+.ticker-track span { padding: 0 26px; line-height: 28px; font-size: 12px; color: #c5dded; white-space: nowrap; }
+.ticker-track span::before { content: "●"; margin-right: 8px; color: #3ec6ff; }
+.ticker.paused .ticker-track,
+.stage-list.paused .roll,
+.gpu-list.paused .roll { animation-play-state: paused; }
+.kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .kpis article {
   padding: 10px 12px 8px;
   border: 1px solid rgba(80, 150, 196, .28);
@@ -351,17 +468,71 @@ onBeforeUnmount(() => {
   background: linear-gradient(180deg, rgba(16, 42, 68, .9), rgba(8, 22, 38, .9));
 }
 .kpis span, .kpis em { display: block; color: #8eabc2; font-size: 12px; }
-.kpis b { display: block; margin: 4px 0 2px; font-size: 26px; line-height: 1; color: #f3f8fc; font-variant-numeric: tabular-nums; }
+.kpis b { display: block; margin: 2px 0; font-size: 22px; line-height: 1; color: #f3f8fc; font-variant-numeric: tabular-nums; }
 .kpis small { margin-left: 4px; font-size: 12px; color: #8eabc2; font-weight: 500; }
 .kpis em.ok { color: #49d39a; }
-.body { flex: 1; min-height: 0; display: grid; grid-template-columns: 250px minmax(0, 1fr) 280px; gap: 12px; }
+.body { flex: 1; min-height: 0; display: grid; grid-template-columns: 248px minmax(0, 1fr) 292px; gap: 8px; }
 .panel {
   border: 1px solid rgba(80, 150, 196, .28);
   border-radius: 14px;
   background: rgba(8, 22, 38, .78);
   box-shadow: inset 0 1px 0 rgba(180, 220, 245, .06);
 }
-.flow, .gpus { padding: 12px; overflow: auto; }
+.flow, .gpus { padding: 10px; }
+.flow { display: flex; flex-direction: column; overflow: hidden; }
+.gpus { display: flex; flex-direction: column; overflow: hidden; }
+.gif {
+  position: relative;
+  height: 132px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 55%, rgba(62, 198, 255, .28), transparent 62%), #061422;
+  border: 1px solid rgba(62, 198, 255, .4);
+  box-shadow: inset 0 0 24px rgba(62, 198, 255, .12);
+}
+.gif b {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 16px rgba(62, 198, 255, .85);
+}
+.ring, .sweep, .orb { position: absolute; left: 50%; top: 50%; }
+.ring { border: 1px solid rgba(62, 198, 255, .5); border-radius: 50%; }
+.ring.a { width: 52px; height: 52px; margin: -26px; animation: spin 7s linear infinite; border-style: dashed; }
+.ring.b { width: 84px; height: 84px; margin: -42px; animation: spin 11s linear infinite reverse; }
+.ring.c { width: 116px; height: 116px; margin: -58px; animation: spin 16s linear infinite; border-color: rgba(208, 171, 104, .55); }
+.sweep {
+  width: 58px;
+  height: 2px;
+  margin-top: -1px;
+  background: linear-gradient(90deg, rgba(62, 198, 255, .05), #9ae6ff);
+  transform-origin: left center;
+  animation: sweep 2.2s linear infinite;
+}
+.orb {
+  width: 18px;
+  height: 18px;
+  margin: -9px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  color: #041018;
+  animation: orbit 6.5s linear infinite;
+}
+.orb.q { background: #3ec6ff; }
+.orb.g { background: #d0ab68; animation-delay: -2.15s; }
+.orb.n { background: #49d39a; animation-delay: -4.3s; }
+.stage-list, .gpu-list { flex: 1; min-height: 0; overflow: hidden; }
+.stage-list .roll { animation: vmarquee 22s linear infinite; }
+.gpu-list .roll { animation: vmarquee 16s linear infinite; }
+.stage-list:hover .roll, .gpu-list:hover .roll { animation-play-state: paused; }
 .flow h3, .gpus h3, .chart-panel h3 { font-size: 14px; font-weight: 650; }
 .stage, .gpus button { width: 100%; text-align: left; margin-top: 8px; padding: 8px 10px; cursor: pointer; }
 .stage { display: flex; gap: 10px; align-items: center; }
@@ -376,15 +547,15 @@ onBeforeUnmount(() => {
 .chart-panel header { display: flex; justify-content: space-between; align-items: baseline; }
 .chart-panel header span { color: #8eabc2; font-size: 12px; }
 .chart { flex: 1; min-height: 120px; }
-.chart.tall { min-height: 180px; }
-.split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 210px; }
+.chart.tall { min-height: 120px; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-height: 168px; }
 .gpu-h, .gpu-m { display: flex; justify-content: space-between; }
 .bar { height: 4px; margin: 6px 0 4px; border-radius: 4px; background: rgba(255,255,255,.08); overflow: hidden; }
 .bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #1d7eb8, #3ec6ff); transition: width .4s ease; }
 .gpu-detail { margin-top: 10px; padding: 10px; border-radius: 10px; background: rgba(62, 198, 255, .08); }
 .gpu-detail b { margin-bottom: 4px; }
 .log {
-  height: 92px;
+  height: 74px;
   display: grid;
   grid-template-columns: 72px 1fr;
   gap: 12px;
@@ -401,5 +572,17 @@ onBeforeUnmount(() => {
 @keyframes pulse {
   70% { box-shadow: 0 0 0 8px rgba(73, 211, 154, 0); }
   100% { box-shadow: 0 0 0 0 rgba(73, 211, 154, 0); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes sweep { to { transform: rotate(360deg); } }
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+}
+@keyframes marquee { to { transform: translateX(-50%); } }
+@keyframes vmarquee { to { transform: translateY(-50%); } }
+@keyframes scan {
+  from { top: -140px; }
+  to { top: 100%; }
 }
 </style>
