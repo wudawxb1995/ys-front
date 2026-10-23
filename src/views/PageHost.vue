@@ -7,6 +7,7 @@
     <PostTrialPage v-else-if="page?.type === 'post-trial'" :key="pageKey" :page="page" :title="title" />
     <TemplateConfigPage v-else-if="page?.type === 'template-config'" :key="pageKey" />
     <DeviationSummaryPage v-else-if="page?.type === 'deviations'" :key="pageKey" :page="page" :title="title" />
+    <CollectPrototypePage v-else-if="page?.type === 'doc-feature' && prototypeScenes.includes(page?.scene)" :key="pageKey" :page="page" :title="title" />
     <DocModulePage v-else-if="page?.type === 'doc-feature'" :key="pageKey" :page="page" :title="title" />
     <RichPage v-else-if="page" :key="pageKey" :page="page" :title="title" />
   </div>
@@ -22,6 +23,7 @@ import ResourceManagePage from '@/components/pages/ResourceManagePage.vue'
 import IndicatorExtractPage from '@/components/pages/IndicatorExtractPage.vue'
 import DeviationSummaryPage from '@/components/pages/DeviationSummaryPage.vue'
 import DocModulePage from '@/components/pages/DocModulePage.vue'
+import CollectPrototypePage from '@/components/pages/CollectPrototypePage.vue'
 import TemplateConfigPage from '@/components/pages/TemplateConfigPage.vue'
 import PostTrialPage from '@/components/pages/PostTrialPage.vue'
 import RichPage from '@/views/RichPage.vue'
@@ -29,6 +31,7 @@ import RichPage from '@/views/RichPage.vue'
 const props = defineProps({ page: Object, title: String })
 const route = useRoute()
 const router = useRouter()
+const prototypeScenes = ['upload', 'classify', 'transfer', 'ontology', 'extract', 'terms', 'constraint', 'validation', 'policy', 'api', 'knowledge']
 const pageKey = computed(() => [
   props.title, props.page?.type, props.page?.dataset, props.page?.graphKey,
   props.page?.chatKey, props.page?.reportKey, props.page?.entryKey,

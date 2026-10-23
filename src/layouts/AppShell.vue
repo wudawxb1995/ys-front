@@ -22,8 +22,8 @@
           <Icon name="bell" />
         </button>
         <div class="admin">
-          <div class="avatar">M</div>
-          <span>Mona</span>
+          <div class="avatar">管</div>
+          <span>管理员</span>
           <div v-if="showNotice" class="notice-pop">
             <h4>通知</h4>
             <ul>
@@ -79,7 +79,7 @@
           </template>
           <span class="current">{{ menu.name }}</span>
         </div>
-        <nav v-if="platform.id === 'doc'" class="demo-chain" aria-label="录屏链路">
+        <nav v-if="platform.id === 'doc' && chainIndex >= 0" class="demo-chain" aria-label="录屏链路">
           <span>录屏链路</span>
           <button
             v-for="(step, index) in docChain"

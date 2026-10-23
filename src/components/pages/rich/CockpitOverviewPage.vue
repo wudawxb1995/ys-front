@@ -24,7 +24,7 @@
             <div class="m32-platform-sub">试验鉴定领域智能体工作流</div>
             <div class="m32-platform-link">模板库 →</div>
           </div>
-          <div class="m32-platform-card" @click="m32Stage='resource'">
+          <div class="m32-platform-card" @click="router.push({ name: 'resource-library' })">
             <div class="m32-platform-icon"><Icon name="book" /></div>
             <div class="m32-platform-name">领域资源库</div>
             <div class="m32-platform-sub">试验鉴定数据资源库</div>
@@ -99,6 +99,7 @@
 </template>
 
 <script>
+import { useRouter } from 'vue-router'
 import { useRichPage } from '@/composables/rich/useRichPage'
 import Icon from '@/components/Icon.vue'
 
@@ -106,7 +107,7 @@ export default {
   components: { Icon },
   props: { page: Object, title: String },
   setup(props) {
-    return useRichPage(props)
+    return { ...useRichPage(props), router: useRouter() }
   },
 }
 </script>
