@@ -3,9 +3,10 @@ import { rebuildSystems } from '@/data/rebuildMenus'
 import { probeSystems } from '@/data/probeMenus'
 import { designSystems } from '@/data/designMenus'
 import { insightSystems } from '@/data/insightMenus'
+import { ICON_POOL, uniquifySystemMenuIcons } from '@/utils/iconFor'
 
 const g = (id, name, icon, children) => ({ id, name, icon, children })
-const leaf = (id, name, page) => ({ id, name, page })
+const leaf = (id, name, page, icon) => (icon ? { id, name, page, icon } : { id, name, page })
 const crud = (desc, dataset) => ({ type: 'crud', desc, dataset })
 
 const week = [['10-13', 18], ['10-14', 26], ['10-15', 15], ['10-16', 32], ['10-17', 22], ['10-18', 12], ['10-19', 20]]
@@ -52,10 +53,10 @@ function buildDocMenus(systemId, systemName) {
       moduleName: '首页',
       featureName: systemName,
     }),
-    ...modules.map((module) => g(
+    ...modules.map((module, index) => g(
       module.id,
       cleanDocLabel(module.name),
-      undefined,
+      ICON_POOL[index + 1] || ICON_POOL[(index + 1) % ICON_POOL.length],
       module.features.map((feature) => leaf(
         feature.id,
         cleanDocLabel(feature.name),
@@ -65,7 +66,7 @@ function buildDocMenus(systemId, systemName) {
   ]
 }
 
-export const platforms = [
+const platformsRaw = [
   {
     id: 'rebuild',
     group: 'app',
@@ -168,7 +169,7 @@ export const platforms = [
           leaf('deviations', '正偏离能力汇总', {
             type: 'deviations',
             desc: '相对招标技术要求的正偏离能力清单，演示收尾指认用。',
-          }),
+          }, 'flag'),
         ],
       },
     ],
@@ -203,10 +204,10 @@ export const platforms = [
               { label: '单库最大文档', value: '12,400', unit: '篇' },
             ],
           )),
-          leaf('in', '汇聚接入', crud('定型原始资料、试验数据、标准规范、专业文献统一采集入库。', 'resources')),
-          leaf('gov', '多模态治理', crud('文本、图像、表格清洗去噪、标注和结构化解析，并可按统一接口调用开源标注清洗工具。', 'parseTasks')),
-          leaf('audit', '治理审核', { type: 'workbench', desc: '人工审核治理与图谱结果，通过原文溯源辅助校验。' }),
-          leaf('layers', '三级数据资源', { type: 'cards', cardKey: 'layers', desc: '原始库、结构化基础库、推理知识库分层组织，支持多层级关联与全链路追溯。' }),
+          leaf('in', '汇聚接入', crud('定型原始资料、试验数据、标准规范、专业文献统一采集入库。', 'resources'), 'transfer'),
+          leaf('gov', '多模态治理', crud('文本、图像、表格清洗去噪、标注和结构化解析，并可按统一接口调用开源标注清洗工具。', 'parseTasks'), 'clean'),
+          leaf('audit', '治理审核', { type: 'workbench', desc: '人工审核治理与图谱结果，通过原文溯源辅助校验。' }, 'audit'),
+          leaf('layers', '三级数据资源', { type: 'cards', cardKey: 'layers', desc: '原始库、结构化基础库、推理知识库分层组织，支持多层级关联与全链路追溯。' }, 'layers'),
         ],
       },
       {
@@ -229,10 +230,10 @@ export const platforms = [
               { label: '文档库召回', value: '4.2', unit: 's' },
             ],
           )),
-          leaf('graph', '业务知识图谱', { type: 'graph', graphKey: 'resume', desc: '语义关联网络化展示，支持可视化管理。' }),
-          leaf('cls', '领域知识分类', crud('维护分类及定义描述，驱动大模型对新数据自动分类。', 'categories')),
-          leaf('search', '多维知识检索', crud('按模态、分类标签、内容语义和图谱信息检索、推荐与推送。', 'resources')),
-          leaf('api', '统一数据接口', { type: 'report', reportKey: 'api', desc: '按规范提供高精度知识参考数据，支撑各智能体调用。' }),
+          leaf('graph', '业务知识图谱', { type: 'graph', graphKey: 'resume', desc: '语义关联网络化展示，支持可视化管理。' }, 'graph'),
+          leaf('cls', '领域知识分类', crud('维护分类及定义描述，驱动大模型对新数据自动分类。', 'categories'), 'cluster'),
+          leaf('search', '多维知识检索', crud('按模态、分类标签、内容语义和图谱信息检索、推荐与推送。', 'resources'), 'search'),
+          leaf('api', '统一数据接口', { type: 'report', reportKey: 'api', desc: '按规范提供高精度知识参考数据，支撑各智能体调用。' }, 'api'),
         ],
       },
       {
@@ -255,9 +256,9 @@ export const platforms = [
               { label: '问答准确率', value: '86', unit: '%' },
             ],
           )),
-          leaf('chat', '智能问答', { type: 'chat', chatKey: 'kb', desc: '检索增强问答，文字、图片和音视频片段融合呈现，答案可复制复用。' }),
-          leaf('trace', '对话轨迹', { type: 'timeline', desc: '保留对话轨迹，支持版本差异比对和回溯。' }),
-          leaf('qa-lib', 'QA 库', crud('CSV / JSON 批量上传、编辑、检索和回流审核。', 'qa')),
+          leaf('chat', '智能问答', { type: 'chat', chatKey: 'kb', desc: '检索增强问答，文字、图片和音视频片段融合呈现，答案可复制复用。' }, 'chat'),
+          leaf('trace', '对话轨迹', { type: 'timeline', desc: '保留对话轨迹，支持版本差异比对和回溯。' }, 'timeline'),
+          leaf('qa-lib', 'QA 库', crud('CSV / JSON 批量上传、编辑、检索和回流审核。', 'qa'), 'database'),
         ],
       },
       {
@@ -280,9 +281,9 @@ export const platforms = [
               { label: '许可证', value: '有效', unit: '' },
             ],
           )),
-          leaf('kb', '个人与团队知识库', crud('后台批量导入、权限分配、数据隔离与版本控制。', 'kb')),
-          leaf('std', '试验文档标准化', crud('试验总案、大纲、报告的标准化存储和关联管理。', 'stdDocs')),
-          leaf('ops', '用户与许可证', crud('用户、部门、对话、服务监控，以及许可证登记、激活、续期、变更和终止。', 'licenses')),
+          leaf('kb', '个人与团队知识库', crud('后台批量导入、权限分配、数据隔离与版本控制。', 'kb'), 'folder'),
+          leaf('std', '试验文档标准化', crud('试验总案、大纲、报告的标准化存储和关联管理。', 'stdDocs'), 'book'),
+          leaf('ops', '用户与许可证', crud('用户、部门、对话、服务监控，以及许可证登记、激活、续期、变更和终止。', 'licenses'), 'user'),
         ],
       },
     ],
@@ -317,11 +318,11 @@ export const platforms = [
               { label: '支持格式', value: '11', unit: '种' },
             ],
           )),
-          leaf('sets', '源数据集', crud('支持 txt、doc、docx、pdf、json、csv、xlsx、markdown、png、jpg、jpeg。可重命名、筛选删除，并查看关联训练任务。', 'trainSets')),
-          leaf('preview', '双视图预览', { type: 'workbench', desc: '同时预览解析后文件和原文档。' }),
-          leaf('sft', '微调数据集', { type: 'entry', entryKey: 'sft', desc: '配置任务名称、源数据集、参数、需求描述和自动标签，生成领域微调数据。', dataset: 'trainSets' }),
-          leaf('param', '训练参数', { type: 'cards', cardKey: 'trainParam', desc: '提供默认配置和手动配置，可设置训练集与测试集比例。' }),
-          leaf('infer', '历史推理任务', crud('展示任务名、时间、状态、创建人、可见成员、来源和审核进度。标签不超过 10 字且不含特殊符号，支持多选筛选。', 'inferTasks')),
+          leaf('sets', '源数据集', crud('支持 txt、doc、docx、pdf、json、csv、xlsx、markdown、png、jpg、jpeg。可重命名、筛选删除，并查看关联训练任务。', 'trainSets'), 'folder'),
+          leaf('preview', '双视图预览', { type: 'workbench', desc: '同时预览解析后文件和原文档。' }, 'eye'),
+          leaf('sft', '微调数据集', { type: 'entry', entryKey: 'sft', desc: '配置任务名称、源数据集、参数、需求描述和自动标签，生成领域微调数据。', dataset: 'trainSets' }, 'tag'),
+          leaf('param', '训练参数', { type: 'cards', cardKey: 'trainParam', desc: '提供默认配置和手动配置，可设置训练集与测试集比例。' }, 'sliders'),
+          leaf('infer', '历史推理任务', crud('展示任务名、时间、状态、创建人、可见成员、来源和审核进度。标签不超过 10 字且不含特殊符号，支持多选筛选。', 'inferTasks'), 'list'),
         ],
       },
       {
@@ -344,7 +345,7 @@ export const platforms = [
               { label: '人工校核', value: '640', unit: '条' },
             ],
           )),
-          leaf('score', '置信度评估', crud('覆盖多模型集成准确率、上下文一致性等指标，并以图表展示。', 'confidence')),
+          leaf('score', '置信度评估', crud('覆盖多模型集成准确率、上下文一致性等指标，并以图表展示。', 'confidence'), 'chart'),
         ],
       },
       {
@@ -368,7 +369,7 @@ export const platforms = [
               { label: '框架', value: 'LoRA', unit: '' },
             ],
           )),
-          leaf('jobs', '微调任务', crud('配置迭代轮次、学习率、批处理大小，跟踪性能并动态调整策略。', 'loraJobs')),
+          leaf('jobs', '微调任务', crud('配置迭代轮次、学习率、批处理大小，跟踪性能并动态调整策略。', 'loraJobs'), 'train'),
         ],
       },
       {
@@ -391,8 +392,8 @@ export const platforms = [
               { label: '服务启动', value: '78', unit: 's' },
             ],
           )),
-          leaf('models', '模型目录', crud('检索、筛选、详情、部署调度与在线调试。支持多版本存储、对比、回滚。', 'llmModels')),
-          leaf('api', '管理接口', { type: 'report', reportKey: 'api', desc: '管理界面与标准化 API，供业务按需选用模型。' }),
+          leaf('models', '模型目录', crud('检索、筛选、详情、部署调度与在线调试。支持多版本存储、对比、回滚。', 'llmModels'), 'model'),
+          leaf('api', '管理接口', { type: 'report', reportKey: 'api', desc: '管理界面与标准化 API，供业务按需选用模型。' }, 'api'),
         ],
       },
       {
@@ -415,7 +416,7 @@ export const platforms = [
               { label: '推荐档位', value: '8bit', unit: '' },
             ],
           )),
-          leaf('cmp', '量化对比', crud('利用预制指标对比同一模型不同量化程度的生成质量。', 'quants')),
+          leaf('cmp', '量化对比', crud('利用预制指标对比同一模型不同量化程度的生成质量。', 'quants'), 'compare'),
         ],
       },
       {
@@ -438,8 +439,8 @@ export const platforms = [
               { label: '新生成', value: '12', unit: '套' },
             ],
           )),
-          leaf('lib', '模板库', crud('分类存储、检索复用和动态修改。', 'prompts')),
-          leaf('chat', '模板生成', { type: 'chat', chatKey: 'prompt', desc: '描述任务后检索或生成针对性提示模板。' }),
+          leaf('lib', '模板库', crud('分类存储、检索复用和动态修改。', 'prompts'), 'book'),
+          leaf('chat', '模板生成', { type: 'chat', chatKey: 'prompt', desc: '描述任务后检索或生成针对性提示模板。' }, 'spark'),
         ],
       },
       {
@@ -462,9 +463,9 @@ export const platforms = [
               { label: '在线模型', value: '3', unit: '个' },
             ],
           )),
-          leaf('metrics', '评估指标', crud('管理名称、类型、适用领域、描述、API 和版本。修改后版本号自动更新，新增时校验必填项。', 'metrics')),
-          leaf('board', '评分榜单', crud('搭建评估体系、配置场景、创建任务并展示榜单。', 'confidence')),
-          leaf('debug', '在线调试', { type: 'chat', chatKey: 'debug', desc: '选择模型并调节温度、Top P、Top K 后查看生成结果。' }),
+          leaf('metrics', '评估指标', crud('管理名称、类型、适用领域、描述、API 和版本。修改后版本号自动更新，新增时校验必填项。', 'metrics'), 'rule'),
+          leaf('board', '评分榜单', crud('搭建评估体系、配置场景、创建任务并展示榜单。', 'confidence'), 'chart'),
+          leaf('debug', '在线调试', { type: 'chat', chatKey: 'debug', desc: '选择模型并调节温度、Top P、Top K 后查看生成结果。' }, 'sliders'),
         ],
       },
     ],
@@ -499,10 +500,10 @@ export const platforms = [
               { label: '调度时延', value: '1.6', unit: 's' },
             ],
           )),
-          leaf('canvas', '可视化编排', { type: 'canvas', canvasKey: 'agent', desc: '定义节点输入输出、类型校验、默认值和参数映射，支持单组件调试与日志。' }),
-          leaf('integ', '能力集成封装', crud('同步知识库、切换大模型版本、接入工具，并以 API 组合封装训推平台能力。', 'agents')),
-          leaf('mon', '服务监控', { type: 'stats', statsKey: 'agent', desc: '监控已发布智能体的服务状态、CPU、内存和网络。' }),
-          leaf('perm', '权限控制', crud('按角色分配查看、编辑、执行、管理权限。', 'kb')),
+          leaf('canvas', '可视化编排', { type: 'canvas', canvasKey: 'agent', desc: '定义节点输入输出、类型校验、默认值和参数映射，支持单组件调试与日志。' }, 'flow'),
+          leaf('integ', '能力集成封装', crud('同步知识库、切换大模型版本、接入工具，并以 API 组合封装训推平台能力。', 'agents'), 'plugin'),
+          leaf('mon', '服务监控', { type: 'stats', statsKey: 'agent', desc: '监控已发布智能体的服务状态、CPU、内存和网络。' }, 'chart'),
+          leaf('perm', '权限控制', crud('按角色分配查看、编辑、执行、管理权限。', 'kb'), 'shield'),
         ],
       },
       {
@@ -524,7 +525,7 @@ export const platforms = [
               { label: '调用成功率', value: '99.2', unit: '%' },
             ],
           )),
-          leaf('agents', '智能体发布', crud('上线、下线、Web 集成、接口调用和集成后的启停、访问控制。', 'agents')),
+          leaf('agents', '智能体发布', crud('上线、下线、Web 集成、接口调用和集成后的启停、访问控制。', 'agents'), 'spark'),
         ],
       },
       {
@@ -547,7 +548,7 @@ export const platforms = [
               { label: '协议', value: '3', unit: '类' },
             ],
           )),
-          leaf('list', '插件管理', crud('注册、审核、上线、下线，查看调试日志和运行状态，设置可见范围与调用权限。', 'plugins')),
+          leaf('list', '插件管理', crud('注册、审核、上线、下线，查看调试日志和运行状态，设置可见范围与调用权限。', 'plugins'), 'plugin'),
         ],
       },
       {
@@ -569,12 +570,17 @@ export const platforms = [
               { label: '组合场景', value: '9', unit: '个' },
             ],
           )),
-          leaf('mods', '模块目录', crud('配置模块信息与调用参数映射，验证复杂业务组合。', 'modules')),
+          leaf('mods', '模块目录', crud('配置模块信息与调用参数映射，验证复杂业务组合。', 'modules'), 'box'),
         ],
       },
     ],
   },
 ]
+
+export const platforms = platformsRaw.map((p) => ({
+  ...p,
+  systems: uniquifySystemMenuIcons(p.systems),
+}))
 
 export function getPlatform(id) {
   return platforms.find((p) => p.id === id)

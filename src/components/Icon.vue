@@ -104,6 +104,8 @@ const icons = {
   clock: ['M12 4.2a7.8 7.8 0 1 1 0 15.6 7.8 7.8 0 0 1 0-15.6z', 'M12 7.4V12l3.4 2.2'],
   filter: ['M4.4 5.4h15.2l-5.4 6.6v5.4l-4.4 2.2v-7.6z'],
   hash: ['M10 4.4 8.2 19.6', 'M15.8 4.4 14 19.6', 'M4.8 9.2h15', 'M4.2 14.8h15'],
+  signal: ['M4.4 16.6h2.2V20H4.4z', 'M8.8 12.8h2.2V20H8.8z', 'M13.2 8.6h2.2V20h-2.2z', 'M17.6 4.4h2.2V20h-2.2z'],
+  task: ['M8.2 4.6h7.6v2.2H8.2z', 'M6.4 5.8h11.2v14H6.4z', 'M9 11.2h6', 'M9 14.4h6', 'M9 17.4h3.6'],
 }
 
 const paths = computed(() => (icons[props.name] || icons.layers).paths || icons[props.name] || icons.layers)

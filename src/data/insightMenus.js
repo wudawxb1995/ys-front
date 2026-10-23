@@ -193,7 +193,7 @@ export function insightSystems() {
             ['tpl-search', '研判报告模板检索'],
           ],
         )),
-        g('tpl-cfg', '研判报告模板自定义配置', 'book', reuse(
+        g('tpl-cfg', '研判报告模板自定义配置', 'sliders', reuse(
           { type: 'cards', cardKey: 'judgeTpl', desc: '维护技术领域、试验类型、应用场景、成熟度、趋势和高价值方向等板块。' },
           [
             ['cfg-chap', '报告章节结构配置'],
@@ -207,7 +207,7 @@ export function insightSystems() {
             ['cfg-prev', '模板配置预览'],
           ],
         )),
-        g('tpl-rec', '研判报告模板智能推荐', 'search', reuse(
+        g('tpl-rec', '研判报告模板智能推荐', 'spark', reuse(
           { type: 'cards', cardKey: 'judgeTpl', desc: '按任务类型、装备分类和决策层级匹配研判模板。' },
           [
             ['rec-type', '研判任务类型识别'],
@@ -217,7 +217,7 @@ export function insightSystems() {
             ['rec-smart', '报告模板智能推荐'],
           ],
         )),
-        g('rpt-g', '技术研判报告自动生成', 'doc', reuse(
+        g('rpt-g', '技术研判报告自动生成', 'report', reuse(
           { type: 'm31', desc: '三栏布局（模板+对象+报告列表），报告预览页含ECharts图表与麦金色高亮建议块。' },
           [
             ['rpt-data', '研判核心数据获取'],
@@ -240,7 +240,7 @@ export function insightSystems() {
             ['expr-src', '研判报告内容溯源'],
           ],
         )),
-        g('edit-g', '研判报告在线编辑导出', 'doc', reuse(
+        g('edit-g', '研判报告在线编辑导出', 'edit', reuse(
           { type: 'm31', desc: '在线预览、编辑、完善研判报告，并支持多格式导出。' },
           [
             ['edit-prev', '研判报告在线预览'],
@@ -263,7 +263,7 @@ export function insightSystems() {
             ['dup', '多维查重结果综合判定'],
           ],
         )),
-        g('sim-g', '项目创新内容相似度分析', 'search', reuse(
+        g('sim-g', '项目创新内容相似度分析', 'compare', reuse(
           crud('计算项目创新点与研究内容相似度，并溯源立项文件。', 'dupChecks'),
           [
             ['psim-cfg', '项目相似度分析对象配置'],
@@ -273,7 +273,7 @@ export function insightSystems() {
             ['psim-src', '项目立项文件溯源'],
           ],
         )),
-        g('conc-g', '研判分析结论生成', 'doc', reuse(
+        g('conc-g', '研判分析结论生成', 'flag', reuse(
           crud('汇集分析数据，生成、查看并导出研判结论。', 'dupChecks'),
           [
             ['conc-data', '分析结论基础数据汇集'],

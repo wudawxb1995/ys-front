@@ -45,13 +45,52 @@ const rules = [
   [/用户|运营/, 'user'],
 ]
 
+/** 小尺寸下外形接近的 glyph，同一 tab 内按同一族去重 */
+const LOOKALIKE = {
+  vector: 'graph',
+  transfer: 'graph',
+  filter: 'clean',
+  box: 'model',
+}
+
+function iconFamily(name) {
+  return LOOKALIKE[name] || name
+}
+
+/** 同一 tab 内可轮换的互异形状；不同 tab 可复用同一套 */
+export const ICON_POOL = [
+  'home', 'folder', 'parse', 'list', 'clean', 'layout', 'eye', 'plugin', 'globe',
+  'audit', 'edit', 'hash', 'semantic', 'export', 'database', 'chart', 'tag',
+  'book', 'cards', 'extract', 'cluster', 'sliders', 'table', 'timeline', 'model',
+  'layers', 'graph', 'report', 'transfer', 'compass', 'spark', 'shield', 'flag',
+  'ontology', 'link', 'radar', 'flow', 'search', 'chat', 'swap', 'code', 'target',
+  'scheme', 'compare', 'signal', 'task', 'clock', 'image', 'wrench', 'api',
+  'archive', 'card', 'rule', 'train', 'user', 'box', 'filter',
+]
+
 export function iconFor(item = {}) {
+  if (item.icon) return item.icon
   if (byId[item.id]) return byId[item.id]
   if (item.id === 'home') return 'home'
-  if (item.icon) return item.icon
   const name = `${item.name || ''}${item.id || ''}`
   for (const [re, icon] of rules) {
     if (re.test(name)) return icon
   }
   return 'layers'
+}
+
+/** 保证同一 system.menus 一级目录图标不重复；不同 system 可一致 */
+export function uniquifySystemMenuIcons(systems = []) {
+  return systems.map((sys) => {
+    const used = new Set()
+    const menus = (sys.menus || []).map((item) => {
+      let icon = iconFor(item)
+      if (used.has(iconFamily(icon))) {
+        icon = ICON_POOL.find((name) => !used.has(iconFamily(name))) || icon
+      }
+      used.add(iconFamily(icon))
+      return { ...item, icon }
+    })
+    return { ...sys, menus }
+  })
 }

@@ -33,7 +33,7 @@ export function rebuildSystems() {
           { type: 'parse', desc: '文本提取关键信息、段落主旨与语义关系；图像经 OCR 转为可编辑文本；表格识别行列并结构化。支持中英双语、印刷体、繁体、手写体与复杂表格。' },
           [['parse-multi', '文本解析'], ['parse-image', '图像解析'], ['parse-table', '表格解析']],
         )),
-        g('parse-task-g', '解析任务管理', 'parse', [
+        g('parse-task-g', '解析任务管理', 'list', [
           leaf('parse-mode', '解析模式配置', crud('选择即时解析或暂存后解析，配置解析规则、适用资料类型与目标输出格式。', 'parseRules')),
           leaf('parse-batch', '批量解析', crud('批量启动解析任务，支持按资料类别与规则集中处理。', 'parseTasks')),
           leaf('parse-task', '任务进度监控', crud('即时解析、暂存后解析与批量解析任务的进度监控。音视频 ≤5 秒/MB，图片 ≤10 秒/MB。', 'parseTasks')),
@@ -42,11 +42,11 @@ export function rebuildSystems() {
           { type: 'clean', desc: '去除页眉页脚等噪声，将多格式数据按统一标准清洗、转换与整合。' },
           [['clean', '噪声清除'], ['clean-norm', '数据归一'], ['clean-merge', '数据整合']],
         )),
-        g('layout', '文档版式分析', 'parse', reuse(
+        g('layout', '文档版式分析', 'layout', reuse(
           { type: 'parse', desc: '识别单栏、双栏版式与页面区域，还原阅读顺序，提取标题、正文、表格与图片结构。' },
           [['layout-page', '页面布局识别'], ['layout-struct', '文档结构识别'], ['layout-order', '阅读顺序还原']],
         )),
-        g('understand', '文档内容理解', 'parse', [
+        g('understand', '文档内容理解', 'eye', [
           leaf('parse-rule', '切分规则配置', crud('按章节、字符数或页码切分，识别单栏、双栏版式并按阅读顺序还原，提取实体与关系。', 'parseRules')),
           leaf('split-smart', '文档智能切分', crud('按已保存规则切分文档，合并相邻小片段，形成有序内容单元。', 'parseTasks')),
           leaf('semantic-ana', '内容语义分析', crud('提取段落主旨、实体与语义关系，为向量化与检索提供结构化片段。', 'entities')),
@@ -56,7 +56,7 @@ export function rebuildSystems() {
           leaf('engines-diff', '差异化解析服务', { type: 'engines', desc: '按文本、图像、表格与音视频匹配差异化解析工具。' }),
           leaf('engines-sched', '解析能力调度', { type: 'engines', desc: '按资料类型与任务优先级调度解析能力。' }),
         ]),
-        g('lang', '多语种内容识别', 'parse', reuse(
+        g('lang', '多语种内容识别', 'globe', reuse(
           { type: 'parse', desc: '处理中文、英文及中英混合资料，识别印刷体、繁体、手写体与特殊文字。' },
           [['lang-text', '双语文本解析'], ['lang-media', '双语媒体解析'], ['lang-special', '特殊文字识别']],
         )),
@@ -64,17 +64,17 @@ export function rebuildSystems() {
           { type: 'workbench', desc: '左侧结构化目录，中间审核编辑，右侧源文件。支持章节层级调整、增删改查，以及源文件与解析结果联动定位。' },
           [['audit', '三栏视图展示'], ['audit-edit', '审核内容编辑'], ['audit-nav', '智能导航定位']],
         )),
-        g('edit-g', '解析成果编辑', 'audit', [
+        g('edit-g', '解析成果编辑', 'edit', [
           leaf('edit-struct', '结构化数据维护', crud('维护文档名称、装备型号、试验阶段等字段，支持增删改与修改记录。', 'resources')),
           leaf('edit-media', '多媒体内容编辑', crud('修订解析结果中的图片、表格与音视频关联内容。', 'resources')),
           leaf('entities', '实体标注修订', crud('修订实体边界与类型，也可手动新增系统未识别的实体。对象覆盖文本、图片与视频。', 'entities')),
           leaf('entities-add', '实体标注新增', crud('手动新增系统未识别的实体，覆盖文本、图片与视频。', 'entities')),
         ]),
-        g('toc', '文档目录调整', 'book', reuse(
+        g('toc', '文档目录调整', 'hash', reuse(
           { type: 'workbench', desc: '修正文档解析后的章节归属与层级关系，对照原文调整目录结构。' },
           [['toc-edit', '章节结构编辑'], ['toc-fix', '目录结构修正']],
         )),
-        g('vec', '文档语义量化', 'vector', [
+        g('vec', '文档语义量化', 'semantic', [
           leaf('vec-task', '语义向量生成', crud('将非结构化文本转为可计算向量。50 页以内文档向量化处理时间不大于 15 秒。', 'vecTasks')),
           leaf('vec-chunks', '向量成果管理', crud('查看分块文本与向量预览，供检索与比对调用。', 'vecChunks')),
           leaf('vec-calc', '向量计算支持', crud('配置相似度计算方式、摘要向量与结果存储，支撑后续语义检索。', 'vecTasks')),
@@ -84,7 +84,7 @@ export function rebuildSystems() {
           leaf('export-fmt', '目标格式转换', { type: 'export', desc: '将解析成果转换为指定目标格式。', dataset: 'exports' }),
           leaf('export-get', '导出成果获取', crud('查看历史导出任务，下载转换成果。', 'exports')),
         ]),
-        g('store-g', '多模态数据存储', 'export', reuse(
+        g('store-g', '多模态数据存储', 'database', reuse(
           crud('按文本、图像、表格、音视频组织存储。单文档 ≥100 MB / ≥1000 页，单图 ≥30 MB，音视频 ≥100 MB。', 'resources'),
           [['store', '多模态数据存储'], ['store-maint', '多模态资源维护']],
         )),
@@ -129,7 +129,7 @@ export function rebuildSystems() {
           crud('维护通用解析模板，支持新增、编辑、启用与停用。意图不明时作为默认策略。', 'schemeTpls'),
           [['tpl-parse', '通用模板预置'], ['tpl-enable', '默认模板启用'], ['tpl-check', '默认策略校验']],
         )),
-        g('entity', '实体识别配置', 'parse', reuse(
+        g('entity', '实体识别配置', 'tag', reuse(
           crud('按条目约定实体类别。可识别文档、音频、视频和图片中的业务对象。', 'entities'),
           [['entity-cfg', '实体条目配置'], ['entity-multi', '多类型实体识别'], ['entity-org', '实体成果组织']],
         )),
@@ -137,7 +137,7 @@ export function rebuildSystems() {
           { type: 'cards', cardKey: 'modalPref', desc: '文本侧重要点与关系，图像侧重文字与图形，视频侧重事件导览，并给出可对照的跨模态策略。' },
           [['modal-pref', '模态偏好配置'], ['modal-focus', '解析重点设置'], ['modal-cross', '跨模态策略管理']],
         )),
-        g('ind', '装备关键指标抽取', 'parse', [
+        g('ind', '装备关键指标抽取', 'extract', [
           leaf('inds', '关键指标识别', crud('抽取文档信息、概要、标签、导航与关键实体，内容对齐知识库主题。', 'indicators')),
           leaf('ind-data', '指标数据提取', crud('提取指标数值、计量单位与属性关联。', 'indicators')),
           leaf('ind-out', '抽取成果生成', crud('按配置输出指定格式的指标抽取成果。', 'indicators')),
@@ -146,7 +146,7 @@ export function rebuildSystems() {
           crud('分类信息可增删改查。系统按配置对章节自动打标，用户可审核修改。', 'categories'),
           [['cats', '分类信息管理'], ['cats-tag', '章节分类打标'], ['cats-rev', '分类标注审核']],
         )),
-        g('custom-g', '自定义指标抽取', 'parse', [
+        g('custom-g', '自定义指标抽取', 'sliders', [
           leaf('custom', '抽取条目配置', { type: 'entry', entryKey: 'extract', desc: '定义文档范围、内容类型与结果格式，系统按配置定位并提取指标。', dataset: 'indicators' }),
           leaf('custom-maint', '抽取配置维护', crud('维护自定义抽取条目的适用范围、规则与启用状态。', 'indicators')),
           leaf('custom-run', '定向抽取执行', crud('加载有效配置，完成目标内容定位和提取。', 'indicators')),
@@ -156,7 +156,7 @@ export function rebuildSystems() {
           leaf('preview-mode', '审核模式管理', { type: 'm02', desc: '在预览与审核模式间切换，按权限开展增删改、保存及审核确认。' }),
           leaf('preview-edit', '解析结果编辑', { type: 'm02', desc: '对自动解析结果增删改，保存核验意见。' }),
         ]),
-        g('multi', '多类别装备审核', 'audit', reuse(
+        g('multi', '多类别装备审核', 'table', reuse(
           crud('针对不同装备类别分别核验抽取结果，确保分类准确性。', 'indicators'),
           [['multi-rev', '装备审核对象管理'], ['multi-viz', '模型结果可视化'], ['multi-check', '装备指标核验']],
         )),
@@ -195,7 +195,7 @@ export function rebuildSystems() {
             { label: '关系抽取准确率', value: '79.2', unit: '%' },
           ],
         )),
-        g('life-g', '装备全生命周期数据整合', 'book', reuse(
+        g('life-g', '装备全生命周期数据整合', 'layers', reuse(
           crud('资料按研发设计、性能试验设计、性能试验鉴定、成果验收归类。', 'lifecycle'),
           [['life', '全生命周期数据汇聚'], ['life-class', '生命周期阶段归类'], ['life-merge', '生命周期数据整合']],
         )),
@@ -207,26 +207,26 @@ export function rebuildSystems() {
           { type: 'graph', graphKey: 'resume', desc: '二维 / 三维展示，支持搜索、筛选、查验、编辑。可手动创建节点、关系与事件类型。' },
           [['graph', '履历要素识别'], ['graph-rel', '履历关系挖掘'], ['graph-triple', '知识三元组构建'], ['graph-gen', '履历图谱生成']],
         )),
-        g('resume-show', '装备履历信息展示', 'book', reuse(
+        g('resume-show', '装备履历信息展示', 'report', reuse(
           { type: 'timeline', desc: '按时间轴展示装备全生命周期履历，支持阶段筛选与事件详情查看。' },
           [['life-view', '履历信息结构化'], ['life-layout', '履历信息编排'], ['life-viz', '履历信息可视化']],
         )),
-        g('hand', '图谱手工构建', 'graph', reuse(
+        g('hand', '图谱手工构建', 'edit', reuse(
           { type: 'graph', graphKey: 'resume', desc: '在指定装备履历知识图谱中补充节点、关系与事件类型，并维护 Schema。' },
           [['hand-node', '图谱节点创建'], ['hand-rel', '图谱关系创建'], ['hand-evt', '事件类型创建'], ['hand-schema', '图谱Schema维护']],
         )),
-        g('multi-src', '多源数据图谱构建', 'graph', reuse(
+        g('multi-src', '多源数据图谱构建', 'swap', reuse(
           { type: 'entry', desc: '集中接入结构化与非结构化履历资料，支持表格与文本图谱构建。', dataset: 'lifecycle' },
           [['multi-up', '构建数据批量上传'], ['multi-table', '表格图谱构建'], ['multi-text', '文本图谱构建'], ['multi-rec', '构建辅助推荐']],
         )),
-        g('ops', '图谱交互管理', 'graph', [
+        g('ops', '图谱交互管理', 'compass', [
           leaf('graph-view', '图谱空间展示', { type: 'graph', graphKey: 'resume', desc: '全图谱浏览与查询，支持节点筛选、关系展开与详情查看。' }),
           leaf('graph-search', '图谱信息检索', { type: 'graph', graphKey: 'resume', desc: '按节点名称、类型或关键词检索图谱对象。' }),
           leaf('graph-check', '图谱内容查验', { type: 'graph', graphKey: 'resume', desc: '核验节点属性、关系与关联路径。' }),
           leaf('graph-edit', '图谱交互编辑', { type: 'graph', graphKey: 'resume', desc: '按权限编辑实例节点与关系。' }),
           leaf('graph-io', '图谱数据导入导出', crud('导入外部图谱数据与结构，也可导出当前图谱。', 'lifecycle')),
         ]),
-        g('fusion-g', '知识融合节点组', 'graph', reuse(
+        g('fusion-g', '知识融合节点组', 'spark', reuse(
           { type: 'cards', cardKey: 'fusion', desc: '推荐可融合节点组，编辑后预览融合效果。' },
           [['fusion', '融合节点组推荐'], ['fusion-edit', '融合节点组编辑'], ['fusion-preview', '融合效果预览']],
         )),
@@ -238,23 +238,23 @@ export function rebuildSystems() {
           crud('以压缩包导入外部图谱的数据与结构，也可导出当前图谱。', 'lifecycle'),
           [['pack', '图谱压缩包导入'], ['pack-out', '图谱压缩包导出'], ['pack-result', '图谱交换结果管理']],
         )),
-        g('del', '图谱安全删除', 'shield', reuse(
+        g('del', '图谱安全删除', 'flag', reuse(
           crud('筛选待清理图谱，核对删除清单与风险后执行受控删除。', 'lifecycle'),
           [['del-pick', '图谱删除对象选择'], ['del-confirm', '图谱删除确认'], ['del-run', '图谱安全删除']],
         )),
-        g('schema-sys', '装备履历知识结构体系', 'model', reuse(
+        g('schema-sys', '装备履历知识结构体系', 'ontology', reuse(
           crud('划分装备履历知识域、规划层级并扩展图谱结构。', 'ontology'),
           [['schema-plan', '履历知识结构规划'], ['schema-build', '图谱结构体系构建'], ['schema-ext', '图谱结构扩展']],
         )),
-        g('nodes-g', '装备履历节点类型定义', 'model', reuse(
+        g('nodes-g', '装备履历节点类型定义', 'tag', reuse(
           crud('定义实体类型，配置属性、颜色与图标。', 'nodeTypes'),
           [['nodes', '节点类型定义'], ['nodes-attr', '节点类型属性配置'], ['nodes-style', '节点类型样式配置']],
         )),
-        g('rels-g', '装备履历关系类型定义', 'model', reuse(
+        g('rels-g', '装备履历关系类型定义', 'link', reuse(
           crud('内置因果、条件、组成等事件关系，并支持扩展。', 'relTypes'),
           [['rels', '节点关系类型定义'], ['rels-evt', '事件关系类型管理'], ['rels-ext', '自定义关系扩展'], ['rels-sem', '关系语义体系组织']],
         )),
-        g('schema-g', '图谱Schema可视化预览', 'graph', reuse(
+        g('schema-g', '图谱Schema可视化预览', 'eye', reuse(
           { type: 'graph', graphKey: 'schema', desc: '实时展示节点、关系与事件类型的整体关联，辅助结构设计与校验。' },
           [['schema', 'Schema结构图展示'], ['schema-live', 'Schema实时预览'], ['schema-check', 'Schema关联查验']],
         )),
@@ -337,7 +337,7 @@ export function rebuildSystems() {
           crud('按实体、关系、事件组合检索，并做语义扩展。可按需求调整排序权重。', 'indicators'),
           [['search-cfg', '多维检索条件配置'], ['search', '多维组合检索'], ['search-sem', '语义扩展检索'], ['search-show', '检索成果展示']],
         )),
-        g('dyn', '动态检索策略', 'search', reuse(
+        g('dyn', '动态检索策略', 'sliders', reuse(
           crud('配置检索权重、排序规则与语义扩展策略。', 'preferences'),
           [['dyn-need', '数据检索需求分析'], ['dyn-adj', '检索策略调整'], ['dyn-weight', '排序权重调节'], ['dyn-merge', '数据知识整合'], ['dyn-push', '检索成果推送']],
         )),
@@ -345,7 +345,7 @@ export function rebuildSystems() {
           { type: 'chat', chatKey: 'kg', desc: '全文与向量混合检索、重排、问题改写与对话补全，答案附带引用来源。' },
           [['qa-intent', '问答意图识别'], ['qa', '知识图谱问答检索'], ['qa-ans', '问答答案生成'], ['qa-cite', '问答引用溯源']],
         )),
-        g('mix', '混合检索优化', 'search', reuse(
+        g('mix', '混合检索优化', 'swap', reuse(
           { type: 'chat', chatKey: 'kg', desc: '结合全文检索与语义向量检索，支持重排、问题改写与对话语义补全。' },
           [['mix-search', '全文向量混合检索'], ['mix-rerank', '重排模型排序'], ['mix-rewrite', '用户问题改写'], ['mix-complete', '对话语义补全']],
         )),
@@ -363,7 +363,7 @@ export function rebuildSystems() {
             ['reason-api', '问答服务接口'],
           ],
         )),
-        g('chain', '推理链路知识检索', 'search', reuse(
+        g('chain', '推理链路知识检索', 'link', reuse(
           { type: 'flow', flowKey: 'reason', desc: '为业务推理获取实体、文档与证据，完成候选裁剪、上下文拼装与结果结构化。' },
           [['chain-get', '推理数据获取'], ['chain-cut', '检索候选裁剪'], ['chain-ctx', '推理上下文拼装'], ['chain-out', '推理结果结构化']],
         )),

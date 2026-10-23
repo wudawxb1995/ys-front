@@ -34,7 +34,7 @@ export function probeSystems() {
             ['fusion-know', '试验知识融合发现'],
           ],
         )),
-        g('data-link', '数据对接任务控制', 'signal', [
+        g('data-link', '数据对接任务控制', 'transfer', [
           leaf('sync-cfg', '跨应用对接配置', crud('跨资源库与业务智能体对接，配置接口与字段映射。', 'syncTasks')),
           leaf('sync-live', '实时数据同步', crud('支持实时同步试验回传数据。', 'syncTasks')),
           leaf('sync-cron', '定时数据同步', crud('按计划定时拉取试验数据。', 'syncTasks')),
@@ -54,7 +54,7 @@ export function probeSystems() {
             ['domain-out', '特征解析成果管理'],
           ],
         )),
-        g('algo-g', '数据解析算法管理', 'parse', reuse(
+        g('algo-g', '数据解析算法管理', 'plugin', reuse(
           crud('分词、实体识别、语义标注、关系抽取与特征嵌入，提升处理效率与准确性。', 'algorithms'),
           [
             ['algo-cfg', '解析算法能力配置'],
@@ -119,7 +119,7 @@ export function probeSystems() {
             ['graph-ref', '探针参考数据生成'],
           ],
         )),
-        g('pgraph-opt', '探针推理图谱优化', 'graph', reuse(
+        g('pgraph-opt', '探针推理图谱优化', 'clean', reuse(
           crud('识别重复实体和冗余关系，优化结构并评估检索效率。', 'entities'),
           [
             ['dedup-ent', '重复实体识别'],
@@ -129,7 +129,7 @@ export function probeSystems() {
             ['dedup-eval', '图谱检索效率评估'],
           ],
         )),
-        g('pgraph-edit', '探针推理图谱编辑', 'graph', reuse(
+        g('pgraph-edit', '探针推理图谱编辑', 'edit', reuse(
           crud('专家编辑实体与关系，补充经验知识。', 'events'),
           [
             ['edit-ent', '图谱实体编辑'],
@@ -138,7 +138,7 @@ export function probeSystems() {
             ['expert-edit', '专家修订管理'],
           ],
         )),
-        g('pgraph-inc', '探针推理图谱增量更新', 'graph', reuse(
+        g('pgraph-inc', '探针推理图谱增量更新', 'compare', reuse(
           crud('识别变化、执行增量并校验质量，同步探针参考数据。', 'syncTasks'),
           [
             ['incr-chg', '图谱数据变化识别'],
@@ -233,7 +233,7 @@ export function probeSystems() {
           leaf('chain-risk', '合规风险识别', crud('识别合规潜在风险。性能指标、指标值、试验结果等实体识别准确率不低于 80%。', 'indicators')),
           leaf('out', '异常定位成果输出', crud('输出异常指标、异常节点和合规潜在风险。', 'indicators')),
         ]),
-        g('chain-viz', '推理思维链可视化', 'flow', reuse(
+        g('chain-viz', '推理思维链可视化', 'eye', reuse(
           { type: 'flow', flowKey: 'probe', desc: '展示问题排查的推理过程和依据，帮助试验人员理解异常节点逻辑。' },
           [
             ['chain', '推理思维链展示'],
