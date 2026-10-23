@@ -28,5 +28,18 @@ export const richPageTypes = {
   'm30': () => import('@/components/pages/rich/TechSystemGraphPage.vue'),
   'm31': () => import('@/components/pages/rich/TechJudgeReportPage.vue'),
   'm32': () => import('@/components/pages/rich/CockpitOverviewPage.vue'),
+  'case-in': () => import('@/components/pages/rich/CaseInboundPage.vue'),
+  'tpl-in': () => import('@/components/pages/rich/TplInboundPage.vue'),
+  'need-cfg': () => import('@/components/pages/rich/NeedConfigPage.vue'),
+  'scheme-review': () => import('@/components/pages/rich/SchemeReviewPage.vue'),
+  'code-check': () => import('@/components/pages/rich/CodeCheckConfigPage.vue'),
+  'code-note': () => import('@/components/pages/rich/CodeNoteConfigPage.vue'),
+  'code-need': () => import('@/components/pages/rich/CodeNeedConfigPage.vue'),
+  'graph-map': () => import('@/components/pages/rich/GraphMapConfigPage.vue'),
+  'res-up': () => import('@/components/pages/rich/ResUpdatePage.vue'),
+  'struct-dev': () => import('@/components/pages/rich/DeviceExtractPage.vue'),
+  'vec-parse': () => import('@/components/pages/rich/VectorParsePage.vue'),
+  'cls-feat': () => import('@/components/pages/rich/ClusterFeatPage.vue'),
+  'res-doc': () => import('@/components/pages/rich/HistDocFetchPage.vue'),
 }
 

@@ -5,13 +5,17 @@
       <p>{{ page.desc }}</p>
     </div>
 
-    <!-- 筛选栏 + 工具栏 + 表格 + 分页 统一白色卡片 -->
     <div class="crud-body">
       <!-- 筛选栏 -->
       <div v-if="schema.filters?.length" class="filter-bar filter-panel">
         <div v-for="f in schema.filters" :key="f.key" class="field">
           <label>{{ f.label }}</label>
-          <input v-if="f.type === 'search'" v-model="draft[f.key]" :placeholder="f.placeholder || '请输入'" />
+          <el-input
+            v-if="f.type === 'search'"
+            v-model="draft[f.key]"
+            clearable
+            :placeholder="f.placeholder || '请输入'"
+          />
           <select-field
             v-else
             v-model="draft[f.key]"
@@ -20,90 +24,85 @@
           />
         </div>
         <div class="filter-actions">
-          <button class="btn btn-primary" @click="apply">查询</button>
-          <button class="btn btn-outline" @click="reset">重置</button>
+          <el-button type="primary" @click="apply">查询</el-button>
+          <el-button @click="reset">重置</el-button>
         </div>
       </div>
 
       <!-- 工具栏 -->
       <div class="toolbar">
-        <button class="btn btn-primary" @click="create">＋ 新增录入</button>
-        <button class="btn btn-outline" @click="removeSelected">批量删除</button>
+        <el-button type="primary" @click="create">＋ 新增录入</el-button>
+        <el-button @click="removeSelected">批量删除</el-button>
         <span class="spacer"></span>
-        <span style="color:#8a99a8;font-size:13.5px">
+        <span class="hint">
           {{ checked.length ? `已选 ${checked.length} 条` : '勾选多条记录后可执行批量删除' }}
         </span>
       </div>
 
       <!-- 表格 -->
       <div class="table-inner">
-      <table>
-        <thead>
-          <tr>
-            <th class="col-cb">
-              <input type="checkbox" :checked="allChecked" @change="toggleAll" />
-            </th>
-            <th class="col-idx">序号</th>
-            <th v-for="col in schema.columns" :key="col.key">{{ col.label }}</th>
-            <th style="text-align:center">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, i) in pageRows" :key="i" :class="{ checked: checked.includes(row) }">
-            <td class="col-cb">
-              <input type="checkbox" v-model="checked" :value="row" />
-            </td>
-            <td class="col-idx">{{ (pageNo - 1) * pageSize + i + 1 }}</td>
-            <td v-for="col in schema.columns" :key="col.key">
-              <span v-if="col.kind === 'badge'" class="badge" :class="badgeKind(row[col.key])">
-                <i></i>{{ row[col.key] }}
-              </span>
-              <template v-else-if="col.kind === 'progress'">
-                <span class="prog" :class="{ done: row[col.key] >= 100 }">
-                  <i :style="{ width: row[col.key] + '%' }"></i>
+        <table>
+          <thead>
+            <tr>
+              <th class="col-cb">
+                <el-checkbox :model-value="allChecked" :indeterminate="someChecked" @change="toggleAll" />
+              </th>
+              <th class="col-idx">序号</th>
+              <th v-for="col in schema.columns" :key="col.key">{{ col.label }}</th>
+              <th style="text-align:center">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, i) in pageRows" :key="i" :class="{ checked: checked.includes(row) }">
+              <td class="col-cb">
+                <el-checkbox :model-value="checked.includes(row)" @change="(v) => toggleOne(row, v)" />
+              </td>
+              <td class="col-idx">{{ (pageNo - 1) * pageSize + i + 1 }}</td>
+              <td v-for="col in schema.columns" :key="col.key">
+                <span v-if="col.kind === 'badge'" class="badge" :class="badgeKind(row[col.key])">
+                  <i></i>{{ row[col.key] }}
                 </span>
-                {{ row[col.key] }}%
-              </template>
-              <template v-else>{{ row[col.key] }}</template>
-            </td>
-            <td style="text-align:center">
-              <div class="ops" style="justify-content:center">
-                <a v-for="op in ops" :key="op"
-                   :class="{ danger: op === '删除' }"
-                   @click="act(op, row)">{{ op }}</a>
-              </div>
-            </td>
-          </tr>
-          <tr v-if="!pageRows.length">
-            <td :colspan="schema.columns.length + 3" class="empty">
-              没有符合条件的记录
-            </td>
-          </tr>
-          <!-- 补空行，固定表格高度 -->
-          <tr v-for="n in emptyRows" :key="'e'+n" class="empty-row">
-            <td :colspan="schema.columns.length + 3"></td>
-          </tr>
-        </tbody>
-      </table>
-      </div><!-- /table-inner -->
+                <template v-else-if="col.kind === 'progress'">
+                  <span class="prog" :class="{ done: row[col.key] >= 100 }">
+                    <i :style="{ width: row[col.key] + '%' }"></i>
+                  </span>
+                  {{ row[col.key] }}%
+                </template>
+                <template v-else>{{ row[col.key] }}</template>
+              </td>
+              <td style="text-align:center">
+                <div class="ops" style="justify-content:center">
+                  <a
+                    v-for="op in ops"
+                    :key="op"
+                    :class="{ danger: op === '删除' }"
+                    @click="act(op, row)"
+                  >{{ op }}</a>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="!pageRows.length">
+              <td :colspan="schema.columns.length + 3" class="empty">没有符合条件的记录</td>
+            </tr>
+            <tr v-for="n in emptyRows" :key="'e'+n" class="empty-row">
+              <td :colspan="schema.columns.length + 3"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-      <!-- 分页 -->
       <div class="pager">
         <span>共 <b>{{ filtered.length }}</b> 条记录</span>
-        <div class="pages">
-          <button class="pg" :disabled="pageNo === 1" @click="pageNo--">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
-          </button>
-          <button
-            v-for="n in pageCount" :key="n"
-            class="pg" :class="{ cur: n === pageNo }"
-            @click="pageNo = n">{{ n }}</button>
-          <button class="pg" :disabled="pageNo === pageCount" @click="pageNo++">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
-          </button>
-        </div>
+        <el-pagination
+          v-model:current-page="pageNo"
+          :page-size="pageSize"
+          :total="filtered.length"
+          layout="prev, pager, next"
+          background
+          small
+        />
       </div>
-    </div><!-- /crud-body -->
+    </div>
   </div>
 </template>
 
@@ -138,15 +137,28 @@ const filtered = computed(() => rows.filter((row) => {
 const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
 const pageRows = computed(() => filtered.value.slice((pageNo.value - 1) * pageSize, pageNo.value * pageSize))
 const emptyRows = computed(() => Math.max(0, pageSize - pageRows.value.length))
-const allChecked = computed(() => pageRows.value.length > 0 && pageRows.value.every(r => checked.value.includes(r)))
+const allChecked = computed(() => pageRows.value.length > 0 && pageRows.value.every((r) => checked.value.includes(r)))
+const someChecked = computed(() => {
+  const n = pageRows.value.filter((r) => checked.value.includes(r)).length
+  return n > 0 && n < pageRows.value.length
+})
 
 watch(pageCount, (n) => { if (pageNo.value > n) pageNo.value = n })
 
-function toggleAll(e) {
-  if (e.target.checked) {
-    pageRows.value.forEach(r => { if (!checked.value.includes(r)) checked.value.push(r) })
+function toggleAll(val) {
+  if (val) {
+    pageRows.value.forEach((r) => {
+      if (!checked.value.includes(r)) checked.value.push(r)
+    })
   } else {
-    checked.value = checked.value.filter(r => !pageRows.value.includes(r))
+    checked.value = checked.value.filter((r) => !pageRows.value.includes(r))
+  }
+}
+function toggleOne(row, val) {
+  if (val) {
+    if (!checked.value.includes(row)) checked.value.push(row)
+  } else {
+    checked.value = checked.value.filter((r) => r !== row)
   }
 }
 function apply() {
@@ -201,3 +213,15 @@ function act(op, row) {
   openDrawer(op + '详情', schema.columns.map((c) => ({ label: c.label, value: row[c.key] })))
 }
 </script>
+
+<style scoped>
+.hint { color: #8a99a8; font-size: 13.5px; }
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px 14px;
+}
+.pager b { color: #0d4e83; }
+</style>

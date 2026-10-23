@@ -36,7 +36,7 @@
               </div>
               <div class="drop-title">拖拽文件至此处，或点击选择文件</div>
               <div class="drop-sub">支持 Word、PDF、Excel、图片及扫描件</div>
-              <button type="button" class="btn btn-primary pick-btn" @click.stop="openPicker">选择文件</button>
+              <el-button type="primary" class="pick-btn" @click.stop="openPicker">选择文件</el-button>
             </div>
             <input
               ref="fileInput"
@@ -66,17 +66,18 @@
               <label>来源单位<span class="req">*</span></label>
               <input v-model="meta.org" placeholder="试验单位" />
               <label>资料日期<span class="req">*</span></label>
-              <input v-model="meta.date" type="date" />
+              <date-field v-model="meta.date" placeholder="选择日期" />
 
               <label class="align-top">备注</label>
-              <div class="remark">
-                <textarea v-model="meta.remark" maxlength="200" placeholder="请输入备注信息（可选）" />
-                <span class="counter">{{ (meta.remark || '').length }}/200</span>
-              </div>
+              <text-area-field
+                v-model="meta.remark"
+                :maxlength="200"
+                placeholder="请输入备注信息（可选）"
+              />
             </div>
             <div class="form-actions">
-              <button type="button" class="btn btn-outline" @click="stash">暂存</button>
-              <button type="button" class="btn btn-primary" @click="confirmEntry">确认录入</button>
+              <el-button @click="stash">暂存</el-button>
+              <el-button type="primary" @click="confirmEntry">确认录入</el-button>
             </div>
           </div>
         </div>
@@ -158,7 +159,7 @@
           </div>
           <input v-else v-model="form[f.key]" :placeholder="f.placeholder || ''" />
         </div>
-        <button class="btn btn-primary" style="width:100%;margin-top:4px" @click="addToList">加入导入清单</button>
+        <el-button type="primary" style="width:100%;margin-top:4px" @click="addToList">加入导入清单</el-button>
       </div>
       <div class="panel">
         <h3 style="justify-content:space-between">
@@ -166,7 +167,7 @@
           <span style="font-size:13px;color:#8a99a8;font-weight:400">支持单次批量导入（≥50篇 / ≥500MB）</span>
         </h3>
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-          <button class="btn btn-primary" @click="commitList">确认录入（{{ importList.length }}）</button>
+          <el-button type="primary" @click="commitList">确认录入（{{ importList.length }}）</el-button>
         </div>
         <div class="table-wrap">
           <table>
@@ -213,6 +214,8 @@ import { useUi } from '@/composables/ui'
 import { useRows } from '@/composables/tables'
 import { nowText } from '@/utils/format'
 import SelectField from '@/components/SelectField.vue'
+import DateField from '@/components/DateField.vue'
+import TextAreaField from '@/components/TextAreaField.vue'
 
 const TYPE_TABS = [
   { key: '定型资料', label: '装备定型资料' },
@@ -238,7 +241,7 @@ function formatSize(bytes) {
 }
 
 export default {
-  components: { SelectField },
+  components: { SelectField, DateField, TextAreaField },
   props: { page: Object, title: String },
   setup(props) {
     const rich = useRichPage(props)
@@ -590,12 +593,12 @@ export default {
   font-family: inherit;
 }
 .entry-form input:focus, .entry-form textarea:focus { border-color: #7eadd4; }
-.entry-form :deep(.sf-wrap) { width: 100%; }
-.remark { grid-column: 2 / -1; }
-.remark textarea { height: 78px; padding: 8px 12px; resize: none; line-height: 1.6; }
-.counter { display: block; text-align: right; color: #9fb0c0; font-size: 12px; margin-top: 4px; }
+.entry-form :deep(.sf-select),
+.entry-form :deep(.sf-select),
+.entry-form :deep(.date-field) { width: 100%; }
+.entry-form :deep(.ta-field) { grid-column: 2 / -1; }
 .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; padding-top: 16px; }
-.form-actions .btn { min-width: 88px; }
+.form-actions :deep(.el-button) { min-width: 88px; }
 
 .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .stat {

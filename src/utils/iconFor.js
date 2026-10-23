@@ -24,7 +24,8 @@ const rules = [
   [/挖掘|创新|要素/, 'spark'],
   [/聚类|分类|标签/, 'cluster'],
   [/统计|图表|研判|雷达|能力/, 'chart'],
-  [/录入|目录|资源|归集|入库|汇聚/, 'database'],
+  [/资源管理|资源归集|资源入库|数据资源/, 'database'],
+  [/录入|目录|归集|入库|汇聚/, 'database'],
   [/解析|抽取|识别/, 'parse'],
   [/清洗|去噪|归一/, 'clean'],
   [/审核|审查|批注|校核/, 'audit'],
@@ -46,10 +47,11 @@ const rules = [
 
 export function iconFor(item = {}) {
   if (byId[item.id]) return byId[item.id]
-  const name = `${item.name || ''}${item.id || ''}`
   if (item.id === 'home') return 'home'
+  if (item.icon) return item.icon
+  const name = `${item.name || ''}${item.id || ''}`
   for (const [re, icon] of rules) {
     if (re.test(name)) return icon
   }
-  return item.icon || 'layers'
+  return 'layers'
 }

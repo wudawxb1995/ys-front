@@ -1,43 +1,94 @@
 <template>
-  <div class="m01-detail">
-    <!-- 顶部返回条 -->
+  <div class="res-detail">
     <div class="detail-topbar">
-      <button class="back-btn" @click="emit('back')">
+      <button type="button" class="back-btn" @click="emit('back')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
         返回资源列表
       </button>
-      <span class="sep">|</span>
+      <span class="sep">/</span>
       <span class="detail-breadcrumb">{{ detail.name }}</span>
     </div>
 
-    <!-- 文件信息条 -->
-    <div class="file-infobar">
-      <div class="fi-fmt" :class="fmtClass(detail.fmt)">{{ detail.fmt }}</div>
-      <div class="fi-meta">
-        <div class="fi-name">{{ detail.name }}</div>
-        <div class="fi-attrs">
-          <span>{{ detail.pages }} 页</span>
-          <span class="dot">·</span>
-          <span>{{ detail.size }}</span>
-          <span class="dot">·</span>
-          <span>解析完成：{{ detail.parsedAt }}</span>
+    <div class="dash-frame file-frame">
+      <h3><i></i>资源概览</h3>
+      <div class="file-infobar">
+        <span class="file-ico" :class="iconKind(detail.fmt)">{{ iconText(detail.fmt) }}</span>
+        <div class="fi-meta">
+          <div class="fi-name">{{ detail.name }}</div>
+          <div class="fi-attrs">
+            <span>{{ detail.fmt }}</span>
+            <span class="dot">·</span>
+            <span>{{ detail.pages }} 页</span>
+            <span class="dot">·</span>
+            <span>{{ detail.size }}</span>
+            <span class="dot">·</span>
+            <span>解析完成：{{ detail.parsedAt }}</span>
+          </div>
         </div>
-      </div>
-      <div class="fi-actions">
-        <button class="act-btn" @click="goParseTask">查看解析日志</button>
-        <button class="act-btn primary" @click="goExtract">发起指标抽取</button>
+        <div class="fi-actions">
+          <el-button @click="goParseTask">查看解析日志</el-button>
+          <el-button type="primary" @click="goExtract">发起指标抽取</el-button>
+        </div>
       </div>
     </div>
 
-    <!-- 主体：左侧章节树 + 右侧统计/索引 -->
     <div class="detail-body">
-      <!-- 左：章节结构树 -->
-      <div class="chapter-panel">
-        <div class="panel-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"/></svg>
-          章节结构
+      <div class="dash-frame stat-frame">
+        <h3><i></i>解析统计</h3>
+          <div class="stat-row">
+            <div class="stat">
+              <div class="stat-ico all">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              </div>
+              <div>
+                <div class="stat-label">表格识别</div>
+                <div class="stat-value all">{{ detail.tableCount }} <small>项</small></div>
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat-ico done">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+              </div>
+              <div>
+                <div class="stat-label">图片提取</div>
+                <div class="stat-value done">{{ detail.imageCount }} <small>项</small></div>
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat-ico run">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 10h16M4 14h10M4 18h7"/></svg>
+              </div>
+              <div>
+                <div class="stat-label">段落识别</div>
+                <div class="stat-value run">{{ detail.paraCount }} <small>项</small></div>
+              </div>
+            </div>
+          </div>
+      </div>
+
+      <div class="dash-frame index-frame">
+          <h3><i></i>语义索引</h3>
+          <div class="index-card" :class="{ built: detail.indexStatus === '已建立' }">
+            <div class="index-status-row">
+              <span class="dot-status" :class="detail.indexStatus === '已建立' ? 'ok' : 'wait'"><i></i>{{ detail.indexStatus }}</span>
+              <span class="index-badge" v-if="detail.indexStatus === '已建立'">可检索</span>
+            </div>
+            <div class="index-meta">
+              <div><span class="meta-key">索引库</span><span class="meta-val">{{ detail.indexName }}</span></div>
+              <div><span class="meta-key">建立时间</span><span class="meta-val">{{ detail.indexAt }}</span></div>
+            </div>
+            <div class="index-actions">
+              <el-button @click="goVecSearch">语义检索</el-button>
+              <el-button @click="goVecTask">查看向量化</el-button>
+            </div>
+          </div>
+      </div>
+
+      <div class="dash-frame chapter-frame">
+        <h3>
+          <i></i>章节结构
           <span class="chapter-count">{{ flatChapters.length }} 节</span>
-        </div>
+        </h3>
         <div class="chapter-tree">
           <div
             v-for="item in treeItems"
@@ -55,65 +106,8 @@
         </div>
       </div>
 
-      <!-- 右：统计卡片 + 语义索引 -->
-      <div class="detail-right">
-        <!-- 解析统计 -->
-        <div class="stat-section">
-          <div class="section-title">解析统计</div>
-          <div class="stat-cards">
-            <div class="stat-card">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-              </svg>
-              <div>
-                <div class="stat-val">{{ detail.tableCount }}</div>
-                <div class="stat-lbl">表格识别</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>
-              </svg>
-              <div>
-                <div class="stat-val">{{ detail.imageCount }}</div>
-                <div class="stat-lbl">图片提取</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-                <path d="M4 6h16M4 10h16M4 14h10M4 18h7"/>
-              </svg>
-              <div>
-                <div class="stat-val">{{ detail.paraCount }}</div>
-                <div class="stat-lbl">段落识别</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 语义索引状态 -->
-        <div class="index-section">
-          <div class="section-title">语义索引</div>
-          <div class="index-card" :class="{ built: detail.indexStatus === '已建立' }">
-            <div class="index-status-row">
-              <span class="index-dot"></span>
-              <span class="index-status-text">{{ detail.indexStatus }}</span>
-              <span class="index-badge" v-if="detail.indexStatus === '已建立'">可检索</span>
-            </div>
-            <div class="index-meta">
-              <div><span class="meta-key">索引库</span><span class="meta-val">{{ detail.indexName }}</span></div>
-              <div><span class="meta-key">建立时间</span><span class="meta-val">{{ detail.indexAt }}</span></div>
-            </div>
-            <div class="index-actions">
-              <button class="act-btn" @click="goVecSearch">语义检索</button>
-              <button class="act-btn" @click="goVecTask">查看向量化</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 实体识别概况 -->
-        <div class="entity-section">
-          <div class="section-title">实体识别概况</div>
+      <div class="dash-frame entity-frame">
+          <h3><i></i>实体识别概况</h3>
           <div class="entity-list">
             <div v-for="ent in entitySummary" :key="ent.type" class="ent-row">
               <span class="ent-type" :class="ent.cls">{{ ent.type }}</span>
@@ -123,7 +117,6 @@
               <span class="ent-count">{{ ent.count }}</span>
             </div>
           </div>
-        </div>
       </div>
     </div>
   </div>
@@ -195,9 +188,20 @@ function toggleChap(item) {
   activeChap.value = item.id
 }
 
-function fmtClass(fmt) {
-  const map = { PDF: 'fmt-pdf', DOCX: 'fmt-docx', XLSX: 'fmt-xlsx', MP4: 'fmt-mp4', JPG: 'fmt-jpg', CSV: 'fmt-csv' }
-  return map[fmt] || 'fmt-other'
+function iconKind(fmt) {
+  if (/DOC/.test(fmt)) return 'word'
+  if (/XLS|CSV/.test(fmt)) return 'excel'
+  if (/PDF/.test(fmt)) return 'pdf'
+  if (/PNG|JPE?G|TIF|BMP/.test(fmt)) return 'img'
+  if (/MP4|MP3/.test(fmt)) return 'media'
+  return 'file'
+}
+function iconText(fmt = '') {
+  if (/DOC/.test(fmt)) return 'W'
+  if (/XLS/.test(fmt)) return 'X'
+  if (/PDF/.test(fmt)) return 'A'
+  if (/CSV/.test(fmt)) return 'C'
+  return String(fmt).slice(0, 1) || 'F'
 }
 
 // 实体识别数据（与资源绑定的 mock 统计）
@@ -213,132 +217,157 @@ const maxEntCount = computed(() => Math.max(...entitySummary.map((e) => e.count)
 </script>
 
 <style scoped>
-.m01-detail { display: flex; flex-direction: column; gap: 14px; }
-
-/* 返回条 */
+.res-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px 22px 16px;
+  box-shadow: 0 6px 18px rgba(15, 55, 95, .04);
+}
 .detail-topbar {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 13.5px; color: #7c8fa2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: #7c8fa2;
 }
 .back-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: none; border: none; color: #1668a8;
-  font-size: 13.5px; cursor: pointer; padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: #1668a8;
+  font-size: 13.5px;
+  cursor: pointer;
+  padding: 0;
 }
 .back-btn:hover { text-decoration: underline; }
 .back-btn svg { width: 14px; height: 14px; }
-.sep { color: #d0dce8; }
-.detail-breadcrumb { color: #3f5062; font-weight: 500; }
+.sep { color: #b6c4d2; }
+.detail-breadcrumb { color: #0d4e83; font-weight: 600; }
 
-/* 文件信息条 */
-.file-infobar {
-  display: flex; align-items: center; gap: 14px;
-  background: #fff; border: 1px solid #e4ecf4; border-radius: 8px;
-  padding: 14px 18px;
+.dash-frame {
+  border: 1.5px dashed #b7d4ee;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
 }
-.fi-fmt {
-  width: 48px; height: 48px; border-radius: 8px; flex: 0 0 48px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; color: #fff; letter-spacing: .5px;
+.dash-frame h3 {
+  font-size: 16px;
+  color: var(--navy-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
 }
-.fmt-pdf  { background: linear-gradient(135deg, #e53e3e, #c53030); }
-.fmt-docx { background: linear-gradient(135deg, #2b6cb0, #1668a8); }
-.fmt-xlsx { background: linear-gradient(135deg, #2f855a, #276749); }
-.fmt-mp4  { background: linear-gradient(135deg, #6b46c1, #553c9a); }
-.fmt-jpg  { background: linear-gradient(135deg, #d48806, #b7791f); }
-.fmt-other{ background: linear-gradient(135deg, #4a5568, #2d3748); }
+.dash-frame h3 i {
+  width: 4px; height: 16px; background: var(--blue); border-radius: 2px; display: inline-block;
+}
 
+.file-infobar { display: flex; align-items: center; gap: 14px; }
+.file-ico {
+  width: 36px; height: 36px; border-radius: 6px;
+  display: grid; place-items: center;
+  color: #fff; font-size: 13px; font-weight: 700; flex: 0 0 auto;
+}
+.file-ico.word { background: #2b7cd3; }
+.file-ico.excel { background: #217346; }
+.file-ico.pdf { background: #e2574c; }
+.file-ico.img { background: #7b6bb0; }
+.file-ico.media { background: #6b46c1; }
+.file-ico.file { background: #7c8fa2; }
 .fi-meta { flex: 1; min-width: 0; }
 .fi-name { font-size: 16px; font-weight: 600; color: #1a3a5a; }
 .fi-attrs { font-size: 13px; color: #8a99a8; margin-top: 4px; }
 .fi-attrs .dot { margin: 0 5px; }
 .fi-actions { display: flex; gap: 8px; flex: 0 0 auto; }
-.act-btn {
-  height: 32px; padding: 0 14px; border-radius: 6px; border: 1px solid #d5e0ea;
-  background: #fff; color: #3f5062; font-size: 13.5px; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 5px; transition: all .12s;
-}
-.act-btn:hover { border-color: #9ec8e8; color: #1668a8; }
-.act-btn.primary { background: linear-gradient(#14639f, #0d4e83); color: #fff; border-color: #0d4e83; }
-.act-btn.primary:hover { filter: brightness(1.06); }
 
-/* 主体 */
 .detail-body {
   display: grid;
   grid-template-columns: 260px 1fr;
-  gap: 14px;
-  align-items: start;
+  grid-template-rows: auto auto auto;
+  gap: 16px;
+  align-items: stretch;
 }
-
-/* 章节树面板 */
-.chapter-panel {
-  background: #fff; border: 1px solid #e4ecf4; border-radius: 8px;
-  overflow: hidden;
+.stat-frame { grid-column: 1 / -1; grid-row: 1; }
+.chapter-frame {
+  grid-column: 1;
+  grid-row: 2 / 4;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
-.panel-title {
-  display: flex; align-items: center; gap: 6px;
-  padding: 12px 14px; border-bottom: 1px solid #eef3f8;
-  font-size: 14px; font-weight: 600; color: #0d4e83;
+.index-frame { grid-column: 2; grid-row: 2; }
+.entity-frame {
+  grid-column: 2;
+  grid-row: 3;
+  display: flex;
+  flex-direction: column;
 }
-.panel-title svg { width: 15px; height: 15px; color: #0d4e83; }
 .chapter-count {
-  margin-left: auto; font-size: 12px; font-weight: 400;
-  color: #8a99a8; background: #f0f4f8; padding: 2px 8px; border-radius: 9px;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 400;
+  color: #8a99a8;
+  background: #f0f4f8;
+  padding: 2px 8px;
+  border-radius: 9px;
 }
-.chapter-tree { padding: 6px 0 10px; }
+.chapter-tree { padding: 2px 0 4px; flex: 1; }
 .chap-item {
   display: flex; align-items: center; gap: 7px;
-  padding: 7px 14px; cursor: pointer; font-size: 13.5px; color: #3e5163;
-  transition: background .1s;
+  padding: 8px 8px; cursor: pointer; font-size: 13.5px; color: #3e5163;
+  border-radius: 6px;
 }
 .chap-item:hover { background: #f4f8fc; }
 .chap-item.active { background: #e8f2fb; color: #1668a8; font-weight: 600; }
-.chap-item.lv2 { padding-left: 30px; font-size: 13px; color: #55677a; }
+.chap-item.lv2 { padding-left: 28px; font-size: 13px; color: #55677a; }
 .chap-item.lv2.active { color: #1668a8; font-weight: 600; }
 .chap-arrow { width: 13px; height: 13px; color: #8a99a8; flex: none; transition: transform .15s; }
 .chap-item.open .chap-arrow { transform: rotate(90deg); }
 .chap-dot { width: 13px; height: 13px; color: #c5d4e0; flex: none; }
 
-/* 右侧区域 */
-.detail-right { display: flex; flex-direction: column; gap: 14px; }
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stat {
+  background: #f7fbfe;
+  border: 1px solid #e6eef6;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.stat-ico {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center; flex: 0 0 auto;
+}
+.stat-ico svg { width: 20px; height: 20px; }
+.stat-ico.all { background: #e8f2fb; color: #1668a8; }
+.stat-ico.done { background: #e8f7ec; color: #2f9e62; }
+.stat-ico.run { background: #fff6e6; color: #d48806; }
+.stat-label { color: #6d8092; font-size: 13px; }
+.stat-value { margin-top: 2px; font-size: 24px; font-weight: 700; line-height: 1.2; }
+.stat-value small { font-size: 12px; font-weight: 500; color: #8a99a8; }
+.stat-value.all { color: #1668a8; }
+.stat-value.done { color: #2f9e62; }
+.stat-value.run { color: #d48806; }
 
-.section-title {
-  font-size: 13.5px; font-weight: 600; color: #0d4e83;
-  margin-bottom: 10px; padding-left: 2px;
-}
-
-/* 统计卡片 */
-.stat-section {
-  background: #fff; border: 1px solid #e4ecf4; border-radius: 8px; padding: 14px 16px;
-}
-.stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.stat-card {
-  display: flex; align-items: center; gap: 12px;
-  background: #f5f8fb; border-radius: 8px; padding: 12px 14px;
-}
-.stat-card svg { width: 28px; height: 28px; color: #d0ab68; flex: none; }
-.stat-val { font-size: 26px; font-weight: 700; color: #0d4e83; line-height: 1.1; font-family: "DIN Alternate", "Segoe UI", sans-serif; }
-.stat-lbl { font-size: 12.5px; color: #8a99a8; margin-top: 2px; }
-
-/* 语义索引 */
-.index-section {
-  background: #fff; border: 1px solid #e4ecf4; border-radius: 8px; padding: 14px 16px;
-}
 .index-card {
-  border: 1px solid #e4ecf4; border-radius: 8px; padding: 14px;
-  background: #fafcfe;
+  border: 1px solid #e6eef6;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: #f7fbfe;
 }
-.index-card.built { border-color: #b3d9a8; background: #f4faf3; }
-.index-status-row {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
-}
-.index-dot {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: #a7b7c6;
-}
-.index-card.built .index-dot { background: #2fbf4a; box-shadow: 0 0 0 3px rgba(47,191,74,.15); }
-.index-status-text { font-size: 15px; font-weight: 600; color: #33506a; }
-.index-card.built .index-status-text { color: #22913c; }
+.index-card.built { border-color: #cfe8d6; background: #f4faf3; }
+.index-status-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.dot-status { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.dot-status i { width: 7px; height: 7px; border-radius: 50%; }
+.dot-status.ok { color: #2f9e62; } .dot-status.ok i { background: #2fbf4a; }
+.dot-status.wait { color: #d4380d; } .dot-status.wait i { background: #f5222d; }
 .index-badge {
   margin-left: auto; font-size: 12px; padding: 1px 8px; border-radius: 9px;
   background: #e4f6e8; color: #22913c;
@@ -349,11 +378,7 @@ const maxEntCount = computed(() => Math.max(...entitySummary.map((e) => e.count)
 .meta-val { color: #3f5062; }
 .index-actions { display: flex; gap: 8px; }
 
-/* 实体识别概况 */
-.entity-section {
-  background: #fff; border: 1px solid #e4ecf4; border-radius: 8px; padding: 14px 16px;
-}
-.entity-list { display: flex; flex-direction: column; gap: 8px; }
+.entity-list { display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .ent-row { display: grid; grid-template-columns: 90px 1fr 36px; align-items: center; gap: 10px; font-size: 13px; }
 .ent-type {
   display: inline-flex; align-items: center; height: 20px; padding: 0 8px;

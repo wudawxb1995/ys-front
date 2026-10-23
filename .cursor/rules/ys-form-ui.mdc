@@ -1,0 +1,190 @@
+---
+description: 平台 UI：Element Plus 优先 + 虚线框表单视觉。改表单/入库/控件封装/element-theme 时必读；改完同步迭代本 rule。
+globs: src/components/pages/rich/**/*.vue,src/components/SelectField.vue,src/components/DateField.vue,src/components/TextAreaField.vue,src/components/ModalHost.vue,src/composables/ui.js,src/styles/element-theme.css,src/main.js,src/data/designMenus.js,src/config/page-registry.js
+alwaysApply: false
+---
+
+# 平台 UI 规范（EP 优先 + 虚线框语言）
+
+**维护约定**：对齐新页或换控件后，**同步更新本 rule**。
+
+## 0. Element Plus 优先（全工程）
+
+- **能用 EP 就用 EP**，不要再写一套自定义下拉/日期/弹窗/Toast
+- 视觉以现有平台为准：token 在 `src/styles/element-theme.css`，**改色改圆角先改这里**，勿散落改 EP 默认紫系
+- 封装入口（保持旧 API，页面少改）：
+  | 场景 | 使用 |
+  |------|------|
+  | 下拉 | `SelectField` → `el-select` |
+  | 日期 | `DateField` → `el-date-picker` |
+  | 多行文字域 | `TextAreaField` → `el-input` textarea + `show-word-limit`（字数在**框内右下角**） |
+  | Toast | `useUi().toast` → `ElMessage` |
+  | 确认 | `useUi().confirm` → `ElMessageBox` |
+  | 表单弹窗/抽屉 | `ModalHost` → `ElDialog` / `ElDrawer` |
+- 新代码可直接写 `el-button` / `el-input` / `el-select` / `el-checkbox` / `el-pagination`，样式吃 `element-theme.css`
+- **已替换主路径**：`CrudPage` 筛选/工具栏/分页；`ResourceCatalogPage` 搜索/状态/按钮；入库与需求配置主按钮
+- **禁止**原生 `input[type=date]`、自绘下拉面板（旧 SelectField 实现已废弃）；新页勿再写 `.btn.btn-primary` 除非过渡兼容
+
+## 1. Token（虚线框语言）
+
+| 用途 | 值 |
+|------|-----|
+| 虚线框 | `1.5px dashed #b7d4ee`，圆角 `12px` |
+| 白底内容卡 | 圆角 12px + 浅阴影；外框 `var(--line)` |
+| 段标题 | 框内 `h3` + 左竖条 `4×16` `var(--blue)` |
+| 描边次按钮 | 白底，字 `#1668a8`，边 `#8eb4d4` |
+| 主按钮 | 蓝底渐变 `#14639f→#0d4e83`，**文字必须纯白 `#fff`**（禁止蓝底深蓝字） |
+| 上传区底 | `linear-gradient(180deg, #f7fbfe, #eef6fc)` |
+| Placeholder | `#a8b8c6` |
+| 文字域字数 | 框内右下角（`TextAreaField` / `show-word-limit`），禁止框外 `.counter` |
+
+### 表格（全工程）
+- **表头必须完整显示**：禁止 `序...` / `字段...` 等省略，禁止表头换行
+- 表头 `white-space: nowrap` + `overflow: visible` + `text-overflow: clip`；列宽按表头文字给够（如「序号」≥64）
+- 单元格过长可用 `...` + tooltip；横向不够时**表格左右滚动**，不要挤换行、不要截表头
+
+对照页：`EntryPage`、`CaseInboundPage`、`TplInboundPage`、`NeedConfigPage`、`SchemeReviewPage`、`CodeCheckConfigPage`、`CodeNoteConfigPage`、`CodeNeedConfigPage`、`GraphMapConfigPage`、`ResUpdatePage`、`DeviceExtractPage`、`VectorParsePage`、`ClusterFeatPage`、`HistDocFetchPage`。
+
+## 2. 页面类型
+
+### A. 入库页
+- 上传虚线渐变区；有页签浮框顶（Case），无页签标题在框内（Tpl）
+- 「重置」描边蓝 +「确认入库」主色；任务表在虚线框内无表外框
+
+### B. 多段配置（NeedConfig）
+- `.sec-frame` 标题在框内；禁止通栏硬塞大文本（除非原型通栏）
+- `.split-form`：左 N 右 1（任务目标 / 重点关注内容独占右）
+- `.dual-cols`：底行并排半宽（对象描述\|图片；试验资源\|其他条件）
+- `.field-row` 标签列固定 `5.5em`，输入左边框齐平
+- 日期区间：两个 `DateField` + `-`，占位「开始日期 / 结束日期」
+
+### C. 人工校核（SchemeReview）
+- 四宫格：方案基本信息 | 章节目录 / 方案正文 | 人工校核意见
+- EP：`el-form` / `el-table` / `el-dialog` / `el-button`；简介用 `TextAreaField`；日期用 `DateField`
+- **不要**再用会话列表 Chat 页冒充人工校核
+
+#### 表单标签（info / 弹窗）
+- `label-width` 固定（信息区 `7.2em`，弹窗 `5.5em`）；标签**文字左对齐、不换行**
+- 必填 `*` **贴标签区右缘**（靠近输入框），不要跟在文字后面、不要跑到左边
+- 做法：`require-asterisk-position="right"` + 关掉 EP `::before`，用 `::after` 绝对定位 `right: 2px`
+
+#### 方案正文（固定高 + 内滚）
+- `.body-panel`：`min-height: 420px`、`max-height: 520px`；`.sec-frame` 已是 column flex + `min-height: 0`
+- `.editor-shell` 占满剩余高度；工具栏/页脚 `flex: 0`；`.editor-body`：`flex:1; min-height:0; height:0; overflow-y:auto`
+- **禁止**随正文变长把整块卡片撑高
+- 工具栏必须真正改 `contenteditable`：字体/`fontName`、字号（`fontSize` 转 `span` px）、B/I/U、无序列表、插入链接（EP prompt）、本地图片（file → dataURL）；禁止只 `toast` 占位
+- 工具栏按钮用 `@mousedown.prevent` 保住选区；B/I/U/列表有 `.on` 状态
+
+#### 人工校核意见表（固定高 + 内滚）
+- `.opinion-panel` 与正文同高：`min-height: 420px`、`max-height: 520px`
+- `.table-wrap`：`flex:1; min-height:0; height:0; overflow:hidden`；`el-table` 设 `height="100%"`（表头固定、表体竖滚）
+- 「+ 新增校核意见」在框内表格下方，`flex: 0`，不随行数下沉出框
+- 单元格 **nowrap**（章节/意见/状态/操作不折行、不 ellipsis）；横向不够时由表格内部出横滚，不要把列挤换行
+- 操作列「编辑 / 删除」并排，删除用危险色 `#d4380d`
+
+#### 底栏按钮
+- 右对齐 `.page-actions`；预览/保存描边蓝 +「提交校核结果」主色**白字** `#fff`
+- 按钮间距 **`gap: 8px`**；并覆盖 EP 默认 `.el-button + .el-button { margin-left }` 为 `0`，避免 gap 叠 margin
+
+### D. 代码检查任务配置（CodeCheckConfig）
+- 2×2 虚线框：任务基本信息 | 源代码预览（只读） / 检查范围选择 | 检查要求（底行两框**等高**）
+- 任务基本信息**全部必填**；标签文字左对齐；`*` 与文字垂直居中平齐，`right: 6px`（相对输入框左移，勿贴死）；输入值 `#3f5062`，placeholder `#a8b8c6`
+- **无预填**：名称/描述/检查重点/期望输出为空；检查范围不预勾；上传区默认无文件，预览显示「未选择文件」；由用户自行填写、上传或从库中选择
+- EP：`el-form` / `el-radio-group` / `el-checkbox-group` / `el-input`；描述/检查重点/期望输出用 `TextAreaField`
+- 「检查要求」文字域压矮（约 2 行 / `min-height:52px`），勿高于左侧检查范围
+- 上传区：虚线渐变 + 云图标；已传文件用橙色扩展名芯片，可移除；支持拖拽/点击，读入文本后刷新只读预览
+- 「从已有代码中选择」切 `SelectField`，不要继续用 Chat 会话页冒充本页
+- 预览：浅底 + 行号 + 关键字着色，只读；代码框宽度跟右栏走，不随长行撑宽；内容过长在框内上下（及必要时横向）滚动
+- 检查范围：全选 + 4 列复选；两行 `row-gap: 20px`；标签可换行、不压虚线框；底栏右对齐「保存配置」描边蓝 +「提交检查任务」主色白字，`gap: 8px`
+
+### E. 代码注释任务配置（CodeNoteConfig）
+- **不要**再用 CRUD 列表冒充本页；`type: code-note`
+- 上：基本信息 | 代码来源选择（生成/纠错后/已有 + 选择代码文件上传）
+- 中：源代码预览通栏，右上「文件编码」；代码框固定高度，超长框内滚动，不撑宽
+- 下：注释范围与内容要求（三项复选 + 说明） | 注释规范要求（语言/详细程度/风格必填，其他要求可选）
+- 必填 `*` 与文字平齐，`right: 6px`；名称/描述/文件/范围/规范**无预填**，由用户填写上传
+- 上传区与已选文件芯片**并排**；底栏「保存配置」+「提交任务」，`gap: 8px` 主按钮白字
+
+### F. 试验编码需求配置（CodeNeedConfig）
+- **不要**再用 `type: code` 代码页冒充；`type: code-need`
+- 2×3 虚线框：任务基础信息 | 程序功能需求 / 编程语言选择 | 输入输出要求 / 生成要求设置 | 其他信息
+- 语言用三张可选卡片（Python / C++ / MATLAB），选中蓝框；日期用 `DateField`
+- 必填：任务名称/项目/类型/优先级/领域、功能描述、目标语言、输出结果要求；文案与参考资料**无预填**
+- 底栏右对齐「暂存」描边蓝 +「保存需求」主色白字，`gap: 8px`
+
+### G. 结构化资源图谱映射（GraphMapConfig）
+- **不要**再用 `type: graph` 图谱页冒充；`type: graph-map`
+- 上 3 下 2 虚线框：①选择数据集 | ②查看源数据字段 | ③配置字段映射 / ④映射规则配置 | ⑤映射预览
+- 段标题用蓝色圆序号（非左竖条）；字段/规则表固定高、框内滚动
+- 必填 `*` 与文字平齐，`right: 6px`；数据描述/映射规则**无预填**，选择数据源后才加载源字段
+- ③「+ 添加映射规则」描边蓝；「重置」+「保存映射配置」主色白字；⑤「开始映射」主色白字，`gap: 8px`
+
+### H. 试验资源更新（ResUpdate）
+- **不要**再用 `type: crud` 列表冒充；`type: res-up`
+- 左查询+列表 | 右资源详细信息，三段虚线框，标题在框内 + 左蓝竖条
+- 查询：名称/类型/专业/状态 + 起止日期（`DateField`）；「查询」主色白字 +「重置」描边蓝，`gap: 8px`
+- 列表：单选 + 查看；状态「有效」绿底、「待更新」橙底；表头完整显示；分页 `el-pagination`
+- 详情必填：名称/类型/专业/更新说明；`*` 与文字平齐 `right: 6px`；查询条件与更新说明**无预填**，点选列表后才带出详情
+- 底栏右对齐「取消」+「保存更新」主色白字，`gap: 8px`
+
+### I. 试验设备信息抽取（DeviceExtract）
+- **不要**再用 `type: crud` 列表冒充；`type: struct-dev`
+- 上：源文档选择（查询+单选列表）| 源文档内容片段（文件芯片+框内滚动）
+- 下：设备信息抽取结果表；右上「重新抽取」描边蓝 +「导出结果」+「保存结果」主色白字，`gap: 8px`
+- 查询条件**无预填**；点选文档后才带出片段与抽取结果；表头不换行，超宽左右滚
+
+### J. 试验资源向量化解析（VectorParse）
+- **不要**再用 `type: crud` 列表冒充；`type: vec-parse`
+- 2×2 虚线框：①选择数据集 | ②字段选择+解析配置 / ③结构化资源记录 | ④解析文本预览
+- 段标题蓝色圆序号；数据集/描述/自定义文本**无预填**，选数据集后才加载字段与记录
+- ④「保存解析结果」描边蓝 +「开始解析」主色白字，`gap: 8px`
+- ④底部分页单行不换行；页码最多显示 3 个，多出的序号收成 `...`（如 `‹ ... 4 ... ›`），不要把 1–N 全列出来、不要折行
+
+### K. 资源聚类特征提取（ClusterFeat）
+- **不要**再用 `type: crud` 列表冒充；`type: cls-feat`
+- 虚线框：数据选择（标题与首行字段同一行：数据集*、范围*、类型；时间范围在类型下方，中间「至」）| 结构化资源列表 + 特征提取配置 | 特征数据预览
+- 特征字段 3×3（属性/用途/规格；对象/条件/方法；环境类型/试验设备/其他），标题带*；下接「特征提取要求」：格式、粒度+缺失值处理* 并排、备注
+- 标题在框内 + 左蓝竖条；查询/备注**无预填**，选数据集后才出列表；特征字段不预勾
+- 列表多选 + 批量选择；配置底栏「预览特征数据」「保存特征配置」描边蓝 +「开始提取」主色白字，`gap: 8px`
+- 预览列随勾选字段；状态「已提取」绿点、「提取中」青点；表头完整不换行
+
+### L. 历史文档获取（HistDocFetch）
+- **不要**再用 `type: crud` 列表冒充；`type: res-doc`
+- 白底整页：查询 4×2（来源/名称/试验类型/文档类型；试验时间~、对象、项目、关键词）+「重置」描边蓝「查询」主色白字
+- 左文档列表多选 + 获取所选/清空选择；右「文档信息」点选后展示；查询**无预填**
+- 表头完整不换行；文件名带类型色标（W/A/X/Z）
+
+## 3. 接线
+
+- 专用页独立 `type`（`case-in` / `tpl-in` / `need-cfg` / `scheme-review` / `code-check` / `code-note` / `code-need` / `graph-map` / `res-up` / `struct-dev` / `vec-parse` / `cls-feat` / `res-doc`），勿与 `m08`/`crud`/`chat`/`code`/`graph` 混用
+- `page-registry.js` 映射；勿把专用叶子塞进 `reuse(crud(...))` / `reuse({ type:'chat' })`
+
+## 4. 禁止
+
+- ❌ Crud/m08/chat/code/graph 冒充配置/入库/代码检查/代码注释/编码需求/图谱映射/资源更新/设备抽取/向量解析/聚类特征提取/历史文档获取页
+- ❌ 标题在框外 + 实线灰框
+- ❌ 截图没有的区块从别页硬拷
+- ❌ 绕过 EP 再写一套 Toast/Modal/Select/Date
+- ❌ 正文编辑区 / 意见表随内容无限长高（必须框内滚动）
+- ❌ 必填 `*` 在标签文字左侧或紧跟文字中间
+- ❌ 页底按钮吃 EP 默认 `margin-left` 导致间距不准
+- ❌ 表头省略号或换行（「序号」写成「序...」）
+
+## 5. 交付前
+
+- [ ] EP 控件 + theme 色未跑偏
+- [ ] 虚线框 `#b7d4ee`，标题在框内
+- [ ] 表头完整单行，不出现 `...`、不换行；不够宽就表内横滚
+- [ ] 无原生 date；placeholder 为灰 `#a8b8c6`
+- [ ] type + registry 已接
+- [ ] 校核页：标签左字右 `*`；正文/意见表 `max-height:520` 内滚；底栏 `gap:8px` 主按钮白字
+- [ ] 代码检查配置：非 Chat；左右虚线框 + 上传/预览/检查范围；提交按钮白字
+- [ ] 代码注释配置：非 CRUD；基本信息/来源上传/通栏预览/范围+规范；无预填文件与文案
+- [ ] 编码需求配置：非 Code 页；六宫格虚线框 + 语言卡片；无预填；暂存/保存需求
+- [ ] 图谱映射配置：非 Graph 页；五宫格虚线框 + 圆序号；源字段/规则表内滚；无预填规则
+- [ ] 资源更新：非 CRUD；左查询列表 + 右详情虚线框；无预填查询/说明
+- [ ] 设备抽取：非 CRUD；源文档选择 + 内容片段 + 抽取结果表
+- [ ] 向量化解析：非 CRUD；四宫格虚线框 + 圆序号；无预填
+- [ ] 聚类特征提取：非 CRUD；数据选择 + 列表/配置 + 预览；无预填查询与字段勾选
+- [ ] 历史文档获取：非 CRUD；查询 + 列表多选 + 右侧文档信息；无预填查询
+- [ ] **本 rule 已按差异补一句**

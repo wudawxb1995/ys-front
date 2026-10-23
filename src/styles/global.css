@@ -411,8 +411,8 @@ button { cursor: pointer; }
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   font-size: 14px; letter-spacing: .5px; background: #fff;
 }
-.btn-primary { background: linear-gradient(#14639f, #0d4e83); color: #fff; border-color: #0d4e83; box-shadow: 0 2px 5px rgba(13,78,131,.25); }
-.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary { background: linear-gradient(#14639f, #0d4e83); color: #fff !important; border-color: #0d4e83; box-shadow: 0 2px 5px rgba(13,78,131,.25); }
+.btn-primary:hover { color: #fff !important; filter: brightness(1.06); }
 .btn-outline { background: #fff; color: #3f5062; border-color: #c9d6e2; }
 .btn-outline:hover { border-color: #8eb4d4; color: #0d4e83; }
 .btn-ghost { background: transparent; color: var(--blue); border-color: transparent; height: 30px; padding: 0 4px; }

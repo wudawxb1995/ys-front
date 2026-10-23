@@ -24,20 +24,24 @@ export function designSystems() {
           ],
         )),
         g('gen-g', '试验方案辅助生成', 'scheme', [
-          leaf('gen-need', '试验设计需求配置', { type: 'm08', desc: '配置试验设计需求、考核指标与约束条件。' }),
+          leaf('gen-need', '试验设计需求配置', {
+            type: 'need-cfg',
+            desc: '配置试验设计任务的基本信息、试验对象、试验条件与方案设计要求。',
+          }),
           leaf('gen-src', '方案生成依据获取', { type: 'm08', desc: '获取历史案例、资源条件与标准模板作为生成依据。' }),
           leaf('gen', '试验方案智能生成', { type: 'm08', desc: '生成新方案初稿并支持人工编辑。当前示例方案包含 22 个试验因子。' }),
           leaf('gen-edit', '方案初稿编辑', { type: 'm08', desc: '对方案初稿进行人工编辑与确认。' }),
         ]),
-        g('case-in', '试验案例资源入库', 'database', reuse(
-          crud('历史试验案例与试验资源的入库、关键词检索和多条件查阅。', 'cases'),
-          [
-            ['cases', '历史试验案例入库'],
-            ['cases-res', '试验资源入库'],
-            ['cases-search', '案例资源检索'],
-            ['cases-read', '案例资源查阅'],
-          ],
-        )),
+        g('case-in', '试验案例资源入库', 'database', [
+          leaf('cases', '历史试验案例入库', {
+            type: 'case-in',
+            desc: '登记历史试验案例信息，上传关联资料并完成入库。可检索已入库案例作为参照。',
+            dataset: 'cases',
+          }),
+          leaf('cases-res', '试验资源入库', crud('试验资源入库登记与维护。', 'cases')),
+          leaf('cases-search', '案例资源检索', crud('按关键词与条件检索历史案例和试验资源。', 'cases')),
+          leaf('cases-read', '案例资源查阅', crud('查阅已入库案例与资源详情。', 'cases')),
+        ]),
         g('case-up', '试验案例资源更新', 'compare', reuse(
           crud('案例与资源版本管理，历史版本可在线查看。', 'schemes'),
           [
@@ -47,25 +51,36 @@ export function designSystems() {
             ['ver-hist', '历史版本在线查阅'],
           ],
         )),
-        g('tpl-g', '试验标准方案模板库', 'book', reuse(
-          crud('管理资源库中的试验方案模板，支持上传、更新与删除。', 'schemeTpls'),
-          [
-            ['tpl', '试验方案模板入库'],
-            ['tpl-up', '试验方案模板更新'],
-            ['tpl-del', '试验方案模板删除'],
-            ['tpl-mgr', '标准方案模板库管理'],
-          ],
-        )),
-        g('opt-g', '试验方案交互优化', 'chat', reuse(
-          { type: 'chat', chatKey: 'scheme', desc: '通过多轮对话补充关键词和设计思路，持续校核方案合理性。' },
-          [
-            ['chat-man', '试验方案人工校核'],
-            ['chat', '自然语言交互'],
-            ['chat-cond', '方案优化条件补充'],
-            ['chat-round', '多轮方案优化'],
-            ['chat-check', '方案合理性校核'],
-          ],
-        )),
+        g('tpl-g', '试验标准方案模板库', 'book', [
+          leaf('tpl', '试验方案模板入库', {
+            type: 'tpl-in',
+            desc: '支持试验方案模板上传、元信息登记与集中入库。',
+            dataset: 'schemeTpls',
+          }),
+          ...reuse(
+            crud('管理资源库中的试验方案模板，支持上传、更新与删除。', 'schemeTpls'),
+            [
+              ['tpl-up', '试验方案模板更新'],
+              ['tpl-del', '试验方案模板删除'],
+              ['tpl-mgr', '标准方案模板库管理'],
+            ],
+          ),
+        ]),
+        g('opt-g', '试验方案交互优化', 'chat', [
+          leaf('chat-man', '试验方案人工校核', {
+            type: 'scheme-review',
+            desc: '对照方案信息与正文进行人工校核，按章节登记意见并提交结果。',
+          }),
+          ...reuse(
+            { type: 'chat', chatKey: 'scheme', desc: '通过多轮对话补充关键词和设计思路，持续校核方案合理性。' },
+            [
+              ['chat', '自然语言交互'],
+              ['chat-cond', '方案优化条件补充'],
+              ['chat-round', '多轮方案优化'],
+              ['chat-check', '方案合理性校核'],
+            ],
+          ),
+        ]),
       ],
     },
     {
@@ -88,39 +103,54 @@ export function designSystems() {
             { label: '已注释函数', value: '210', unit: '个' },
           ],
         )),
-        g('code-gen', '数字试验代码生成', 'code', reuse(
-          { type: 'code', desc: '按试验编码需求生成 Python、C++、MATLAB 代码并管理成果。' },
-          [
-            ['code-need', '试验编码需求配置'],
-            ['code-llm', '编码大模型调用'],
-            ['code-py', 'Python代码生成'],
-            ['code-cpp', 'C++代码生成'],
-            ['code-mat', 'MATLAB代码生成'],
-            ['gen', '代码生成成果管理'],
-          ],
-        )),
-        g('code-fix', '试验代码纠错优化', 'chat', reuse(
-          { type: 'chat', chatKey: 'code', desc: '识别语法错误和逻辑漏洞，给出纠错建议，支持多轮对话优化。' },
-          [
-            ['fix-task', '代码检查任务配置'],
-            ['fix-syn', '代码语法错误识别'],
-            ['fix-logic', '代码逻辑漏洞分析'],
-            ['fix', '代码纠错建议生成'],
-            ['fix-round', '多轮对话优化'],
-            ['fix-ok', '代码纠错结果验证'],
-          ],
-        )),
-        g('code-note', '试验代码注释生成', 'code', reuse(
-          crud('自动补充函数说明、参数含义和执行逻辑，提升可读性。', 'codes'),
-          [
-            ['note-task', '代码注释任务配置'],
-            ['note', '函数说明注释生成'],
-            ['note-param', '参数含义注释生成'],
-            ['note-logic', '执行逻辑注释生成'],
-            ['note-std', '注释规范化处理'],
-            ['note-mgr', '注释成果管理'],
-          ],
-        )),
+        g('code-gen', '数字试验代码生成', 'code', [
+          leaf('code-need', '试验编码需求配置', {
+            type: 'code-need',
+            desc: '根据数字试验任务要求，配置试验代码生成需求，明确程序功能、编程语言及相关生成要求。',
+          }),
+          ...reuse(
+            { type: 'code', desc: '按试验编码需求生成 Python、C++、MATLAB 代码并管理成果。' },
+            [
+              ['code-llm', '编码大模型调用'],
+              ['code-py', 'Python代码生成'],
+              ['code-cpp', 'C++代码生成'],
+              ['code-mat', 'MATLAB代码生成'],
+              ['gen', '代码生成成果管理'],
+            ],
+          ),
+        ]),
+        g('code-fix', '试验代码纠错优化', 'audit', [
+          leaf('fix-task', '代码检查任务配置', {
+            type: 'code-check',
+            desc: '选择需要检查的试验代码，配置检查范围及相关要求，明确代码纠错优化任务。',
+          }),
+          ...reuse(
+            { type: 'chat', chatKey: 'code', desc: '识别语法错误和逻辑漏洞，给出纠错建议，支持多轮对话优化。' },
+            [
+              ['fix-syn', '代码语法错误识别'],
+              ['fix-logic', '代码逻辑漏洞分析'],
+              ['fix', '代码纠错建议生成'],
+              ['fix-round', '多轮对话优化'],
+              ['fix-ok', '代码纠错结果验证'],
+            ],
+          ),
+        ]),
+        g('code-note', '试验代码注释生成', 'doc', [
+          leaf('note-task', '代码注释任务配置', {
+            type: 'code-note',
+            desc: '选择需要加注释的试验代码，配置注释生成范围及相关要求，明确代码注释任务。',
+          }),
+          ...reuse(
+            crud('自动补充函数说明、参数含义和执行逻辑，提升可读性。', 'codes'),
+            [
+              ['note', '函数说明注释生成'],
+              ['note-param', '参数含义注释生成'],
+              ['note-logic', '执行逻辑注释生成'],
+              ['note-std', '注释规范化处理'],
+              ['note-mgr', '注释成果管理'],
+            ],
+          ),
+        ]),
       ],
     },
     {
@@ -144,61 +174,91 @@ export function designSystems() {
             { label: '向量维度', value: '1024', unit: '维' },
           ],
         )),
-        g('res-ext', '试验资源智能提取', 'parse', reuse(
-          crud('识别文本、图表、图像中的试验资源。图像提供 OCR。', 'testRes'),
-          [
-            ['res-doc', '历史文档获取'],
-            ['res-text', '文本资源识别'],
-            ['res-chart', '图表资源识别'],
-            ['res-img', '图像资源识别'],
-            ['res', '试验资源信息提取'],
-          ],
-        )),
-        g('res-struct', '试验资源结构化处理', 'parse', reuse(
-          crud('抽取试验设备与参数信息，生成标准化结构化数据。', 'testRes'),
-          [
-            ['struct-dev', '试验设备信息抽取'],
-            ['struct-param', '试验参数信息抽取'],
-            ['struct-std', '资源数据标准化'],
-            ['struct-out', '结构化数据生成'],
-          ],
-        )),
-        g('res-vec', '试验资源向量数据库构建', 'vector', reuse(
-          crud('资源向量化解析并构建向量库。', 'vecChunks'),
-          [
-            ['vec-parse', '试验资源向量化解析'],
-            ['vec-gen', '试验资源向量生成'],
-            ['vec', '向量数据库构建'],
-            ['vec-mgr', '向量资源管理'],
-          ],
-        )),
-        g('res-kg', '历史试验资源知识图谱构建', 'graph', reuse(
-          { type: 'graph', graphKey: 'resource', desc: '结构化资源映射为实体和关系，形成历史试验资源图谱。' },
-          [
-            ['graph-map', '结构化资源图谱映射'],
-            ['graph-ent', '试验资源实体构建'],
-            ['graph-rel', '试验资源关系构建'],
-            ['graph', '历史试验资源图谱生成'],
-          ],
-        )),
-        g('res-cls', '试验资源智能分类聚类', 'cluster', reuse(
-          crud('按属性、用途、规格提取聚类特征并生成分类体系。', 'testRes'),
-          [
-            ['cls-feat', '资源聚类特征提取'],
-            ['cls-run', '资源智能聚类'],
-            ['cls-sys', '资源分类体系生成'],
-            ['cls-mgr', '分类聚类结果管理'],
-          ],
-        )),
-        g('res-ops', '试验资源迭代维护', 'database', reuse(
-          crud('支持更新、删除和校验，跟踪资源更新状态。', 'testRes'),
-          [
-            ['ops-up', '试验资源更新'],
-            ['ops-del', '试验资源删除'],
-            ['ops-check', '资源数据校验'],
-            ['ops-st', '资源更新状态管理'],
-          ],
-        )),
+        g('res-ext', '试验资源智能提取', 'extract', [
+          leaf('res-doc', '历史文档获取', {
+            type: 'res-doc',
+            desc: '从试验鉴定领域资源库中获取历史试验文档，支持按条件查询、选择并获取所需历史试验文档。',
+          }),
+          ...reuse(
+            crud('识别文本、图表、图像中的试验资源。图像提供 OCR。', 'testRes'),
+            [
+              ['res-text', '文本资源识别'],
+              ['res-chart', '图表资源识别'],
+              ['res-img', '图像资源识别'],
+              ['res', '试验资源信息提取'],
+            ],
+          ),
+        ]),
+        g('res-struct', '试验资源结构化处理', 'swap', [
+          leaf('struct-dev', '试验设备信息抽取', {
+            type: 'struct-dev',
+            desc: '从已识别的历史试验资源信息中提取试验设备名称、型号、规格等关键属性。',
+          }),
+          ...reuse(
+            crud('抽取试验设备与参数信息，生成标准化结构化数据。', 'testRes'),
+            [
+              ['struct-param', '试验参数信息抽取'],
+              ['struct-std', '资源数据标准化'],
+              ['struct-out', '结构化数据生成'],
+            ],
+          ),
+        ]),
+        g('res-vec', '试验资源向量数据库构建', 'layers', [
+          leaf('vec-parse', '试验资源向量化解析', {
+            type: 'vec-parse',
+            desc: '面向试验设备、试验参数等结构化试验资源数据，支持试验资源数据向量化解析。',
+          }),
+          ...reuse(
+            crud('资源向量化解析并构建向量库。', 'vecChunks'),
+            [
+              ['vec-gen', '试验资源向量生成'],
+              ['vec', '向量数据库构建'],
+              ['vec-mgr', '向量资源管理'],
+            ],
+          ),
+        ]),
+        g('res-kg', '历史试验资源知识图谱构建', 'graph', [
+          leaf('graph-map', '结构化资源图谱映射', {
+            type: 'graph-map',
+            desc: '选择结构化试验资源数据集，查看设备和参数源字段，配置字段至实体类型、实体属性和关系的映射。',
+          }),
+          ...reuse(
+            { type: 'graph', graphKey: 'resource', desc: '结构化资源映射为实体和关系，形成历史试验资源图谱。' },
+            [
+              ['graph-ent', '试验资源实体构建'],
+              ['graph-rel', '试验资源关系构建'],
+              ['graph', '历史试验资源图谱生成'],
+            ],
+          ),
+        ]),
+        g('res-cls', '试验资源智能分类聚类', 'cluster', [
+          leaf('cls-feat', '资源聚类特征提取', {
+            type: 'cls-feat',
+            desc: '面向历史试验资源信息，支持提取资源属性、用途、规格等特征，形成用于资源分类聚类的特征数据。',
+          }),
+          ...reuse(
+            crud('按属性、用途、规格提取聚类特征并生成分类体系。', 'testRes'),
+            [
+              ['cls-run', '资源智能聚类'],
+              ['cls-sys', '资源分类体系生成'],
+              ['cls-mgr', '分类聚类结果管理'],
+            ],
+          ),
+        ]),
+        g('res-ops', '试验资源迭代维护', 'sliders', [
+          leaf('ops-up', '试验资源更新', {
+            type: 'res-up',
+            desc: '支持对已有试验资源信息进行查询和更新，维护资源的基础信息及相关内容。',
+          }),
+          ...reuse(
+            crud('支持更新、删除和校验，跟踪资源更新状态。', 'testRes'),
+            [
+              ['ops-del', '试验资源删除'],
+              ['ops-check', '资源数据校验'],
+              ['ops-st', '资源更新状态管理'],
+            ],
+          ),
+        ]),
       ],
     },
     {
@@ -290,7 +350,7 @@ export function designSystems() {
             ['ana-all', '试验样本综合分析'],
           ],
         )),
-        g('aug-g', '试验样本数据增强', 'chart', reuse(
+        g('aug-g', '试验样本数据增强', 'spark', reuse(
           crud('对缺失数据补全、对噪声消除，并校验增强结果。', 'samples'),
           [
             ['aug-cfg', '样本增强任务配置'],
