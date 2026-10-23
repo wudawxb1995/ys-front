@@ -1,7 +1,7 @@
 /** 指标树配置：7 性能域 / 15 类 / 28 项 */
 export const m03TreeData = [
   {
-    id: 'root', name: '某型装备', level: 0, open: true, icon: 'device',
+    id: 'root', name: '某型', level: 0, open: true, icon: 'device',
     children: [
       {
         id: 'd-jd', name: '机动', level: 1, open: true, badge: 5,

@@ -176,10 +176,10 @@ import TextAreaField from '@/components/TextAreaField.vue'
 const DATASETS = [
   {
     id: 'eq-dev',
-    name: '装备试验设备资源数据集',
+    name: '试验设备资源数据集',
     resType: '试验设备',
     source: '试验资源结构化处理',
-    desc: '包含装备试验设备的基本信息、技术参数、使用条件等结构化数据。',
+    desc: '包含试验设备的基本信息、技术参数、使用条件等结构化数据。',
     total: 258,
     fields: [
       { key: 'name', name: '设备名称', type: '文本', sample: '高速数据采集仪' },

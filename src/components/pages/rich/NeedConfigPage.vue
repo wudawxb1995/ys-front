@@ -45,12 +45,12 @@
       <div class="dual-cols">
         <div class="col">
           <div class="field-row">
-            <label>装备类别<span class="req">*</span></label>
-            <select-field v-model="form.equipCat" :options="equipCatOptions" placeholder="请选择装备类别" />
+            <label>类别<span class="req">*</span></label>
+            <select-field v-model="form.equipCat" :options="equipCatOptions" placeholder="请选择类别" />
           </div>
           <div class="field-row">
-            <label>装备型号</label>
-            <input v-model="form.equipModel" placeholder="请输入装备型号" />
+            <label>型号</label>
+            <input v-model="form.equipModel" placeholder="请输入型号" />
           </div>
           <div class="field-row grow">
             <label class="align-top">对象描述</label>
@@ -225,8 +225,8 @@ export default {
     })
 
     const sourceOptions = ['上级下达', '型号研制', '专项课题', '用户委托']
-    const equipCatOptions = ['轮式装备', '履带装备', '农机装备', '通用装备']
-    const projectOptions = ['某型装备定型', '性能鉴定专项', '可靠性增长课题', '综合试验课题']
+    const equipCatOptions = ['轮式', '履带', '农机', '通用']
+    const projectOptions = ['某型定型', '性能鉴定专项', '可靠性增长课题', '综合试验课题']
     const envOptions = ['实验室', '野外', '高原', '湿热', '寒区']
     const condEnvOptions = ['常温常湿', '高温高湿', '低温低湿', '盐雾', '沙尘']
     const schemeTypeOptions = ['定型试验方案', '性能鉴定方案', '可靠性试验方案', '专项试验方案']
@@ -247,7 +247,7 @@ export default {
 
     function requiredOk() {
       if (!form.taskName?.trim() || !form.goal?.trim() || !form.equipCat || !form.schemeType || !form.focus?.trim()) {
-        toast('请填写任务名称、任务目标、装备类别、方案类型与重点关注')
+        toast('请填写任务名称、任务目标、类别、方案类型与重点关注')
         return false
       }
       return true

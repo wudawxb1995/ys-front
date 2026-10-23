@@ -166,7 +166,7 @@ import DateField from '@/components/DateField.vue'
 import TextAreaField from '@/components/TextAreaField.vue'
 
 const ROWS = [
-  { id: 1, name: '某型装备定型技术资料', type: '装备定型资料', spec: 'XX-100', major: '试验技术', updatedAt: '2026-10-22', version: 'V1.2', status: '有效', usage: '', cond: '', note: '' },
+  { id: 1, name: '某型定型技术资料', type: '定型资料', spec: 'XX-100', major: '试验技术', updatedAt: '2026-10-22', version: 'V1.2', status: '有效', usage: '', cond: '', note: '' },
   { id: 2, name: '发动机高空模拟试验数据', type: '试验数据', spec: 'AE-300', major: '动力装置', updatedAt: '2026-10-18', version: 'V1.0', status: '有效', usage: '', cond: '', note: '' },
   { id: 3, name: '环境试验规范', type: '标准规范', spec: 'GJB 150A', major: '环境工程', updatedAt: '2026-10-15', version: 'V2.0', status: '有效', usage: '', cond: '', note: '' },
   { id: 4, name: '结构强度试验报告', type: '试验报告', spec: 'STR-001', major: '结构力学', updatedAt: '2026-10-12', version: 'V1.1', status: '有效', usage: '', cond: '', note: '' },
@@ -194,7 +194,7 @@ export default {
     const query = reactive({ name: '', type: '', major: '', status: '', start: '', end: '' })
     const detail = reactive(emptyDetail())
 
-    const typeOpts = ['装备定型资料', '试验数据', '标准规范', '试验报告']
+    const typeOpts = ['定型资料', '试验数据', '标准规范', '试验报告']
     const majorOpts = ['试验技术', '动力装置', '环境工程', '结构力学', '可靠性工程', '电磁兼容', '材料工程', '电子信息']
     const statusOpts = ['有效', '待更新']
 

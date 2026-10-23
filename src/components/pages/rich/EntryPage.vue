@@ -4,7 +4,7 @@
     <div v-if="isResourceEntry" class="res-entry">
       <div class="entry-title">
         <h2>{{ title || '数据资源录入' }}</h2>
-        <p>统一录入装备定型资料、历史试验数据、标准规范及专业文献</p>
+        <p>统一录入定型资料、历史试验数据、标准规范及专业文献</p>
       </div>
 
       <div class="entry-split">
@@ -60,7 +60,7 @@
             <h3><i></i>资源信息登记</h3>
             <div class="entry-form">
               <label>资源名称<span class="req">*</span></label>
-              <input v-model="meta.name" placeholder="某型装备定型技术资料" />
+              <input v-model="meta.name" placeholder="某型定型技术资料" />
               <label>所属项目<span class="req">*</span></label>
               <select-field v-model="meta.project" :options="projects" placeholder="请选择项目" />
 
@@ -224,7 +224,7 @@ import DateField from '@/components/DateField.vue'
 import TextAreaField from '@/components/TextAreaField.vue'
 
 const TYPE_TABS = [
-  { key: '定型资料', label: '装备定型资料' },
+  { key: '定型资料', label: '定型资料' },
   { key: '历史试验数据', label: '历史试验数据' },
   { key: '标准规范', label: '标准规范' },
   { key: '专业文献', label: '专业文献' },
@@ -265,8 +265,8 @@ export default {
     const isResourceEntry = computed(() => !props.page?.entryKey && props.page?.dataset === 'resources')
 
     const meta = reactive({
-      name: '某型装备定型技术资料',
-      project: '装备定型试验项目',
+      name: '某型定型技术资料',
+      project: '定型试验项目',
       cat: '定型资料',
       version: 'V1.0',
       org: '试验单位',
@@ -275,13 +275,13 @@ export default {
     })
 
     const tasks = ref([
-      { id: 1, name: '装备定型技术资料.docx', cat: '定型资料', catLabel: '装备定型资料', size: '2.36 MB', version: 'V1.0', status: '已完成', fmt: 'DOCX', org: '试验单位', project: '装备定型试验项目', date: '2026-10-22' },
-      { id: 2, name: '历史试验数据.xlsx', cat: '历史试验数据', catLabel: '历史试验数据', size: '5.12 MB', version: 'V1.0', status: '处理中', fmt: 'XLSX', org: '试验单位', project: '装备定型试验项目', date: '2026-10-22' },
-      { id: 3, name: '试验标准规范.pdf', cat: '标准规范', catLabel: '标准规范', size: '8.23 MB', version: 'V2.0', status: '待提交', fmt: 'PDF', org: '试验单位', project: '装备定型试验项目', date: '2026-10-22' },
-      { id: 4, name: '装备技术研究文献.pdf', cat: '专业文献', catLabel: '专业文献', size: '3.85 MB', version: 'V1.0', status: '已完成', fmt: 'PDF', org: '试验单位', project: '装备定型试验项目', date: '2026-10-22' },
+      { id: 1, name: '定型技术资料.docx', cat: '定型资料', catLabel: '定型资料', size: '2.36 MB', version: 'V1.0', status: '已完成', fmt: 'DOCX', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
+      { id: 2, name: '历史试验数据.xlsx', cat: '历史试验数据', catLabel: '历史试验数据', size: '5.12 MB', version: 'V1.0', status: '处理中', fmt: 'XLSX', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
+      { id: 3, name: '试验标准规范.pdf', cat: '标准规范', catLabel: '标准规范', size: '8.23 MB', version: 'V2.0', status: '待提交', fmt: 'PDF', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
+      { id: 4, name: '技术研究文献.pdf', cat: '专业文献', catLabel: '专业文献', size: '3.85 MB', version: 'V1.0', status: '已完成', fmt: 'PDF', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
     ])
 
-    const projects = ['装备定型试验项目', '性能鉴定试验项目', '可靠性试验项目']
+    const projects = ['定型试验项目', '性能鉴定试验项目', '可靠性试验项目']
     const catOptions = TYPE_TABS.map((t) => ({ value: t.key, label: t.label }))
 
     const stats = computed(() => {
@@ -397,7 +397,7 @@ export default {
             remark: meta.remark,
           })
         })
-        if (!meta.name || meta.name === '某型装备定型技术资料') {
+        if (!meta.name || meta.name === '某型定型技术资料') {
           meta.name = ok[0].name.replace(/\.[^.]+$/, '')
         }
         toast(`已加入 ${ok.length} 个文件，待确认录入`, 'success')

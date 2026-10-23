@@ -70,14 +70,14 @@ export const postTrialMetrics = metricNames.map((item, index) => ({
 }))
 
 export const reviewTasks = [
-  { id: 'review-v1', name: '试验报告V1审查', target: '某型装备性能鉴定试验报告 V1', rules: '鉴定报告综合审查规则集 V2.4', issues: 7, status: '已完成', time: '2026-10-22 15:46' },
+  { id: 'review-v1', name: '试验报告V1审查', target: '某型性能鉴定试验报告 V1', rules: '鉴定报告综合审查规则集 V2.4', issues: 7, status: '已完成', time: '2026-10-22 15:46' },
   { id: 'review-outline', name: '试验提纲一致性复核', target: '性能试验提纲 V4', rules: '提纲完整性规则集 V1.8', issues: 2, status: '已完成', time: '2026-10-21 17:20' },
   { id: 'review-record', name: '原始记录规范性检查', target: '第1～30发原始记录', rules: '记录表规范规则集 V1.3', issues: 4, status: '待复核', time: '2026-10-22 14:08' },
 ]
 
 export const reviewIssues = reactive([
-  { id: 1, type: '术语规范', title: '“实验”应统一为“试验”', location: '1.2 鉴定目的，第2段', basis: '跨文书术语映射 TERM-001', suggestion: '将“实验”替换为“试验”。', status: '已采纳', handler: '陈工', time: '2026-10-22 16:01', snippet: '本次实验用于验证装备在规定工况下的性能。' },
-  { id: 2, type: '术语规范', title: '装备型号书写格式不统一', location: '3.1 受试对象，第1段', basis: '装备型号术语库 V3.2', suggestion: '统一采用“某型装备 A01”。', status: '已采纳', handler: '陈工', time: '2026-10-22 16:03', snippet: '受试对象为某型装备A-01。' },
+  { id: 1, type: '术语规范', title: '“实验”应统一为“试验”', location: '1.2 鉴定目的，第2段', basis: '跨文书术语映射 TERM-001', suggestion: '将“实验”替换为“试验”。', status: '已采纳', handler: '陈工', time: '2026-10-22 16:01', snippet: '本次实验用于验证在规定工况下的性能。' },
+  { id: 2, type: '术语规范', title: '型号书写格式不统一', location: '3.1 受试对象，第1段', basis: '型号术语库 V3.2', suggestion: '统一采用“某型 A01”。', status: '已采纳', handler: '陈工', time: '2026-10-22 16:03', snippet: '受试对象为某型A-01。' },
   { id: 3, type: '术语规范', title: '“校准后复验”建议改为“校准后复测”', location: '7.3 校准与复测，第1段', basis: '鉴定业务术语映射 TERM-028', suggestion: '与试验记录及处置单保持一致。', status: '已采纳', handler: '李工', time: '2026-10-22 16:05', snippet: '完成温补校准后组织复验。' },
   { id: 4, type: '数据勾稽', title: '结论章样本量与实施章不一致：30/29', location: '8.1 鉴定结论，第1段', basis: '跨章节数据勾稽规则 DATA-014', suggestion: '结论章样本量更新为30发，并补充1组复测数据说明。', status: '已采纳', handler: '王工', time: '2026-10-22 16:11', snippet: '本次共完成29发有效样本测试。' },
   { id: 5, type: '数据勾稽', title: '复测数据未计入结果汇总表统计说明', location: '5.3 图表汇总，表5-2', basis: '结果汇总完整性规则 DATA-021', suggestion: '增加“复测数据单列、不重复计入30发统计量”说明。', status: '已采纳', handler: '王工', time: '2026-10-22 16:14', snippet: '表5-2 汇总30发原始试验数据。' },

@@ -60,7 +60,7 @@
             <div v-show="activeSection===1">
               <h3 style="margin-bottom:14px"><i></i>1 事件概述</h3>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;background:#f4f8fc;border-radius:6px;padding:14px;font-size:13px">
-                <div><span style="color:#8a99a8">装备型号：</span><span style="font-weight:500">某型精度武器系统</span></div>
+                <div><span style="color:#8a99a8">型号：</span><span style="font-weight:500">某型精度武器系统</span></div>
                 <div><span style="color:#8a99a8">试验批次：</span><span>D-07</span></div>
                 <div><span style="color:#8a99a8">试验时间：</span><span>2024-10-18</span></div>
                 <div><span style="color:#8a99a8">试验场地：</span><span>某综合试验场寒区</span></div>
@@ -207,7 +207,7 @@
               <div style="font-size:13.5px;color:#1a2b3c;line-height:1.8">
                 <b>详细处置步骤：</b>
                 <ol style="margin:10px 0 0 20px;display:flex;flex-direction:column;gap:8px">
-                  <li>对该装备定位定向系统重新进行温补系数标定，参照出厂校准规程执行；</li>
+                  <li>对该定位定向系统重新进行温补系数标定，参照出厂校准规程执行；</li>
                   <li>扩大 TH-03 传感器检测范围，在现有采样基础上增加温度梯度采样点（建议不少于 3 个）；</li>
                   <li>下批次试验前完成上述修正后，在相同工况下对第 19 发场景执行复测验证；</li>
                   <li>复测结果纳入 D-07 批次试验数据库，更新探针 P01 判据基线。</li>
@@ -236,11 +236,11 @@
                     <tr>
                       <td style="font-family:monospace;color:#5a6978;font-weight:600">E2</td>
                       <td style="font-size:13px">温度传感器 TH-03 在第 4.2s 出现 2.1℃ 跳变</td>
-                      <td><span style="font-size:12px;color:#5a6978">装备监控仪</span></td>
+                      <td><span style="font-size:12px;color:#5a6978">监控仪</span></td>
                     </tr>
                     <tr>
                       <td style="font-family:monospace;color:#5a6978;font-weight:600">E3</td>
-                      <td style="font-size:13px">2019年同型装备某次试验出现相同温补失效案例，处置后复测达标</td>
+                      <td style="font-size:13px">2019年同型某次试验出现相同温补失效案例，处置后复测达标</td>
                       <td><span style="font-size:12px;color:#1668a8;font-weight:500">历史案例库 D-06 · 某型装甲车A精度试验2019</span></td>
                     </tr>
                   </tbody>

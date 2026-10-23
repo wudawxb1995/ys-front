@@ -47,7 +47,7 @@ const DEFAULTS = {
   trialReportArchivedAt: '2026-10-22 16:38',
 
   // Part4 — 研判平台使用（从 Part3 归档结论派生）
-  judgeInputReportTitle: '某型装备性能鉴定试验报告 V2',
+  judgeInputReportTitle: '某型性能鉴定试验报告 V2',
   judgeInputArchivedAt: '2026-10-22 16:38',
 
   // 演示指认缓存（sessionStorage）
@@ -140,7 +140,7 @@ export function archiveInterpretReport(report) {
 export function finalizeTrialReport() {
   store.trialReportV2Archived = true
   store.trialReportArchivedAt = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
-  store.judgeInputReportTitle = '某型装备性能鉴定试验报告 V2'
+  store.judgeInputReportTitle = '某型性能鉴定试验报告 V2'
   store.judgeInputArchivedAt = store.trialReportArchivedAt
 }
 

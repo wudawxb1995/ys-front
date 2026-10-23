@@ -617,8 +617,8 @@ function m01OpenDetail(row) {
 
 // 指标树列表
 const m03List = ref([
-  { id: 'v1', version: '指标树 V1.0', srcDoc: 'D-01《某型装备研制总要求》', count: 28, status: '已发布', publishedAt: '2026-10-08 09:24' },
-  { id: 'v2', version: '指标树 V0.9', srcDoc: 'D-01《某型装备研制总要求》', count: 24, status: '草稿',   publishedAt: null },
+  { id: 'v1', version: '指标树 V1.0', srcDoc: 'D-01《某型研制总要求》', count: 28, status: '已发布', publishedAt: '2026-10-08 09:24' },
+  { id: 'v2', version: '指标树 V0.9', srcDoc: 'D-01《某型研制总要求》', count: 24, status: '草稿',   publishedAt: null },
 ])
 
 const m03DetailOpen = ref(false)
@@ -663,9 +663,9 @@ function m03ExpandAll() {
 
 // 第一级：方案列表
 const m08List = ref([
-  { id: 'm1', name: '某型装备性能鉴定试验大纲 V4', ver: 'V4', treeVer: '指标树 V1.0', status: '已定稿', updatedAt: '2026-10-08 10:42' },
-  { id: 'm2', name: '某型装备性能鉴定试验大纲 V3', ver: 'V3', treeVer: '指标树 V0.9', status: '已归档', updatedAt: '2026-10-06 15:20' },
-  { id: 'm3', name: '某型装备性能鉴定试验大纲 V1', ver: 'V1', treeVer: '指标树 V0.9', status: '草稿',   updatedAt: '2026-10-04 09:11' },
+  { id: 'm1', name: '某型性能鉴定试验大纲 V4', ver: 'V4', treeVer: '指标树 V1.0', status: '已定稿', updatedAt: '2026-10-08 10:42' },
+  { id: 'm2', name: '某型性能鉴定试验大纲 V3', ver: 'V3', treeVer: '指标树 V0.9', status: '已归档', updatedAt: '2026-10-06 15:20' },
+  { id: 'm3', name: '某型性能鉴定试验大纲 V1', ver: 'V1', treeVer: '指标树 V0.9', status: '草稿',   updatedAt: '2026-10-04 09:11' },
 ])
 const m08DetailOpen = ref(false)
 function m08OpenDetail() { m08DetailOpen.value = true }
@@ -711,8 +711,8 @@ const m08SelFactor = ref(0)
 // 大纲章节树
 const m08ActiveChapter = ref(3) // 默认显示"试验项目与方法"章
 const m08Chapters = [
-  { no: '第一章', title: '试验目的', content: '本试验旨在对某型装备进行全面性能鉴定，验证各项技术指标是否满足研制总要求（D-01）规定的性能指标，为装备定型提供依据。<br><br>试验依据：《某型装备研制总要求》（D-01）、军标 GJB 4239-2001。' },
-  { no: '第二章', title: '试验条件', content: '2.1 环境条件<br>试验在标准试验场地进行，温度范围 −41℃ 至 +55℃，分贮存工况与工作工况两类。路面条件覆盖硬路面、砂石路面、泥泞路面三类。<br><br>2.2 试验装备<br>受试装备编号：SB-2026-001，配置标准弹药基数，燃油满载。' },
+  { no: '第一章', title: '试验目的', content: '本试验旨在对某型进行全面性能鉴定，验证各项技术指标是否满足研制总要求（D-01）规定的性能指标，为定型提供依据。<br><br>试验依据：《某型研制总要求》（D-01）、军标 GJB 4239-2001。' },
+  { no: '第二章', title: '试验条件', content: '2.1 环境条件<br>试验在标准试验场地进行，温度范围 −41℃ 至 +55℃，分贮存工况与工作工况两类。路面条件覆盖硬路面、砂石路面、泥泞路面三类。<br><br>2.2 试验<br>受试编号：SB-2026-001，配置标准弹药基数，燃油满载。' },
   { no: '第三章', title: '试验项目与方法', content: '3.1 机动性能试验<br>3.1.1 最大公路速度：在硬路面直线段测量，取三次均值，判据 <b style="color:#0d4e83">≥ 65 km/h <svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:13px;height:13px;display:inline;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></b>（引自指标树 D-01·4.1.1）<br><br>3.1.2 最大越野速度：砂石路面测量，判据 <b style="color:#0d4e83">≥ 35 km/h <svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:13px;height:13px;display:inline;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></b>（引自指标树 D-01·4.1.2）<br><br>3.2 电磁兼容考核（第1轮对话新增）<br>按 GJB 1389B 执行传导发射与辐射敏感度测试，判据 ≤ RE102 B类 / ≥ RS103 C类。' },
   { no: '第四章', title: '测量要求', content: '4.1 速度测量：使用标定 GPS 测速仪，精度 ±0.2 km/h。<br>4.2 火力测量：弹道测量仪精度 ±0.5 m/s，计时精度 ±0.01 s。<br>4.3 可靠性记录：故障严格按 GJB 451A 分类，A 类故障单独统计。' },
   { no: '第五章', title: '数据处理与判据', content: '5.1 判据引用自指标树 V1.0<br><br><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr style="background:#eaf3fa"><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">指标名称</th><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">判据</th><th style="padding:6px 10px;border:1px solid #dce8f2">来源</th></tr></thead><tbody><tr><td style="padding:6px 10px;border:1px solid #dce8f2">最大公路速度</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 65 km/h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center"><svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:14px;height:14px;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">首发命中概率</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 0.85</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center"><svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:14px;height:14px;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">MTBF</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 320 h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center"><svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:14px;height:14px;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></td></tr></tbody></table>' },
@@ -769,7 +769,7 @@ const m11BaseResults = [
     res: '某综合试验场寒区',
     cat: '试验场地',
     spec: '−50℃ 低温实验室 + 2400 m 靶道',
-    case: '2024 年某型装备定型案例',
+    case: '2024 年某型定型案例',
     reason: '满足全部 3 条需求标签：寒区能力 / 2000 m 靶道 / 遥测采集',
   },
   {

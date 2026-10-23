@@ -138,12 +138,21 @@ const chainIndex = computed(() => {
   return -1
 })
 
+function expandCurrent() {
+  const sys = system.value
+  const mid = menu.value?.id
+  if (!sys || !mid) return
+  sys.menus.forEach((item) => {
+    if (item.children?.some((c) => c.id === mid)) open[item.id] = true
+  })
+}
 watch(system, (sys) => {
   if (!sys) return
   sys.menus.forEach((item) => {
     if (item.children) open[item.id] = item.children.some((c) => c.id === menu.value?.id) || !!open[item.id]
   })
 }, { immediate: true })
+watch(() => menu.value?.id, expandCurrent, { immediate: true })
 
 function go(mid) {
   router.push({ name: 'app', params: { pid: platform.value.id, sid: system.value.id, mid } })

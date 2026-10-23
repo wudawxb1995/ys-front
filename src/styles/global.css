@@ -280,6 +280,10 @@ button { cursor: pointer; }
   padding: 0 26px 36px;
   position: relative;
 }
+.main > * {
+  max-width: 100%;
+  min-width: 0;
+}
 .crumb {
   display: flex; align-items: center; gap: 8px;
   color: #7c8fa2; font-size: 14.5px;
@@ -921,7 +925,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: #0d4e83; }
   color: var(--blue); font-size: 13.5px; cursor: pointer;
   margin-bottom: 14px; padding: 4px 0;
 }
-.back-bar:hover { color: var(--navy-2); text-decoration: underline; }
+.back-bar:hover { color: var(--navy-2); text-decoration: none; }
 
 /* ── 通用：操作链接按钮 ── */
 .link-btn {

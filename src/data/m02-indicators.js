@@ -5,7 +5,7 @@
 export const m02Domains = ['机动', '火力', '防护', '可靠性', '环境适应性', '电磁兼容', '信息能力']
 
 export const m02CountMap = {
-  '某型装备研制总要求（D-01）': 28,
+  '某型研制总要求（D-01）': 28,
   '雷沃谷神4LZ-8谷物联合收割机鉴定大纲': 15,
   'NY/T 2090-2025 农业机械试验鉴定通则': 21,
   '五征4YZP-4自走式玉米收获机可靠性试验报告': 18,
@@ -19,13 +19,13 @@ function row( partial) {
   return {
     unit: '',
     status: '已确认',
-    srcDoc: 'D-01《某型装备研制总要求》',
+    srcDoc: 'D-01《某型研制总要求》',
     ...partial,
   }
 }
 
 export const m02IndRows = [
-  row({ id: 'i01', name: '最大公路速度', value: '≥ 65', unit: 'km/h', criteria: '≥ 60 km/h（研制总要求 4.1.1）', domain: '机动', conf: 0.96, srcPage: 12, highlight: '最大公路速度不低于 65 km/h', srcText: '4.1.1 最大公路速度\n受试装备在硬路面直线路段的最大公路速度不低于 65 km/h，取三次测量均值作为判定值。' }),
+  row({ id: 'i01', name: '最大公路速度', value: '≥ 65', unit: 'km/h', criteria: '≥ 60 km/h（研制总要求 4.1.1）', domain: '机动', conf: 0.96, srcPage: 12, highlight: '最大公路速度不低于 65 km/h', srcText: '4.1.1 最大公路速度\n受试件在硬路面直线路段的最大公路速度不低于 65 km/h，取三次测量均值作为判定值。' }),
   row({ id: 'i02', name: '最大越野速度', value: '≥ 35', unit: 'km/h', criteria: '≥ 30 km/h（研制总要求 4.1.2）', domain: '机动', conf: 0.94, srcPage: 12, highlight: '最大越野速度不低于 35 km/h', srcText: '4.1.2 最大越野速度\n砂石路面条件下，最大越野速度不低于 35 km/h。' }),
   row({ id: 'i03', name: '最大行程', value: '≥ 500', unit: 'km', criteria: '≥ 450 km（研制总要求 4.1.3）', domain: '机动', conf: 0.91, srcPage: 13, highlight: '最大行程不低于 500 km', srcText: '4.1.3 最大行程\n一次加注条件下最大行程不低于 500 km。' }),
   row({ id: 'i04', name: '爬坡度', value: '≥ 30', unit: '°', criteria: '≥ 25°（研制总要求 4.1.4）', domain: '机动', conf: 0.93, srcPage: 13, highlight: '爬坡度不低于 30°', srcText: '4.1.4 爬坡能力\n最大爬坡度不低于 30°。' }),

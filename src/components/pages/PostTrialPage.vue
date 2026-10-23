@@ -85,7 +85,7 @@
 
       <template v-else>
         <div class="document-toolbar">
-          <div><b>某型装备性能鉴定试验报告</b><span>V1（初稿）</span><span class="good-tag">已生成</span></div>
+          <div><b>某型性能鉴定试验报告</b><span>V1（初稿）</span><span class="good-tag">已生成</span></div>
           <div><button class="btn btn-outline" @click="composeMode = 'wizard'">返回编写向导</button><button class="btn btn-outline" @click="goTo('write', 'trace')">查看数据溯源</button><button class="btn btn-primary" @click="submitReview">进入智能审查</button></div>
         </div>
         <div class="report-layout">
@@ -119,7 +119,7 @@
 
     <template v-else-if="stage === 'trace'">
       <div class="document-toolbar">
-        <div><b>文档生成溯源与版本管控</b><span>某型装备性能鉴定试验报告</span></div>
+        <div><b>文档生成溯源与版本管控</b><span>某型性能鉴定试验报告</span></div>
         <div><button class="btn btn-outline" @click="goTo('write', 'draft')">返回初稿</button><button class="btn btn-primary" @click="submitReview">进入智能审查</button></div>
       </div>
       <div class="kpi-row post-kpis">
@@ -145,7 +145,7 @@
         <div class="review-toolbar"><button class="back-button" @click="reviewMode = 'tasks'">‹ 返回任务列表</button><div><b>试验报告V1审查</b><span>术语规范 · 数据勾稽 · 判据引用</span></div><div class="review-progress"><span>处理进度 {{ processedCount }}/7</span><i><em :style="{ width: `${processedCount / 7 * 100}%` }"></em></i></div><button class="btn btn-primary" @click="finalizeArchive">一键定稿归集</button></div>
         <div class="review-layout">
           <section class="review-document post-panel">
-            <div class="doc-toolbar"><span>某型装备性能鉴定试验报告 V1</span><div><button class="mini-btn" @click="toast('已定位上一条意见')">上一条</button><button class="mini-btn" @click="toast('已定位下一条意见')">下一条</button></div></div>
+            <div class="doc-toolbar"><span>某型性能鉴定试验报告 V1</span><div><button class="mini-btn" @click="toast('已定位上一条意见')">上一条</button><button class="mini-btn" @click="toast('已定位下一条意见')">下一条</button></div></div>
             <div class="doc-page">
               <small>{{ activeIssue.location }}</small><h2>{{ activeIssue.type === '判据引用' ? '6 符合性判定' : activeIssue.type === '数据勾稽' ? '8 结论与建议' : '1 试验任务概述' }}</h2>
               <p>根据试验任务安排，本次试验依据性能试验提纲组织实施，试验数据完整，过程记录可追溯。</p>

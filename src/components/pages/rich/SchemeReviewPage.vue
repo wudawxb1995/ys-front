@@ -26,8 +26,8 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="所属装备" required>
-              <el-select v-model="meta.equip" placeholder="请选择所属装备" style="width:100%">
+            <el-form-item label="所属对象" required>
+              <el-select v-model="meta.equip" placeholder="请选择所属对象" style="width:100%">
                 <el-option v-for="e in equipOptions" :key="e" :label="e" :value="e" />
               </el-select>
             </el-form-item>
@@ -229,17 +229,17 @@ export default {
     let opinionSeq = 4
 
     const meta = reactive({
-      name: '某型装备定型试验方案（校核稿）',
+      name: '某型定型试验方案（校核稿）',
       ver: 'V3.2',
-      equip: '某型装备',
+      equip: '某型',
       type: '定型试验',
       source: '智能生成',
       time: '2026-10-20',
-      intro: '本方案用于某型装备定型鉴定试验，涵盖牵引、动力输出与可靠性等考核项目。',
+      intro: '本方案用于某型定型鉴定试验，涵盖牵引、动力输出与可靠性等考核项目。',
     })
 
     const verOptions = ['V1.0', 'V2.0', 'V3.0', 'V3.2', 'V4.0']
-    const equipOptions = ['某型装备', 'XX-100', 'XX-200', '轮式拖拉机']
+    const equipOptions = ['某型', 'XX-100', 'XX-200', '轮式拖拉机']
     const typeOptions = ['定型试验', '鉴定试验', '摸底试验', '补充试验']
     const statusOptions = ['待处理', '处理中', '已处理', '已关闭']
 
@@ -261,7 +261,7 @@ export default {
       {
         id: 3,
         title: '被试品与配套设备',
-        html: `<h4>3. 被试品与配套设备</h4><p>明确被试装备状态、配套仪器及校准要求。</p>`,
+        html: `<h4>3. 被试品与配套设备</h4><p>明确被试状态、配套仪器及校准要求。</p>`,
       },
       {
         id: 4,
@@ -481,7 +481,7 @@ export default {
       openDrawer('方案预览', [
         { label: '方案名称', value: meta.name },
         { label: '版本', value: meta.ver },
-        { label: '装备', value: meta.equip },
+        { label: '', value: meta.equip },
         { label: '当前章节', value: chapters.value[activeChapter.value]?.title },
         { label: '意见数', value: String(opinions.value.length) },
       ])
@@ -494,7 +494,7 @@ export default {
     }
     function submit() {
       if (!meta.name?.trim() || !meta.ver || !meta.equip || !meta.type) {
-        toast('请完善方案名称、版本、所属装备与试验类型')
+        toast('请完善方案名称、版本、所属对象与试验类型')
         return
       }
       confirm('确认提交本次人工校核结果？', () => {

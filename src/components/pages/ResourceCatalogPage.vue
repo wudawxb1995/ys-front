@@ -139,7 +139,7 @@ const checkedNames = ref(new Set())
 
 const CAT_TABS = [
   { key: 'all', label: '全部资料' },
-  { key: '定型资料', label: '装备定型资料' },
+  { key: '定型资料', label: '定型资料' },
   { key: '历史试验数据', label: '历史试验数据' },
   { key: '标准规范', label: '标准规范' },
   { key: '专业文献', label: '专业文献' },
@@ -256,11 +256,15 @@ function goResAdd() {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 20px 22px 16px;
   box-shadow: 0 6px 18px rgba(15, 55, 95, .04);
+  overflow: hidden;
 }
 .entry-title h2 { font-size: 20px; color: #0d4e83; font-weight: 700; letter-spacing: .3px; }
 .entry-title p { margin-top: 4px; color: #6d8092; font-size: 13.5px; line-height: 1.6; }
@@ -294,16 +298,20 @@ function goResAdd() {
 
 .manage-split {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);
   gap: 16px;
   align-items: stretch;
+  min-width: 0;
+  width: 100%;
 }
 .cat-frame, .list-frame {
   border: 1.5px dashed #b7d4ee;
   border-radius: 12px;
   padding: 16px;
   background: #fff;
+  min-width: 0;
 }
+.list-frame { overflow: hidden; }
 .cat-frame h3, .list-frame h3 {
   font-size: 16px;
   color: var(--navy-2);
@@ -347,12 +355,17 @@ function goResAdd() {
 .list-toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 8px;
   flex-wrap: wrap;
+  min-width: 0;
 }
-.search-input { flex: 0 0 240px; max-width: 280px; }
-.status-filter { display: flex; gap: 4px; flex: 1; min-width: 0; }
+.search-input { flex: 1 1 180px; min-width: 160px; max-width: 280px; }
+.status-filter { display: flex; gap: 4px; flex: 1 1 280px; min-width: 0; }
+.status-filter :deep(.el-radio-group) {
+  display: flex;
+  flex-wrap: wrap;
+}
 .status-filter :deep(.el-radio-button__inner) {
   padding: 7px 12px;
   font-size: 13px;
@@ -374,13 +387,39 @@ function goResAdd() {
   border: 0;
   box-shadow: none;
   border-radius: 0;
+  overflow-x: auto;
+  max-width: 100%;
 }
+.list-frame table {
+  table-layout: fixed;
+  width: 100%;
+  min-width: 640px;
+}
+.list-frame th:nth-child(1),
+.list-frame td:nth-child(1) { width: 42px; }
+.list-frame th:nth-child(3),
+.list-frame td:nth-child(3) { width: 7.5em; }
+.list-frame th:nth-child(4),
+.list-frame td:nth-child(4) { width: 5.5em; }
+.list-frame th:nth-child(5),
+.list-frame td:nth-child(5) { width: 5em; }
+.list-frame th:nth-child(6),
+.list-frame td:nth-child(6) { width: 5.5em; }
+.list-frame th:nth-child(7),
+.list-frame td:nth-child(7) { width: 6.5em; }
 .file-cell {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
+  max-width: 100%;
   cursor: pointer;
+}
+.file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .file-name:hover { color: #1668a8; text-decoration: underline; }
 .file-ico {
@@ -402,5 +441,6 @@ function goResAdd() {
 .dot-status.wait { color: #d4380d; } .dot-status.wait i { background: #f5222d; }
 .dot-status.fail { color: #d4380d; } .dot-status.fail i { background: #f5222d; }
 
+.list-frame .ops { gap: 8px; }
 .res-foot { font-size: 13.5px; color: #7c8fa2; padding: 10px 2px 0; }
 </style>

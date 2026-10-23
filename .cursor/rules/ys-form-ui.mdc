@@ -18,7 +18,7 @@ alwaysApply: false
   | 下拉 | `SelectField` → `el-select` |
   | 日期 | `DateField` → `el-date-picker` |
   | 多行文字域 | `TextAreaField` → `el-input` textarea + `show-word-limit`（字数在**框内右下角**） |
-  | Toast | `useUi().toast(msg, type?)` → `ElMessage`；成功用 `success`，失败用 `error`（可省略，按文案推断） |
+  | Toast | `useUi().toast(msg, type?)` → `ElMessage`；**默认 success**；失败用 `error`（可省略，失败/请…文案推断为 error） |
   | 确认 | `useUi().confirm` → `ElMessageBox` |
   | 表单弹窗/抽屉 | `ModalHost` → `ElDialog` / `ElDrawer` |
 - 新代码可直接写 `el-button` / `el-input` / `el-select` / `el-checkbox` / `el-pagination`，样式吃 `element-theme.css`
@@ -162,14 +162,30 @@ alwaysApply: false
 - 左文档列表多选 + 获取所选/清空选择；右「文档信息」点选后展示；查询**无预填**
 - 表头完整不换行；文件名带类型色标（W/A/X/Z）
 
+### M. 解析结果预览（IndicatorExtract / parse-preview）
+- **不要**再用抽取任务列表冒充；落地为预览工作台：模式切换（预览/审核）+ 查询 + 四统计 + 三栏虚线框
+- 左文档列表、中源文档预览（页码缩略图+正文）、右结构化解析结果表 + 指标详情
+- 查询条件**无预填**；点选文档后才出原文与指标；表头完整不换行；窄屏三栏改为单列
+
+### N. 指标数据提取（IndicatorIdentify / m02）
+- **不要**再用 `type: crud` 指标表冒充；落地为抽取任务列表 + 结果详情
+- 工具栏「新建抽取任务」+ 按来源文档筛选；列：任务名称/来源文档/抽取指标数/状态/完成时间/查看结果
+- 已完成任务进入结果表（性能域筛选、置信度、原文溯源）；资源详情「发起指标抽取」跳到本页 `ind-data`
+
+### O. 技术研判报告生成（TechJudgeReport / m31）
+- 两级：生成页三栏虚线框（模板 / 对象 / 已生成报告）+ 预览页（章节目录 + 正文图表）
+- 模板「技术发展方向研判」挂麦金「智能推荐」；对象自动带入定位定向技术、7 个创新点、三级子树
+- 报告表首行《定位定向技术发展方向研判报告》状态已生成；点查看进预览（四节 + 在线编辑/导出 + 页底查重入口）
+- 首页「报告生成」跳 `rpt` 后侧栏父级必须展开
+
 ## 3. 接线
 
-- 专用页独立 `type`（`case-in` / `tpl-in` / `need-cfg` / `scheme-review` / `code-check` / `code-note` / `code-need` / `graph-map` / `res-up` / `struct-dev` / `vec-parse` / `cls-feat` / `res-doc`），勿与 `m08`/`crud`/`chat`/`code`/`graph` 混用
+- 专用页独立 `type`（`case-in` / `tpl-in` / `need-cfg` / `scheme-review` / `code-check` / `code-note` / `code-need` / `graph-map` / `res-up` / `struct-dev` / `vec-parse` / `cls-feat` / `res-doc` / `parse-preview` / `m02`），勿与 `m08`/`crud`/`chat`/`code`/`graph` 混用
 - `page-registry.js` 映射；勿把专用叶子塞进 `reuse(crud(...))` / `reuse({ type:'chat' })`
 
 ## 4. 禁止
 
-- ❌ Crud/m08/chat/code/graph 冒充配置/入库/代码检查/代码注释/编码需求/图谱映射/资源更新/设备抽取/向量解析/聚类特征提取/历史文档获取页
+- ❌ Crud/m08/chat/code/graph 冒充配置/入库/代码检查/代码注释/编码需求/图谱映射/资源更新/设备抽取/向量解析/聚类特征提取/历史文档获取/指标数据提取/解析结果预览页
 - ❌ 标题在框外 + 实线灰框
 - ❌ 截图没有的区块从别页硬拷
 - ❌ 绕过 EP 再写一套 Toast/Modal/Select/Date

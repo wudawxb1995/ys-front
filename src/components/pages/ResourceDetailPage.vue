@@ -142,9 +142,9 @@ function goParseTask() {
   router.push({ name: 'app', params: { pid: route.params.pid, sid: route.params.sid, mid: 'parse-task' } })
 }
 
-// 发起指标抽取 → S2 系统（extract）的结果预览与审核（preview = 镜头二）
+// 发起指标抽取 → 关键指标抽取 / 指标数据提取
 function goExtract() {
-  router.push({ name: 'app', params: { pid: route.params.pid, sid: 'extract', mid: 'preview' } })
+  router.push({ name: 'app', params: { pid: route.params.pid, sid: 'extract', mid: 'ind-data' } })
 }
 
 // 语义检索 → 向量化任务（vec-task，已向量化的资源才可检索）

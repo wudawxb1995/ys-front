@@ -199,7 +199,7 @@ import TextAreaField from '@/components/TextAreaField.vue'
 const DATASETS = [
   {
     id: 'eq-struct',
-    name: '装备鉴定试验结构化资源',
+    name: '鉴定试验结构化资源',
     model: '试验设备及参数模型',
     version: 'v1.0',
     desc: '',

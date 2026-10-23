@@ -6,21 +6,15 @@
       <template v-if="m31Detail">
 
         <!-- 顶部标题行 + 操作按钮 -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div class="back-bar" style="margin-bottom:0" @click="m31Detail=null;m31ResetCharts()">← 返回</div>
-            <span style="color:#b0bfc8;font-size:13px">|</span>
-            <span style="font-size:15px;font-weight:700;color:var(--navy-2)">{{ m31Detail.title }}</span>
+        <div class="preview-head">
+          <div class="preview-crumb">
+            <span class="back-link" @click="m31Detail=null;m31ResetCharts()">← 返回</span>
+            <span class="sep">|</span>
+            <span class="preview-title">{{ m31Detail.title }}</span>
           </div>
-          <div style="display:flex;gap:10px;align-items:center">
-            <button class="btn btn-outline" @click="toast('在线编辑功能即将开放')">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              在线编辑
-            </button>
-            <button class="btn btn-primary" @click="toast('正在导出…')">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              导出
-            </button>
+          <div class="preview-actions">
+            <el-button @click="toast('在线编辑功能即将开放')">在线编辑</el-button>
+            <el-button type="primary" @click="toast('正在导出…')">导出</el-button>
           </div>
         </div>
 
@@ -57,7 +51,7 @@
                 <h3 class="report-section-title" style="margin-bottom:0">技术现状综述</h3>
               </div>
               <template v-if="activeReportSection===1">
-                <p class="report-body" style="margin-top:14px">定位定向技术是现代精确制导武器系统和试验鉴定领域的核心支撑技术之一。近年来，随着装备对精度要求的持续提高，定位定向技术在温度补偿、初始对准、误差建模等方面取得了一系列进展。本报告基于收录的326篇科技文献（含{{ demoStore.judgeInputReportTitle || '试验报告V2' }}，{{ demoStore.judgeInputArchivedAt ? demoStore.judgeInputArchivedAt.slice(0,10)+'归档' : '已归档' }}），系统分析定位定向技术方向创新点的现状与趋势。</p>
+                <p class="report-body" style="margin-top:14px">定位定向技术是现代精确制导武器系统和试验鉴定领域的核心支撑技术之一。近年来，随着对精度要求的持续提高，定位定向技术在温度补偿、初始对准、误差建模等方面取得了一系列进展。本报告基于收录的326篇科技文献（含{{ demoStore.judgeInputReportTitle || '试验报告V2' }}，{{ demoStore.judgeInputArchivedAt ? demoStore.judgeInputArchivedAt.slice(0,10)+'归档' : '已归档' }}），系统分析定位定向技术方向创新点的现状与趋势。</p>
                 <p class="report-body">当前该方向共收录创新点12个，覆盖温补技术、定向精度校准、初始对准三个三级方向。其中温补技术方向在近2年产出了5个创新点，是当前研究最活跃的子方向，与本次试验第19发超差事件的根因直接相关。</p>
                 <div style="margin-top:14px;background:#f5f9fd;border-radius:8px;padding:12px 14px">
                   <div style="font-size:12px;font-weight:600;color:#7a8b9a;margin-bottom:8px">主要参考文献（6篇）</div>
@@ -67,7 +61,7 @@
                     <div>[3] 试验报告V2·第19发超差分析，2024</div>
                     <div>[4] 自适应惯导对准技术，2021</div>
                     <div>[5] 定向精度评估标准研究，2020</div>
-                    <div>[6] 某型装备温补失效案例分析，2019</div>
+                    <div>[6] 某型温补失效案例分析，2019</div>
                   </div>
                 </div>
               </template>
@@ -183,7 +177,7 @@
                 </div>
                 <!-- 建议2 -->
                 <div style="margin-top:14px;padding:14px 16px;background:#f8fbfe;border-radius:8px;border-left:3px solid var(--blue)">
-                  <p class="report-body" style="margin-bottom:0"><b style="color:var(--navy-2)">② 初始对准快速收敛能力提升</b><br/>结合多位置观测与卡尔曼滤波融合方法，将对准时间压缩至4分钟以内，提高装备快速反应能力。</p>
+                  <p class="report-body" style="margin-bottom:0"><b style="color:var(--navy-2)">② 初始对准快速收敛能力提升</b><br/>结合多位置观测与卡尔曼滤波融合方法，将对准时间压缩至4分钟以内，提高快速反应能力。</p>
                 </div>
                 <!-- 建议3 -->
                 <div style="margin-top:10px;padding:14px 16px;background:#f8fbfe;border-radius:8px;border-left:3px solid var(--blue)">
@@ -205,122 +199,87 @@
 
       <!-- ══ 第一级：报告生成页 ══ -->
       <template v-else>
+        <div class="entry-title">
+          <h2>{{ title || '技术研判报告生成' }}</h2>
+          <p>按当前图谱浏览方向推荐研判模板，自动带入研判对象，生成并预览研判报告。</p>
+        </div>
 
-        <div style="display:grid;grid-template-columns:210px 1fr 1.3fr;gap:14px;align-items:start">
-
-          <!-- ── 左栏：研判模板 ── -->
-          <div class="panel" style="padding:0;overflow:hidden">
-            <!-- 标题栏 -->
-            <div style="padding:14px 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
-              <span style="font-size:13px;font-weight:700;color:var(--navy-2)">研判模板</span>
-              <span style="font-size:11px;color:#8a99a8;background:var(--head);padding:2px 8px;border-radius:8px">{{ m31Templates.length }} 套</span>
+        <div class="work-grid">
+          <section class="sec-frame tpl-pane">
+            <h3><i></i>研判模板 <em>{{ m31Templates.length }} 套</em></h3>
+            <div
+              v-for="(tpl, idx) in m31Templates"
+              :key="tpl.id"
+              class="tpl-item"
+              :class="{ on: m31SelectedTpl === tpl.id }"
+              @click="m31SelectTemplate(tpl)"
+            >
+              <span class="tpl-no">T{{ idx + 1 }}</span>
+              <div class="tpl-meta">
+                <b>{{ tpl.name }}</b>
+                <span v-if="tpl.recommended" class="rec-badge">智能推荐</span>
+                <span v-else class="tpl-hint">点击选择</span>
+              </div>
             </div>
-            <!-- 模板列表 -->
-            <div v-for="(tpl, idx) in m31Templates" :key="tpl.id"
-              class="m31-tpl-row" :class="{on: m31SelectedTpl===tpl.id}"
-              @click="m31SelectedTpl=tpl.id">
-              <!-- 序号 -->
-              <div class="m31-tpl-no">T{{ idx+1 }}</div>
-              <!-- 内容 -->
-              <div style="flex:1;min-width:0">
-                <div style="font-size:13px;font-weight:600;color:var(--navy-2);line-height:1.4">{{ tpl.name }}</div>
-                <div v-if="tpl.recommended" style="margin-top:5px">
-                  <span class="m31-recommend-badge">
-                    <svg viewBox="0 0 24 24" width="9" height="9" fill="currentColor" style="margin-right:3px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    智能推荐
-                  </span>
+          </section>
+
+          <section class="sec-frame obj-pane">
+            <h3><i></i>研判对象 <em class="auto">自动带入</em></h3>
+            <div class="obj-stats">
+              <div class="stat">
+                <div class="k">技术方向</div>
+                <div class="v">定位定向技术</div>
+                <div class="s">来自图谱浏览</div>
+              </div>
+              <div class="stat">
+                <div class="k">创新点统计</div>
+                <div class="n">7 <small>个</small></div>
+                <div class="s">置信度均值 0.88</div>
+              </div>
+            </div>
+            <div class="tree-cap">三级体系子树</div>
+            <div class="tree">
+              <div class="tree-root">定位定向技术</div>
+              <div class="tree-child gold">
+                <i></i>温补技术
+                <em>本次试验沉淀</em>
+              </div>
+              <div class="tree-child"><i></i>定向精度校准</div>
+              <div class="tree-child"><i></i>初始对准</div>
+            </div>
+          </section>
+
+          <section class="sec-frame list-pane">
+            <h3><i></i>已生成报告 <em>{{ m31Reports.length }} 份</em></h3>
+            <el-input
+              v-model="m31FilterDirection"
+              clearable
+              placeholder="请输入报告名称或研判方向"
+            />
+            <div class="rpt-list">
+              <div
+                v-for="rpt in m31FilteredReports"
+                :key="rpt.id"
+                class="rpt-item"
+                @click="m31OpenReport(rpt)"
+              >
+                <div class="rpt-ico">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
                 </div>
-                <div v-else style="font-size:11px;color:#b0bfc8;margin-top:4px">点击选择</div>
-              </div>
-              <!-- 选中箭头 -->
-              <svg v-if="m31SelectedTpl===tpl.id" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2.5" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
-            </div>
-          </div>
-
-          <!-- ── 中栏：研判对象 ── -->
-          <div class="panel" style="padding:0;overflow:hidden">
-            <!-- 标题栏 -->
-            <div style="padding:14px 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
-              <span style="font-size:13px;font-weight:700;color:var(--navy-2)">研判对象</span>
-              <span style="font-size:11px;color:var(--blue);background:#e8f3fb;padding:2px 8px;border-radius:8px">自动带入</span>
-            </div>
-            <!-- 核心指标 2×2 -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--line)">
-              <div style="padding:14px 16px;border-right:1px solid var(--line)">
-                <div style="font-size:11px;color:#8a99a8;margin-bottom:6px;font-weight:500">技术方向</div>
-                <div style="font-size:15px;font-weight:700;color:var(--navy-2);line-height:1.3">定位定向技术</div>
-                <div style="font-size:11px;color:var(--blue);margin-top:4px">来自图谱浏览</div>
-              </div>
-              <div style="padding:14px 16px">
-                <div style="font-size:11px;color:#8a99a8;margin-bottom:6px;font-weight:500">创新点统计</div>
-                <div style="font-size:24px;font-weight:800;color:var(--blue);line-height:1.1">7 <span style="font-size:13px;font-weight:400;color:#7a8b9a">个</span></div>
-                <div style="font-size:11px;color:#8a99a8;margin-top:4px">置信度均值 0.88</div>
-              </div>
-            </div>
-            <!-- 三级体系子树 -->
-            <div style="padding:12px 16px">
-              <div style="font-size:11px;color:#8a99a8;font-weight:600;letter-spacing:.5px;margin-bottom:8px">三级体系子树</div>
-              <div style="font-size:12.5px">
-                <div style="color:var(--blue);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:5px">
-                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                  定位定向技术
-                </div>
-                <div style="padding-left:16px;line-height:2.1;color:#4a5a6a">
-                  <div style="display:flex;align-items:center;gap:7px">
-                    <span style="width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
-                    温补技术
-                    <span style="background:#fff8e0;border:1px solid var(--gold);color:#8a6000;font-size:10px;padding:1px 6px;border-radius:5px">本次试验沉淀</span>
+                <div class="rpt-meta">
+                  <b>{{ rpt.title }}</b>
+                  <div class="rpt-sub">
+                    <span>{{ rpt.direction }}</span>
+                    <span class="dot">·</span>
+                    <span>{{ rpt.time }}</span>
+                    <span class="badge" :class="rpt.statusClass"><i></i>{{ rpt.status }}</span>
                   </div>
-                  <div style="display:flex;align-items:center;gap:7px">
-                    <span style="width:6px;height:6px;border-radius:50%;background:#c5d9ea;flex-shrink:0;display:inline-block"></span>
-                    定向精度校准
-                  </div>
-                  <div style="display:flex;align-items:center;gap:7px">
-                    <span style="width:6px;height:6px;border-radius:50%;background:#c5d9ea;flex-shrink:0;display:inline-block"></span>
-                    初始对准
-                  </div>
                 </div>
+                <button type="button" class="btn-link" @click.stop="m31OpenReport(rpt)">查看</button>
               </div>
+              <div v-if="!m31FilteredReports.length" class="rpt-empty">暂无报告</div>
             </div>
-          </div>
-
-          <!-- ── 右栏：已生成报告 ── -->
-          <div class="panel" style="padding:0;overflow:hidden">
-            <!-- 标题栏 -->
-            <div style="padding:14px 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
-              <span style="font-size:13px;font-weight:700;color:var(--navy-2)">已生成报告</span>
-              <span style="font-size:11px;color:#8a99a8;background:var(--head);padding:2px 8px;border-radius:8px">{{ m31Reports.length }} 份</span>
-            </div>
-            <!-- 搜索栏 -->
-            <div style="padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#b0bfc8" stroke-width="2" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input v-model="m31FilterDirection" placeholder="搜索报告名称或研判方向"
-                style="flex:1;height:30px;border:none;outline:none;font-size:13px;color:var(--text-2);background:transparent"/>
-            </div>
-            <!-- 报告行 -->
-            <div v-for="rpt in m31Reports" :key="rpt.id"
-              class="m31-report-row"
-              @click="m31Detail=rpt;activeReportSection=1;nextTick(()=>initM31Charts())">
-              <!-- 左侧文件图标 -->
-              <div style="flex-shrink:0;width:36px;height:36px;border-radius:9px;background:var(--head);display:grid;place-items:center">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--blue)" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              </div>
-              <!-- 报告信息 -->
-              <div style="flex:1;min-width:0">
-                <div style="font-size:13.5px;font-weight:600;color:var(--blue);line-height:1.4;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ rpt.title }}</div>
-                <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-size:12px;color:#7a8b9a">{{ rpt.direction }}</span>
-                  <span style="font-size:12px;color:#c5d9ea">·</span>
-                  <span style="font-size:12px;color:#b0bfc8">{{ rpt.time }}</span>
-                  <span class="badge" :class="rpt.statusClass" style="height:18px;font-size:10.5px;padding:0 7px">{{ rpt.status }}</span>
-                </div>
-              </div>
-              <!-- 进入箭头 -->
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#c5d9ea" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
-            </div>
-            <div v-if="!m31Reports.length" style="padding:28px;text-align:center;color:#9fb0c0;font-size:13px">暂无报告</div>
-          </div>
-
+          </section>
         </div>
       </template>
 
@@ -337,3 +296,203 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.rich-type-m31 {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px 22px;
+  box-shadow: 0 6px 18px rgba(15, 55, 95, .04);
+  min-width: 0;
+}
+.entry-title h2 { font-size: 20px; color: #0d4e83; font-weight: 700; }
+.entry-title p { margin-top: 4px; color: #6d8092; font-size: 13.5px; line-height: 1.6; }
+
+.work-grid {
+  display: grid;
+  grid-template-columns: 252px 288px minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  align-items: stretch;
+}
+.sec-frame {
+  border: 1.5px dashed #b7d4ee;
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  background: #fff;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sec-frame h3 {
+  font-size: 15px;
+  color: var(--navy-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex: 0 0 auto;
+}
+.sec-frame h3 i {
+  width: 4px; height: 16px; background: var(--blue); border-radius: 2px; display: inline-block;
+}
+.sec-frame h3 em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8a99a8;
+  background: #f4f8fc;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+.sec-frame h3 em.auto { color: #1668a8; background: #e8f3fb; }
+
+.tpl-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e4ecf4;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.tpl-item:last-child { margin-bottom: 0; }
+.tpl-item:hover { background: #f6fafd; }
+.tpl-item.on { background: #fffaf0; border-color: #efd291; }
+.tpl-no {
+  flex: 0 0 28px;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700;
+  background: #eef5fb; color: #1668a8;
+}
+.tpl-item.on .tpl-no { background: #d0ab68; color: #fff; }
+.tpl-meta { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.tpl-meta b {
+  font-size: 13.5px;
+  color: #1f3d5a;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tpl-hint { font-size: 12px; color: #b0bfc8; }
+.rec-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8a6000;
+  background: #fff8e0;
+  border: 1px solid #efd291;
+}
+
+.obj-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.stat {
+  background: #f5f9fd;
+  border-radius: 10px;
+  padding: 12px;
+  min-width: 0;
+}
+.stat .k { font-size: 12px; color: #8a99a8; margin-bottom: 6px; }
+.stat .v { font-size: 15px; font-weight: 700; color: #1f3d5a; white-space: nowrap; }
+.stat .n { font-size: 24px; font-weight: 800; color: #1668a8; line-height: 1.1; }
+.stat .n small { font-size: 13px; font-weight: 400; color: #7a8b9a; }
+.stat .s { font-size: 12px; color: #8a99a8; margin-top: 4px; white-space: nowrap; }
+.tree-cap { font-size: 12px; color: #8a99a8; font-weight: 600; margin-bottom: 8px; }
+.tree-root { color: #1668a8; font-weight: 600; font-size: 13.5px; margin-bottom: 6px; }
+.tree-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 14px;
+  line-height: 2.1;
+  color: #4a5a6a;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.tree-child i {
+  width: 6px; height: 6px; border-radius: 50%; background: #c5d9ea; flex: 0 0 6px;
+}
+.tree-child.gold i { background: #d0ab68; }
+.tree-child em {
+  font-style: normal;
+  font-size: 11px;
+  color: #8a6000;
+  background: #fff8e0;
+  border: 1px solid #efd291;
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+
+.list-pane :deep(.el-input) { margin-bottom: 10px; flex: 0 0 auto; }
+.rpt-list { display: flex; flex-direction: column; gap: 8px; }
+.rpt-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e4ecf4;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.rpt-item:hover { background: #f6fafd; border-color: #c5d9ea; }
+.rpt-ico {
+  flex: 0 0 36px;
+  width: 36px; height: 36px;
+  border-radius: 9px;
+  background: #eef5fb;
+  color: #1668a8;
+  display: grid;
+  place-items: center;
+}
+.rpt-ico svg { width: 16px; height: 16px; }
+.rpt-meta { flex: 1; min-width: 0; }
+.rpt-meta b {
+  display: block;
+  font-size: 13.5px;
+  color: #0d4e83;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rpt-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #7a8b9a;
+}
+.rpt-sub .dot { color: #c5d9ea; }
+.rpt-empty { padding: 28px; text-align: center; color: #9fb0c0; font-size: 13px; }
+
+.preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.preview-crumb { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.back-link { color: #1668a8; font-size: 13px; cursor: pointer; text-decoration: none; }
+.back-link:hover { text-decoration: none; color: #0d4e83; }
+.sep { color: #d0dce8; }
+.preview-title { font-size: 15px; font-weight: 700; color: var(--navy-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preview-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.preview-actions :deep(.el-button + .el-button) { margin-left: 0; }
+.preview-actions :deep(.el-button--primary),
+.preview-actions :deep(.el-button--primary > span) { color: #fff !important; }
+</style>

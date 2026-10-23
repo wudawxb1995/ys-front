@@ -206,7 +206,7 @@ const templates = reactive([
     published: false,
     nodes: [
       node({ id: 'start', type: 'start', title: '开始', sub: '用户问题', x: 48, y: 200, input: '问题', output: '问句', prompt: '接收鉴定业务咨询。' }),
-      node({ id: 'understand', type: 'llm', title: '问题理解', sub: '意图识别', x: 320, y: 200, input: '问句', output: '意图与对象', prompt: '识别意图、装备对象和需要的标准依据。' }),
+      node({ id: 'understand', type: 'llm', title: '问题理解', sub: '意图识别', x: 320, y: 200, input: '问句', output: '意图与对象', prompt: '识别意图、对象和需要的标准依据。' }),
       node({ id: 'kb', type: 'knowledge', title: '知识检索', sub: '资源库召回', x: 600, y: 200, input: '意图', output: '条款片段', kb: '标准规范库', prompt: '按意图召回标准条款和历史试验结论。' }),
       node({ id: 'llm', type: 'llm', title: '生成回答', sub: '鉴定-Qwen32B', x: 880, y: 200, input: '问句 + 条款', output: '回答草稿', prompt: '只依据召回内容回答，并保留引用编号。' }),
       node({ id: 'cite', type: 'tool', title: '引用溯源', sub: '原文页码', x: 1140, y: 80, input: '回答草稿', output: '引用', prompt: '为每条结论补上来源页码。' }),

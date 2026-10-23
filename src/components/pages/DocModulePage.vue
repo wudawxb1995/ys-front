@@ -103,7 +103,7 @@
             <div class="editor-tabs"><button class="active">正文</button><button>引用来源</button><button>处理记录</button></div>
             <div class="paper">
               <h2>{{ selectedChapter + 1 }} {{ chapters[selectedChapter] }}</h2>
-              <p>依据装备定型试验任务要求，对试验对象、试验条件、技术指标与判定依据进行结构化处理。</p>
+              <p>依据定型试验任务要求，对试验对象、试验条件、技术指标与判定依据进行结构化处理。</p>
               <p>高温环境稳定后，样品应连续运行不少于 <mark>8 h</mark>；启动时间不应超过 <mark>30 s</mark>，并形成完整试验记录。</p>
               <div class="paper-table"><b>检查对象</b><b>标准值</b><b>文档值</b><span>高温启动时间</span><span>≤30 s</span><strong>35 s</strong></div>
             </div>
@@ -202,7 +202,7 @@ const rightTitle = computed(() => ({ classify:'匹配条件配置', ontology:'�
 const tableTitle = computed(() => `${featureName.value}记录`)
 
 const graphNodes = [
-  { name:'装备对象', value:'某型装备A01', icon:'model', pos:'p1' }, { name:'技术指标', value:'高温启动时间', icon:'chart', pos:'p2' }, { name:'指标值', value:'≤ 30 s', icon:'target', pos:'p3' }, { name:'试验条件', value:'环境温度 -40℃', icon:'code', pos:'p4' }, { name:'标准依据', value:'GJB 150.3A', icon:'book', pos:'p5' }, { name:'评审结论', value:'符合要求', icon:'audit', pos:'p6' },
+  { name:'对象', value:'某型A01', icon:'model', pos:'p1' }, { name:'技术指标', value:'高温启动时间', icon:'chart', pos:'p2' }, { name:'指标值', value:'≤ 30 s', icon:'target', pos:'p3' }, { name:'试验条件', value:'环境温度 -40℃', icon:'code', pos:'p4' }, { name:'标准依据', value:'GJB 150.3A', icon:'book', pos:'p5' }, { name:'评审结论', value:'符合要求', icon:'audit', pos:'p6' },
 ]
 const flowNodes = [
   { title:'语义规则审查', text:'规则事件与文档内容校验', icon:'doc' }, { title:'本体逻辑审查', text:'概念、属性与关系核验', icon:'graph' }, { title:'跨文档核查', text:'指标承接与结果一致性', icon:'compare' }, { title:'证据追溯', text:'原文、条款与版本定位', icon:'search' }, { title:'结果汇集', text:'问题分级与整改建议', icon:'audit' },

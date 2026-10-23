@@ -55,8 +55,8 @@
             <label>版本号<span class="req">*</span></label>
             <input v-model="meta.ver" placeholder="如 V1.0" />
 
-            <label>适用装备类型<span class="req">*</span></label>
-            <select-field v-model="meta.equip" :options="equipOptions" placeholder="请选择装备类型" />
+            <label>适用类型<span class="req">*</span></label>
+            <select-field v-model="meta.equip" :options="equipOptions" placeholder="请选择类型" />
             <label>制定单位<span class="req">*</span></label>
             <input v-model="meta.org" placeholder="请输入制定单位" />
 
@@ -177,7 +177,7 @@ export default {
 
     const fieldOptions = ['动力系统', '环境适应', '可靠性', '电磁兼容', '综合性能']
     const kindOptions = ['定型试验模板', '性能试验模板', '可靠性试验模板', '专项试验模板']
-    const equipOptions = ['轮式装备', '履带装备', '农机装备', '通用装备']
+    const equipOptions = ['轮式', '履带', '农机', '通用']
     const stageOptions = ['摸底试验', '鉴定试验', '定型试验', '补充试验']
 
     const files = ref([])
@@ -257,7 +257,7 @@ export default {
     function requiredOk() {
       if (!meta.name?.trim() || !meta.field || !meta.kind || !meta.ver?.trim()
         || !meta.equip || !meta.org?.trim() || !meta.stage || !meta.date) {
-        toast('请填写模板名称、专业领域、模板类型、版本号、适用装备类型、制定单位、适用试验阶段与制定日期')
+        toast('请填写模板名称、专业领域、模板类型、版本号、适用类型、制定单位、适用试验阶段与制定日期')
         return false
       }
       return true

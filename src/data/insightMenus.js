@@ -170,7 +170,7 @@ export function insightSystems() {
       menus: [
         leaf('home', '首页', home(
           '欢迎使用 试验鉴定技术研判系统',
-          '按任务类型、装备分类和决策层级匹配研判模板，自动组装成熟度、趋势、优先级、技术路径和高价值方向，并支持项目查重。',
+          '按任务类型、分类和决策层级匹配研判模板，自动组装成熟度、趋势、优先级、技术路径和高价值方向，并支持项目查重。',
           [
             { name: '模板配置', to: 'tpl', desc: '章节与样式' },
             { name: '报告生成', to: 'rpt', desc: '图表与摘要' },
@@ -208,10 +208,10 @@ export function insightSystems() {
           ],
         )),
         g('tpl-rec', '研判报告模板智能推荐', 'spark', reuse(
-          { type: 'cards', cardKey: 'judgeTpl', desc: '按任务类型、装备分类和决策层级匹配研判模板。' },
+          { type: 'cards', cardKey: 'judgeTpl', desc: '按任务类型、分类和决策层级匹配研判模板。' },
           [
             ['rec-type', '研判任务类型识别'],
-            ['rec-eq', '装备种需求分析'],
+            ['rec-eq', '分类需求分析'],
             ['rec-lvl', '决策层级适配'],
             ['rec-match', '报告模板自动匹配'],
             ['rec-smart', '报告模板智能推荐'],

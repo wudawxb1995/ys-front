@@ -179,9 +179,9 @@ const tree = reactive([
         id: 'graph-node',
         name: '图谱节点',
         total: 247,
-        desc: '装备、指标和标准条款三类节点，记录与本次任务的关联。',
+        desc: '、指标和标准条款三类节点，记录与本次任务的关联。',
         children: [
-          item({ id: 'graph-equip', name: '装备实体', total: 86, desc: '机型、部件和试验对象。' }),
+          item({ id: 'graph-equip', name: '实体', total: 86, desc: '机型、部件和试验对象。' }),
           item({ id: 'graph-metric', name: '指标实体', total: 102, desc: '性能、环境和可靠性指标。' }),
           item({ id: 'graph-std', name: '标准条款', total: 59, desc: '可被审查和问答直接引用的条款。' }),
         ],
@@ -216,7 +216,7 @@ const rows = {
     ['大纲审查单', '审校平台', '3 条意见已关闭。'],
   ],
   'doc-report': [
-    ['装备定型试验报告 V2', '编写平台', '已归集，含审查留痕。'],
+    ['定型试验报告 V2', '编写平台', '已归集，含审查留痕。'],
     ['符合性判定章', '编写平台', '第 19 发复测后符合。'],
     ['审查意见回写稿', '审校平台', '意见定位到 4.2 持续时间。'],
   ],
@@ -269,7 +269,7 @@ const kindOf = {
   'paper-std': '标准规范',
   'paper-thesis': '专业论文',
   'dataset-hist': '历史数据集',
-  'graph-equip': '装备实体',
+  'graph-equip': '实体',
   'graph-metric': '指标实体',
   'graph-std': '标准条款',
 }

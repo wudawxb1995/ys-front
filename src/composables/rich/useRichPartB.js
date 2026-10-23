@@ -349,6 +349,11 @@ const m31FilterDirection  = ref('')
 const m31Templates        = judgeTemplates
 const m31Reports          = judgeReports
 const m31Sections         = judgeReportSections
+const m31FilteredReports  = computed(() => {
+  const q = (m31FilterDirection.value || '').trim()
+  if (!q) return m31Reports
+  return m31Reports.filter((r) => r.title.includes(q) || r.direction.includes(q))
+})
 
 const innovBarEl    = ref(null)
 const trendLineEl   = ref(null)
@@ -421,13 +426,13 @@ function initM31Charts() {
 
 function m31SelectTemplate(tpl) {
   m31SelectedTpl.value = tpl.id
-  // 有匹配报告时直接跳转预览
-  const matched = m31Reports.find(r => r.direction === '定位定向技术')
-  if (matched && tpl.recommended) {
-    m31Detail.value = matched
-    activeReportSection.value = 1
-    nextTick(() => initM31Charts())
-  }
+}
+
+function m31OpenReport(rpt) {
+  if (!rpt) return
+  m31Detail.value = rpt
+  activeReportSection.value = 1
+  nextTick(() => initM31Charts())
 }
 
 function m31ResetCharts() {
@@ -636,6 +641,7 @@ onBeforeUnmount(() => {
     m31FilterDirection,
     m31Templates,
     m31Reports,
+    m31FilteredReports,
     m31Sections,
     innovBarEl,
     trendLineEl,
@@ -643,6 +649,7 @@ onBeforeUnmount(() => {
     trendLineChart,
     initM31Charts,
     m31SelectTemplate,
+    m31OpenReport,
     m31ResetCharts,
     m31GoSection,
     m32Stage,

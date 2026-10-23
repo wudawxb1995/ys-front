@@ -9,7 +9,7 @@ export function rebuildSystems() {
       menus: [
         leaf('home', '首页', home(
           '欢迎使用 实验判定异构数据智能量化系统',
-          '面向装备试验鉴定业务，提供定型资料、历史试验数据、标准规范、专业文献的统一录入、智能解析、清洗规整、语义量化与成果导出，支撑定型资料数据智能再造。',
+          '面向试验鉴定业务，提供定型资料、历史试验数据、标准规范、专业文献的统一录入、智能解析、清洗规整、语义量化与成果导出，支撑定型资料数据智能再造。',
           [
             { name: '资源录入', to: 'res-add', desc: '统一汇聚多模态资料' },
             { name: '智能解析', to: 'parse-multi', desc: '文本、图像、表格、音视频' },
@@ -65,7 +65,7 @@ export function rebuildSystems() {
           [['audit', '三栏视图展示'], ['audit-edit', '审核内容编辑'], ['audit-nav', '智能导航定位']],
         )),
         g('edit-g', '解析成果编辑', 'edit', [
-          leaf('edit-struct', '结构化数据维护', crud('维护文档名称、装备型号、试验阶段等字段，支持增删改与修改记录。', 'resources')),
+          leaf('edit-struct', '结构化数据维护', crud('维护文档名称、型号、试验阶段等字段，支持增删改与修改记录。', 'resources')),
           leaf('edit-media', '多媒体内容编辑', crud('修订解析结果中的图片、表格与音视频关联内容。', 'resources')),
           leaf('entities', '实体标注修订', crud('修订实体边界与类型，也可手动新增系统未识别的实体。对象覆盖文本、图片与视频。', 'entities')),
           leaf('entities-add', '实体标注新增', crud('手动新增系统未识别的实体，覆盖文本、图片与视频。', 'entities')),
@@ -96,11 +96,11 @@ export function rebuildSystems() {
     },
     {
       id: 'extract',
-      name: '装备关键指标定向抽取',
-      full: '装备关键指标定向抽取系统',
+      name: '关键指标定向抽取',
+      full: '关键指标定向抽取系统',
       menus: [
         leaf('home', '首页', home(
-          '欢迎使用 装备关键指标定向抽取系统',
+          '欢迎使用 关键指标定向抽取系统',
           '从定型资料与试验报告中识别性能参数与技术指标，支持意图推断、分类打标、人工审核与原文追溯，并按领域标准生成结构化数据。',
           [
             { name: '解析偏好', to: 'pref', desc: '意图映射为解析策略' },
@@ -116,7 +116,7 @@ export function rebuildSystems() {
             { label: '问答训练数据', value: '5,200', unit: '条' },
           ],
         )),
-        g('parse-ind', '装备关键指标解析', 'parse', reuse(
+        g('parse-ind', '关键指标解析', 'parse', reuse(
           { type: 'parse', desc: '上传定型资料与试验报告，提取文档原始信息、概要、标签与关键实体，对齐知识库主题。' },
           [['parse-info', '文档信息解析'], ['parse-nav', '信息导航解析'], ['parse-ent', '关键实体解析'], ['parse-kb', '知识库主题适配']],
         )),
@@ -137,9 +137,9 @@ export function rebuildSystems() {
           { type: 'cards', cardKey: 'modalPref', desc: '文本侧重要点与关系，图像侧重文字与图形，视频侧重事件导览，并给出可对照的跨模态策略。' },
           [['modal-pref', '模态偏好配置'], ['modal-focus', '解析重点设置'], ['modal-cross', '跨模态策略管理']],
         )),
-        g('ind', '装备关键指标抽取', 'extract', [
+        g('ind', '关键指标抽取', 'extract', [
           leaf('inds', '关键指标识别', crud('抽取文档信息、概要、标签、导航与关键实体，内容对齐知识库主题。', 'indicators')),
-          leaf('ind-data', '指标数据提取', crud('提取指标数值、计量单位与属性关联。', 'indicators')),
+          leaf('ind-data', '指标数据提取', { type: 'm02', desc: '从定型资料与试验报告中抽取指标数值、计量单位与属性关联，支持任务进度查看与结果溯源。' }),
           leaf('ind-out', '抽取成果生成', crud('按配置输出指定格式的指标抽取成果。', 'indicators')),
         ]),
         g('cats-g', '文档分类标注', 'cluster', reuse(
@@ -152,13 +152,13 @@ export function rebuildSystems() {
           leaf('custom-run', '定向抽取执行', crud('加载有效配置，完成目标内容定位和提取。', 'indicators')),
         ]),
         g('rev', '解析结果审核', 'audit', [
-          leaf('preview', '解析结果预览', { type: 'm02', desc: '预览模式查看自动解析结果；审核模式对结果增删改。支持多类别装备的精细化人工核验。' }),
-          leaf('preview-mode', '审核模式管理', { type: 'm02', desc: '在预览与审核模式间切换，按权限开展增删改、保存及审核确认。' }),
-          leaf('preview-edit', '解析结果编辑', { type: 'm02', desc: '对自动解析结果增删改，保存核验意见。' }),
+          leaf('preview', '解析结果预览', { type: 'parse-preview', desc: '预览模式查看自动解析结果；审核模式对结果增删改。支持多类别的精细化人工核验。' }),
+          leaf('preview-mode', '审核模式管理', { type: 'parse-preview', desc: '在预览与审核模式间切换，按权限开展增删改、保存及审核确认。' }),
+          leaf('preview-edit', '解析结果编辑', { type: 'parse-preview', desc: '对自动解析结果增删改，保存核验意见。' }),
         ]),
-        g('multi', '多类别装备审核', 'table', reuse(
-          crud('针对不同装备类别分别核验抽取结果，确保分类准确性。', 'indicators'),
-          [['multi-rev', '装备审核对象管理'], ['multi-viz', '模型结果可视化'], ['multi-check', '装备指标核验']],
+        g('multi', '多类别审核', 'table', reuse(
+          crud('针对不同类别分别核验抽取结果，确保分类准确性。', 'indicators'),
+          [['multi-rev', '审核对象管理'], ['multi-viz', '模型结果可视化'], ['multi-check', '指标核验']],
         )),
         g('trace-g', '指标原文追溯', 'timeline', reuse(
           crud('由指标项定位并展示源文件，辅助人工核验。', 'indicators'),
@@ -175,12 +175,12 @@ export function rebuildSystems() {
     },
     {
       id: 'resume',
-      name: '装备履历知识库构建',
-      full: '装备履历知识库构建系统',
+      name: '履历知识库构建',
+      full: '履历知识库构建系统',
       menus: [
         leaf('home', '首页', home(
-          '欢迎使用 装备履历知识库构建系统',
-          '把定型资料与相关数据归入研发设计、性能试验设计、性能试验鉴定、成果验收，记录技术状态、性能变更、问题归零与关键事件，构建“装备—指标—试验—事件”知识图谱。',
+          '欢迎使用 履历知识库构建系统',
+          '把定型资料与相关数据归入研发设计、性能试验设计、性能试验鉴定、成果验收，记录技术状态、性能变更、问题归零与关键事件，构建“指标—试验—事件”知识图谱。',
           [
             { name: '阶段归类', to: 'life', desc: '全生命周期整合' },
             { name: '过程记录', to: 'events', desc: '状态、变更、归零' },
@@ -195,24 +195,24 @@ export function rebuildSystems() {
             { label: '关系抽取准确率', value: '79.2', unit: '%' },
           ],
         )),
-        g('life-g', '装备全生命周期数据整合', 'layers', reuse(
+        g('life-g', '全生命周期数据整合', 'layers', reuse(
           crud('资料按研发设计、性能试验设计、性能试验鉴定、成果验收归类。', 'lifecycle'),
           [['life', '全生命周期数据汇聚'], ['life-class', '生命周期阶段归类'], ['life-merge', '生命周期数据整合']],
         )),
-        g('events-g', '装备履历过程记录', 'timeline', reuse(
+        g('events-g', '履历过程记录', 'timeline', reuse(
           crud('记录技术状态、性能变更、问题及归零、关键事件。', 'events'),
           [['events', '技术状态记录'], ['events-chg', '性能变更记录'], ['events-zero', '问题归零记录'], ['events-key', '关键事件记录']],
         )),
-        g('build', '装备履历知识图谱构建', 'graph', reuse(
+        g('build', '履历知识图谱构建', 'graph', reuse(
           { type: 'graph', graphKey: 'resume', desc: '二维 / 三维展示，支持搜索、筛选、查验、编辑。可手动创建节点、关系与事件类型。' },
           [['graph', '履历要素识别'], ['graph-rel', '履历关系挖掘'], ['graph-triple', '知识三元组构建'], ['graph-gen', '履历图谱生成']],
         )),
-        g('resume-show', '装备履历信息展示', 'report', reuse(
-          { type: 'timeline', desc: '按时间轴展示装备全生命周期履历，支持阶段筛选与事件详情查看。' },
+        g('resume-show', '履历信息展示', 'report', reuse(
+          { type: 'timeline', desc: '按时间轴展示全生命周期履历，支持阶段筛选与事件详情查看。' },
           [['life-view', '履历信息结构化'], ['life-layout', '履历信息编排'], ['life-viz', '履历信息可视化']],
         )),
         g('hand', '图谱手工构建', 'edit', reuse(
-          { type: 'graph', graphKey: 'resume', desc: '在指定装备履历知识图谱中补充节点、关系与事件类型，并维护 Schema。' },
+          { type: 'graph', graphKey: 'resume', desc: '在指定履历知识图谱中补充节点、关系与事件类型，并维护 Schema。' },
           [['hand-node', '图谱节点创建'], ['hand-rel', '图谱关系创建'], ['hand-evt', '事件类型创建'], ['hand-schema', '图谱Schema维护']],
         )),
         g('multi-src', '多源数据图谱构建', 'swap', reuse(
@@ -242,15 +242,15 @@ export function rebuildSystems() {
           crud('筛选待清理图谱，核对删除清单与风险后执行受控删除。', 'lifecycle'),
           [['del-pick', '图谱删除对象选择'], ['del-confirm', '图谱删除确认'], ['del-run', '图谱安全删除']],
         )),
-        g('schema-sys', '装备履历知识结构体系', 'ontology', reuse(
-          crud('划分装备履历知识域、规划层级并扩展图谱结构。', 'ontology'),
+        g('schema-sys', '履历知识结构体系', 'ontology', reuse(
+          crud('划分履历知识域、规划层级并扩展图谱结构。', 'ontology'),
           [['schema-plan', '履历知识结构规划'], ['schema-build', '图谱结构体系构建'], ['schema-ext', '图谱结构扩展']],
         )),
-        g('nodes-g', '装备履历节点类型定义', 'tag', reuse(
+        g('nodes-g', '履历节点类型定义', 'tag', reuse(
           crud('定义实体类型，配置属性、颜色与图标。', 'nodeTypes'),
           [['nodes', '节点类型定义'], ['nodes-attr', '节点类型属性配置'], ['nodes-style', '节点类型样式配置']],
         )),
-        g('rels-g', '装备履历关系类型定义', 'link', reuse(
+        g('rels-g', '履历关系类型定义', 'link', reuse(
           crud('内置因果、条件、组成等事件关系，并支持扩展。', 'relTypes'),
           [['rels', '节点关系类型定义'], ['rels-evt', '事件关系类型管理'], ['rels-ext', '自定义关系扩展'], ['rels-sem', '关系语义体系组织']],
         )),
@@ -262,23 +262,23 @@ export function rebuildSystems() {
     },
     {
       id: 'situation',
-      name: '装备能力牵引的实验判定态势综合展示',
-      full: '装备能力牵引的实验判定态势综合展示系统',
+      name: '能力牵引的实验判定态势综合展示',
+      full: '能力牵引的实验判定态势综合展示系统',
       menus: [
         leaf('home', '首页', { type: 'stats', statsKey: 'situation', desc: '覆盖试验任务、资源、环境的综合信息面板，融合试验情况与测试数据，快速定位问题与结果。' }),
-        g('trace-g', '装备技术状态追溯', 'timeline', reuse(
+        g('trace-g', '技术状态追溯', 'timeline', reuse(
           { type: 'timeline', desc: '建立技术状态发展链，按时间轴展示关键技术节点演进，支持原文回溯。' },
           [['trace', '技术状态发展链构建'], ['evt-axis', '关键事件时间轴构建'], ['trace-hist', '技术状态历程追溯']],
         )),
-        g('hist-g', '装备履历全景追溯', 'report', [
+        g('hist-g', '履历全景追溯', 'report', [
           leaf('hist-src', '原文信息回溯', { type: 'timeline', desc: '关联履历记录与原始资料，定位原文页码与章节。' }),
           leaf('compare', '技术状态阶段对比', { type: 'report', reportKey: 'compare', desc: '对比技术状态阶段，分析各阶段差异与演变规律。' }),
           leaf('change-imp', '技术状态变更影响分析', { type: 'report', reportKey: 'changeImp', desc: '分析变更对指标与试验结论的影响，辅助决策。' }),
-          leaf('hist-view', '装备履历全景展示', { type: 'timeline', desc: '全景展示装备履历与关联技术状态。' }),
+          leaf('hist-view', '履历全景展示', { type: 'timeline', desc: '全景展示履历与关联技术状态。' }),
         ]),
-        g('cap-g', '装备能力评估展示', 'radar', [
-          leaf('cap-idx', '装备能力指标组织', crud('维护能力评估指标体系，配置指标权重与评分规则。', 'indicators')),
-          leaf('cap-eval', '装备能力评估', { type: 'radar', desc: '按打击、机动、防护等维度评估装备能力状态。' }),
+        g('cap-g', '能力评估展示', 'radar', [
+          leaf('cap-idx', '能力指标组织', crud('维护能力评估指标体系，配置指标权重与评分规则。', 'indicators')),
+          leaf('cap-eval', '能力评估', { type: 'radar', desc: '按打击、机动、防护等维度评估能力状态。' }),
           leaf('radar', '能力雷达图展示', { type: 'radar', desc: '以雷达图展示能力状态，维度包括打击、机动、防护，并补充可靠性与作业效率。' }),
           leaf('cap-matrix', '能力矩阵展示', { type: 'radar', desc: '以能力矩阵展示各维度评估结果。' }),
           leaf('cap-bar', '能力柱状图展示', { type: 'radar', desc: '以柱状图对比各能力维度得分。' }),
@@ -321,7 +321,7 @@ export function rebuildSystems() {
         )),
         g('card-g', '个性化知识卡片', 'cards', [
           leaf('theme-ana', '问答主题分析', { type: 'cards', cardKey: 'platCard', desc: '分析平台热点主题与个人兴趣主题，支撑卡片生成与推荐。' }),
-          leaf('plat-card', '平台知识卡片生成', { type: 'cards', cardKey: 'platCard', desc: '平台级卡片来自全平台问答主题，涵盖装备参数与试验鉴定方法。' }),
+          leaf('plat-card', '平台知识卡片生成', { type: 'cards', cardKey: 'platCard', desc: '平台级卡片来自全平台问答主题，涵盖参数与试验鉴定方法。' }),
           leaf('cards', '个性化卡片推荐', { type: 'cards', cardKey: 'knowledge', desc: '个性化卡片来自当前账号，按个人关注领域推送。' }),
           leaf('card-biz', '业务知识卡片组织', { type: 'cards', cardKey: 'knowledge', desc: '按业务主题组织知识卡片，便于共享与按需获取。' }),
         ]),
@@ -330,7 +330,7 @@ export function rebuildSystems() {
           [['topic-gen', '专题内容生成'], ['topic', '专题文档组织'], ['topic-mm', '多模态专题展示'], ['topic-src', '专题内容溯源'], ['topic-dl', '专题文档下载']],
         )),
         g('mine-g', '多类型文档要素挖掘', 'spark', reuse(
-          crud('识别装备试验鉴定资料中的性能、过程与技术状态等要素，并组织挖掘成果。', 'entities'),
+          crud('识别试验鉴定资料中的性能、过程与技术状态等要素，并组织挖掘成果。', 'entities'),
           [['mine', '文档要素识别'], ['mine-rel', '业务关系挖掘'], ['mine-org', '要素挖掘成果组织']],
         )),
         g('search-g', '多维数据智能检索', 'search', reuse(

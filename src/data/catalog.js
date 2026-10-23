@@ -72,7 +72,7 @@ const platformsRaw = [
     group: 'app',
     no: '01',
     name: '定型资料数据智能再造平台',
-    brief: '异构资料统一汇聚与结构化解析，关键指标定向抽取，构建装备履历知识图谱',
+    brief: '异构资料统一汇聚与结构化解析，关键指标定向抽取，构建履历知识图谱',
     tags: ['数据解析', '指标抽取', '履历图谱', '态势展示'],
     icon: 'book',
     iconFile: '/icons/p1-rebuild.svg',
@@ -112,15 +112,15 @@ const platformsRaw = [
     systems: [
       {
         id: 'collect',
-        name: '某型装备领域文档归集系统',
-        full: '某型装备领域文档归集系统',
-        menus: buildDocMenus('collect', '某型装备领域文档归集系统'),
+        name: '某型领域文档归集系统',
+        full: '某型领域文档归集系统',
+        menus: buildDocMenus('collect', '某型领域文档归集系统'),
       },
       {
         id: 'write',
-        name: '某型装备试验文档设计系统',
-        full: '某型装备试验文档设计系统',
-        menus: buildDocMenus('write', '某型装备试验文档设计系统'),
+        name: '某型试验文档设计系统',
+        full: '某型试验文档设计系统',
+        menus: buildDocMenus('write', '某型试验文档设计系统'),
       },
       {
         id: 'review',

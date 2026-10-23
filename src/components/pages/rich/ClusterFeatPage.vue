@@ -178,16 +178,16 @@ const PREVIEW_COLS = [
 ]
 
 const SEEDS = [
-  { name: '某型装备高温环境试验报告', type: '试验报告', project: '装备定型试验', ver: 'V1.0', date: '2024-06-12', attr: '环境试验', use: '性能验证', spec: '高温：150℃', obj: '整机', env: '高温', method: '高温试验', cond: '150℃ / 2h', device: '高温试验箱', other: '—' },
+  { name: '某型高温环境试验报告', type: '试验报告', project: '定型试验', ver: 'V1.0', date: '2024-06-12', attr: '环境试验', use: '性能验证', spec: '高温：150℃', obj: '整机', env: '高温', method: '高温试验', cond: '150℃ / 2h', device: '高温试验箱', other: '—' },
   { name: '某型发动机振动试验数据', type: '试验数据', project: '发动机专项', ver: 'V2.1', date: '2024-05-28', attr: '力学试验', use: '可靠性验证', spec: '频率：20-2000Hz', obj: '发动机', env: '振动', method: '振动试验', cond: '20–2000Hz', device: '电动振动台', other: '—' },
-  { name: '某型装备电磁兼容试验方案', type: '试验方案', project: '装备定型试验', ver: 'V1.0', date: '2024-04-13', attr: '电磁试验', use: '符合性验证', spec: '频段：30MHz–1GHz', obj: '整机', env: '电磁', method: 'EMC试验', cond: '标准限值', device: 'EMC暗室', other: '—' },
-  { name: '某型装备低温试验数据记录', type: '试验记录', project: '环境试验项目', ver: 'V1.3', date: '2024-03-15', attr: '环境试验', use: '可靠性验证', spec: '低温：-40℃', obj: '整机', env: '低温', method: '低温试验', cond: '-40℃ / 4h', device: '高低温试验箱', other: '—' },
+  { name: '某型电磁兼容试验方案', type: '试验方案', project: '定型试验', ver: 'V1.0', date: '2024-04-13', attr: '电磁试验', use: '符合性验证', spec: '频段：30MHz–1GHz', obj: '整机', env: '电磁', method: 'EMC试验', cond: '标准限值', device: 'EMC暗室', other: '—' },
+  { name: '某型低温试验数据记录', type: '试验记录', project: '环境试验项目', ver: 'V1.3', date: '2024-03-15', attr: '环境试验', use: '可靠性验证', spec: '低温：-40℃', obj: '整机', env: '低温', method: '低温试验', cond: '-40℃ / 4h', device: '高低温试验箱', other: '—' },
   { name: '某型雷达性能摸底试验', type: '试验报告', project: '雷达专项', ver: 'V2.0', date: '2024-02-28', attr: '性能试验', use: '摸底评估', spec: '作用距离：120km', obj: '雷达', env: '常温', method: '性能测试', cond: '常温常湿', device: '雷达综合测试仪', other: '—' },
-  { name: '某型装备环境适应性试验报告', type: '试验报告', project: '装备定型试验', ver: 'V1.0', date: '2024-01-17', attr: '环境试验', use: '适应性考核', spec: '温循：-40～70℃', obj: '整机', env: '温循', method: '环境试验', cond: '温循 10 周期', device: '温循试验箱', other: '—' },
-  { name: '某型装备可靠性增长试验数据', type: '试验数据', project: '可靠性试验', ver: 'V1.5', date: '2024-01-05', attr: '可靠性增长', use: '寿命评估', spec: '周期：1000h', obj: '发动机', env: '低温', method: '加速试验', cond: '1000h', device: '可靠性试验台', other: '—' },
-  { name: '某型装备静力试验方案', type: '试验方案', project: '结构强度试验', ver: 'V1.3', date: '2023-12-20', attr: '结构试验', use: '强度考核', spec: '载荷：120%', obj: '结构件', env: '静载', method: '静力试验', cond: '分级加载', device: '静力加载架', other: '—' },
-  { name: '某型装备疲劳试验数据', type: '试验数据', project: '疲劳试验', ver: 'V1.0', date: '2023-11-11', attr: '结构试验', use: '寿命验证', spec: '循环：1e6', obj: '结构件', env: '疲劳', method: '疲劳试验', cond: '1×10⁶ 次', device: '疲劳试验机', other: '—' },
-  { name: '某型装备冲击试验数据', type: '试验数据', project: '冲击环境试验', ver: 'V1.0', date: '2023-10-09', attr: '力学试验', use: '抗冲击考核', spec: '峰值：50g', obj: '整机', env: '冲击', method: '冲击试验', cond: '半正弦 11ms', device: '冲击试验台', other: '—' },
+  { name: '某型环境适应性试验报告', type: '试验报告', project: '定型试验', ver: 'V1.0', date: '2024-01-17', attr: '环境试验', use: '适应性考核', spec: '温循：-40～70℃', obj: '整机', env: '温循', method: '环境试验', cond: '温循 10 周期', device: '温循试验箱', other: '—' },
+  { name: '某型可靠性增长试验数据', type: '试验数据', project: '可靠性试验', ver: 'V1.5', date: '2024-01-05', attr: '可靠性增长', use: '寿命评估', spec: '周期：1000h', obj: '发动机', env: '低温', method: '加速试验', cond: '1000h', device: '可靠性试验台', other: '—' },
+  { name: '某型静力试验方案', type: '试验方案', project: '结构强度试验', ver: 'V1.3', date: '2023-12-20', attr: '结构试验', use: '强度考核', spec: '载荷：120%', obj: '结构件', env: '静载', method: '静力试验', cond: '分级加载', device: '静力加载架', other: '—' },
+  { name: '某型疲劳试验数据', type: '试验数据', project: '疲劳试验', ver: 'V1.0', date: '2023-11-11', attr: '结构试验', use: '寿命验证', spec: '循环：1e6', obj: '结构件', env: '疲劳', method: '疲劳试验', cond: '1×10⁶ 次', device: '疲劳试验机', other: '—' },
+  { name: '某型冲击试验数据', type: '试验数据', project: '冲击环境试验', ver: 'V1.0', date: '2023-10-09', attr: '力学试验', use: '抗冲击考核', spec: '峰值：50g', obj: '整机', env: '冲击', method: '冲击试验', cond: '半正弦 11ms', device: '冲击试验台', other: '—' },
 ]
 
 function buildCatalog() {
@@ -222,7 +222,7 @@ export default {
     const previewRows = ref([])
     const listTable = ref(null)
 
-    const dsOpts = ['装备试验结构化资源数据集', '试验参数结构化数据集']
+    const dsOpts = ['试验结构化资源数据集', '试验参数结构化数据集']
     const scopeOpts = ['全部资源', '已结构化资源', '已校验资源']
     const typeOpts = ['全部类型', '试验报告', '试验数据', '试验方案', '试验记录']
     const formatOpts = ['结构化表格（CSV）', 'JSON', '向量特征表']

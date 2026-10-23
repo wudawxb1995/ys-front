@@ -143,11 +143,11 @@ const DOCS = [
   { id: 1, name: '某型飞机高温环境试验报告.docx', kind: 'doc', mark: 'W', docType: '试验报告', testType: '环境试验', object: '某型飞机', project: '某型飞机研制项目', date: '2023-06-12', size: '12.36 MB', keywords: '高温环境、性能测试、试验报告', abstract: '本文档为某型飞机在高温环境条件下的试验报告，涵盖试验目的、试验条件、试验过程及结果分析。' },
   { id: 2, name: '某型发动机振动试验记录.pdf', kind: 'pdf', mark: 'A', docType: '试验记录', testType: '振动试验', object: '某型发动机', project: '发动机专项', date: '2022-11-03', size: '8.15 MB', keywords: '振动试验、发动机、试验记录', abstract: '记录某型发动机振动试验过程数据、测点布置及主要结论。' },
   { id: 3, name: '某型雷达电磁兼容试验方案.docx', kind: 'doc', mark: 'W', docType: '试验方案', testType: '电磁兼容试验', object: '某型雷达', project: '雷达专项', date: '2022-08-21', size: '5.23 MB', keywords: '电磁兼容、试验方案、雷达', abstract: '制定某型雷达电磁兼容试验的项目、限值、场地与判定准则。' },
-  { id: 4, name: '某型装备可靠性试验报告.pdf', kind: 'pdf', mark: 'A', docType: '试验报告', testType: '可靠性试验', object: '某型装备', project: '装备定型试验', date: '2022-05-17', size: '10.29 MB', keywords: '可靠性、寿命、试验报告', abstract: '给出某型装备可靠性试验剖面、故障统计与评估结论。' },
+  { id: 4, name: '某型可靠性试验报告.pdf', kind: 'pdf', mark: 'A', docType: '试验报告', testType: '可靠性试验', object: '某型', project: '定型试验', date: '2022-05-17', size: '10.29 MB', keywords: '可靠性、寿命、试验报告', abstract: '给出某型可靠性试验剖面、故障统计与评估结论。' },
   { id: 5, name: '某型车辆道路试验数据.xlsx', kind: 'xls', mark: 'X', docType: '试验数据', testType: '道路试验', object: '某型车辆', project: '车辆道路试验', date: '2021-12-08', size: '4.76 MB', keywords: '道路试验、车辆、试验数据', abstract: '汇总某型车辆道路试验的速度、载荷与油耗等结构化数据。' },
   { id: 6, name: '某型导弹环境试验图片资料.zip', kind: 'zip', mark: 'Z', docType: '试验资料', testType: '环境试验', object: '某型导弹', project: '导弹环境试验', date: '2021-09-14', size: '28.67 MB', keywords: '环境试验、图片、导弹', abstract: '收集某型导弹环境试验现场照片与配套说明资料。' },
   { id: 7, name: '某型卫星热真空试验报告.pdf', kind: 'pdf', mark: 'A', docType: '试验报告', testType: '热真空试验', object: '某型卫星', project: '卫星热真空试验', date: '2021-06-30', size: '9.14 MB', keywords: '热真空、卫星、试验报告', abstract: '描述某型卫星热真空试验工况、温度曲线及性能复核结果。' },
-  { id: 8, name: '某型装备试验大纲.docx', kind: 'doc', mark: 'W', docType: '试验大纲', testType: '综合试验', object: '某型装备', project: '装备综合试验', date: '2021-03-18', size: '6.81 MB', keywords: '试验大纲、综合试验、装备', abstract: '明确某型装备综合试验的目的、项目、方法与验收要求。' },
+  { id: 8, name: '某型试验大纲.docx', kind: 'doc', mark: 'W', docType: '试验大纲', testType: '综合试验', object: '某型', project: '综合试验', date: '2021-03-18', size: '6.81 MB', keywords: '试验大纲、综合试验、', abstract: '明确某型综合试验的目的、项目、方法与验收要求。' },
 ]
 
 export default {

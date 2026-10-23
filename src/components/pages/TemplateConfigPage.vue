@@ -195,7 +195,7 @@ import SelectField from '@/components/SelectField.vue'
 import { useUi } from '@/composables/ui'
 
 const { toast } = useUi()
-const templateOptions = ['装备定型试验报告模板', '性能鉴定试验报告模板', '试验大纲模板']
+const templateOptions = ['定型试验报告模板', '性能鉴定试验报告模板', '试验大纲模板']
 const currentTemplate = ref(templateOptions[0])
 const paperTitle = computed(() => currentTemplate.value.replace('模板', ''))
 const scale = ref(1)
@@ -233,7 +233,7 @@ const previews = {
   c4: {
     title: '4 试验条件',
     page: 4,
-    clause: '在规定环境条件下，装备应连续运行不少于规定时长。各项功能应保持正常。',
+    clause: '在规定环境条件下，应连续运行不少于规定时长。各项功能应保持正常。',
     blocks: [
       { h: '4.1 环境条件', rows: [{ label: '环境温度', fieldId: 'temp', unit: '℃' }, { label: '相对湿度', fieldId: 'humidity', unit: '%' }] },
       { h: '4.2 持续时间', rows: [{ label: '持续时间', fieldId: 'duration', unit: 'h' }] },

@@ -7,7 +7,7 @@
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
           <svg viewBox="0 0 24 24" fill="none" stroke="#0d4e83" stroke-width="1.8" style="width:16px;height:16px;flex:0 0 auto"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           <span style="font-weight:700;font-size:13.5px;color:#0d4e83">需求摘要</span>
-          <span style="font-size:12.5px;color:#4a7fa8">自动解析自定稿方案《某型装备性能鉴定试验大纲 V4》</span>
+          <span style="font-size:12.5px;color:#4a7fa8">自动解析自定稿方案《某型性能鉴定试验大纲 V4》</span>
           <button class="btn btn-outline" style="margin-left:auto;height:28px;padding:0 10px;font-size:12.5px" @click="toast('已重新解析方案')">重新解析</button>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">

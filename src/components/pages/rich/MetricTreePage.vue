@@ -86,7 +86,7 @@
                       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                     </div>
                     <div style="flex:1">
-                      <div style="font-weight:600;font-size:13.5px;color:#1f3d5a">D-01《某型装备研制总要求》</div>
+                      <div style="font-weight:600;font-size:13.5px;color:#1f3d5a">D-01《某型研制总要求》</div>
                       <div style="font-size:12.5px;color:#8a99a8;margin-top:2px">第 12 页 · {{ m03SelNode.srcSection }}</div>
                     </div>
                     <button @click="toast('原文定位：第12页')" style="width:32px;height:32px;border:1px solid #c8dff0;border-radius:6px;background:#fff;cursor:pointer;display:grid;place-items:center;color:#4a7fa8;flex:0 0 auto" title="查看原文">

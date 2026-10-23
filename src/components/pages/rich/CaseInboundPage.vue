@@ -54,8 +54,8 @@
           <div class="entry-form">
             <label>案例名称<span class="req">*</span></label>
             <input v-model="meta.name" placeholder="请输入案例名称" />
-            <label>所属装备<span class="req">*</span></label>
-            <select-field v-model="meta.equip" :options="equipOptions" placeholder="请选择所属装备" />
+            <label>所属对象<span class="req">*</span></label>
+            <select-field v-model="meta.equip" :options="equipOptions" placeholder="请选择所属对象" />
 
             <label>试验类型<span class="req">*</span></label>
             <select-field v-model="meta.type" :options="typeOptions" placeholder="请选择试验类型" />
@@ -190,15 +190,15 @@ export default {
       remark: '',
     })
 
-    const equipOptions = ['某型装备', 'XX-100', 'XX-200', 'XX-300']
+    const equipOptions = ['某型', 'XX-100', 'XX-200', 'XX-300']
     const typeOptions = ['环境试验', '力学试验', '电磁试验', '可靠性试验']
     const stageOptions = ['鉴定试验', '定型试验', '摸底试验', '补充试验']
 
     const tasks = ref([
-      { id: 1, file: '某型装备高温环境适应性报告.docx', caseName: '高温环境适应性试验', type: '环境试验', size: '12.36 MB', time: '2026-10-22 14:23:16', status: '已完成', fmt: 'DOCX' },
-      { id: 2, file: '某型装备振动试验数据.xlsx', caseName: '振动试验案例', type: '力学试验', size: '8.52 MB', time: '2026-10-22 11:09:35', status: '处理中', fmt: 'XLSX' },
-      { id: 3, file: '某型装备盐雾试验方案.pdf', caseName: '盐雾腐蚀试验方案', type: '环境试验', size: '5.18 MB', time: '2026-10-21 16:45:22', status: '待提交', fmt: 'PDF' },
-      { id: 4, file: '某型装备可靠性试验资料.zip', caseName: '可靠性增长试验', type: '可靠性试验', size: '26.76 MB', time: '2026-10-21 09:32:18', status: '已完成', fmt: 'ZIP' },
+      { id: 1, file: '某型高温环境适应性报告.docx', caseName: '高温环境适应性试验', type: '环境试验', size: '12.36 MB', time: '2026-10-22 14:23:16', status: '已完成', fmt: 'DOCX' },
+      { id: 2, file: '某型振动试验数据.xlsx', caseName: '振动试验案例', type: '力学试验', size: '8.52 MB', time: '2026-10-22 11:09:35', status: '处理中', fmt: 'XLSX' },
+      { id: 3, file: '某型盐雾试验方案.pdf', caseName: '盐雾腐蚀试验方案', type: '环境试验', size: '5.18 MB', time: '2026-10-21 16:45:22', status: '待提交', fmt: 'PDF' },
+      { id: 4, file: '某型可靠性试验资料.zip', caseName: '可靠性增长试验', type: '可靠性试验', size: '26.76 MB', time: '2026-10-21 09:32:18', status: '已完成', fmt: 'ZIP' },
     ])
 
     const stats = computed(() => [
@@ -267,7 +267,7 @@ export default {
 
     function requiredOk() {
       if (!meta.name?.trim() || !meta.equip || !meta.type || !meta.stage || !meta.object?.trim() || !meta.date) {
-        toast('请填写案例名称、所属装备、试验类型、试验阶段、试验对象与试验时间')
+        toast('请填写案例名称、所属对象、试验类型、试验阶段、试验对象与试验时间')
         return false
       }
       return true

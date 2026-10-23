@@ -1,5 +1,5 @@
 const resources = [
-  ['某型装备研制总要求（D-01）', '定型资料', 'PDF', '文本', '12.4 MB', '48', '已解析', '张明远', '2026-10-08 09:24'],
+  ['某型研制总要求（D-01）', '定型资料', 'PDF', '文本', '12.4 MB', '48', '已解析', '张明远', '2026-10-08 09:24'],
   ['雷沃谷神4LZ-8谷物联合收割机鉴定大纲', '定型资料', 'PDF', '文本', '18.2 MB', '86', '已解析', '李慧敏', '2026-10-09 10:11'],
   ['NY/T 2090-2025 农业机械试验鉴定通则', '标准规范', 'PDF', '文本', '6.8 MB', '42', '已解析', '王建国', '2026-09-28 14:02'],
   ['2BMQ-6气力式免耕播种机田间试验数据', '历史试验数据', 'XLSX', '表格', '12.4 MB', '—', '解析中', '陈思远', '2026-10-14 16:40'],
@@ -56,7 +56,7 @@ export const datasets = {
       { key: 'time', label: '创建时间' },
     ],
     rows: [
-      { name: '某型装备研制总要求（D-01）全文解析', mode: '即时解析', engine: '领域多模态大模型', progress: 100, count: '1286/1286', status: '已完成', cost: '156s', time: '2026-10-08 09:24' },
+      { name: '某型研制总要求（D-01）全文解析', mode: '即时解析', engine: '领域多模态大模型', progress: 100, count: '1286/1286', status: '已完成', cost: '156s', time: '2026-10-08 09:24' },
       { name: '雷沃谷神4LZ-8鉴定大纲解析', mode: '即时解析', engine: '文档OCR识别引擎', progress: 100, count: '642/642', status: '已完成', cost: '98s', time: '2026-10-09 10:11' },
       { name: '2BMQ-6免耕播种机田间数据解析', mode: '批量调度', engine: '表格结构识别引擎', progress: 64, count: '328/512', status: '进行中', cost: '—', time: '2026-10-14 16:41' },
       { name: '播种机历史影像资料批量解析', mode: '批量调度', engine: '语音转写ASR引擎', progress: 0, count: '0/96', status: '排队中', cost: '—', time: '2026-10-16 11:05' },
@@ -132,7 +132,7 @@ export const datasets = {
       { key: 'time', label: '创建时间' },
     ],
     rows: [
-      { name: '某型装备研制总要求（D-01）', progress: 100, status: '已完成', dim: '1024', chunks: '96', cost: '11.2s', ok: '达标（≤15s）', time: '2026-10-09 14:20' },
+      { name: '某型研制总要求（D-01）', progress: 100, status: '已完成', dim: '1024', chunks: '96', cost: '11.2s', ok: '达标（≤15s）', time: '2026-10-09 14:20' },
       { name: '雷沃谷神4LZ-8谷物联合收割机鉴定大纲', progress: 100, status: '已完成', dim: '1024', chunks: '64', cost: '8.6s', ok: '达标', time: '2026-10-10 09:32' },
       { name: 'NY/T 2090-2025 农业机械试验鉴定通则', progress: 100, status: '已完成', dim: '1024', chunks: '32', cost: '5.1s', ok: '达标', time: '2026-10-10 10:15' },
       { name: '五征4YZP-4可靠性试验报告', progress: 46, status: '进行中', dim: '1024', chunks: '—', cost: '—', ok: '—', time: '2026-10-16 15:02' },
@@ -170,7 +170,7 @@ export const datasets = {
       { key: 'time', label: '完成时间' },
     ],
     rows: [
-      { name: '某型装备研制总要求解析成果', fmt: 'JSON', count: '1', status: '已完成', time: '2026-10-10 11:22' },
+      { name: '某型研制总要求解析成果', fmt: 'JSON', count: '1', status: '已完成', time: '2026-10-10 11:22' },
       { name: '标准规范类资源批量导出', fmt: 'Markdown', count: '6', status: '已完成', time: '2026-10-12 16:08' },
       { name: '历史试验表格结构化导出', fmt: 'TXT', count: '4', status: '进行中', time: '—' },
     ],
@@ -987,8 +987,8 @@ export function cloneRows(id) {
 
 // ── 镜头一：资源处理结果详情（key = 资源名称）────────────────────────
 export const resourceDetails = {
-  '某型装备研制总要求（D-01）': {
-    name: '某型装备研制总要求（D-01）',
+  '某型研制总要求（D-01）': {
+    name: '某型研制总要求（D-01）',
     fmt: 'PDF', size: '12.4 MB', pages: 48,
     parsedAt: '2026-10-08 09:26:47',
     tableCount: 12, imageCount: 9, paraCount: 326,
@@ -1148,7 +1148,7 @@ export const evidence = [
   { id:'E1', text:'第19发飞行段pitch角偏差0.38°，超出阈值0.20°', source:'遥测通道T-07',    relNode:'C4' },
   { id:'E2', text:'温度传感器TH-03在T+4.2s后出现2.1℃跳变',      source:'弹载记录仪',      relNode:'C5' },
   { id:'E3', text:'温补系数与出厂标定值偏差12.4%，超出容差5%',   source:'标定台检测报告',  relNode:'C6' },
-  { id:'E4', text:'2019年同型装备某次试验同类温补失效案例',       source:'历史案例库D-06 · 某型装甲车A精度试验2019',  relNode:'C6' },
+  { id:'E4', text:'2019年同型某次试验同类温补失效案例',       source:'历史案例库D-06 · 某型装甲车A精度试验2019',  relNode:'C6' },
 ]
 
 export const candidates = [
@@ -1175,7 +1175,7 @@ export const judgeInnovations = [
     pRef: '原文P.24',
     i: '提出自适应温补系数分级修正方法，结合历史温漂模式预测当前发次修正量，抗温度突变鲁棒性强。',
     iRef: '原文P.24-25',
-    e: '在3型装备定型试验中验证，定向角精度提升约38%，异常发次检出率从72%提升至91%。',
+    e: '在3型定型试验中验证，定向角精度提升约38%，异常发次检出率从72%提升至91%。',
     eRef: '原文P.31',
   },
   {
@@ -1184,13 +1184,13 @@ export const judgeInnovations = [
     source: '2篇',
     direction: '弹道修正技术',
     confidence: 0.87,
-    q: '弹着点散布超限问题在多型装备试验中反复出现，缺乏系统化修正手段。',
+    q: '弹着点散布超限问题在多型试验中反复出现，缺乏系统化修正手段。',
     qRef: '原文P.12',
     p: '基于弹道残差补偿模型，融合气象参数与弹体姿态实时修正弹着点偏差。',
     pRef: '原文P.13',
     i: '提出分层递进式散布修正策略，先补偿系统性偏差再消除随机散布。',
     iRef: '原文P.14',
-    e: '在某型装备定型试验中，散布圆概率偏差降低约24%。',
+    e: '在某型定型试验中，散布圆概率偏差降低约24%。',
     eRef: '原文P.16',
   },
   {
@@ -1199,7 +1199,7 @@ export const judgeInnovations = [
     source: '2篇',
     direction: '惯导技术',
     confidence: 0.85,
-    q: '惯导初始对准耗时长，影响试验效率和装备快速响应能力。',
+    q: '惯导初始对准耗时长，影响试验效率和快速响应能力。',
     qRef: '原文P.08',
     p: '基于多位置观测与卡尔曼滤波融合的快速对准方法，利用先验误差模型加速收敛。',
     pRef: '原文P.09',
