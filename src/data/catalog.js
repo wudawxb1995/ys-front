@@ -693,7 +693,10 @@ export const platforms = [
             ],
           )),
           leaf('papers', '科技文献收录', crud('多格式接入、OCR、版式还原和分类收录。', 'papers')),
-          leaf('points', '创新点抽取标注', crud('提取创新主体、动作、技术细节和目标效果，并标注技术领域、试验场景、创新程度。', 'innovations')),
+          leaf('points', '创新点抽取标注', {
+            type: 'm29',
+            desc: '从326篇科技文献（含归档试验报告V2）中抽取58个技术创新点，每个创新点含四要素及原文页码溯源。',
+          }),
           leaf('json', '标准 JSON', { type: 'code', codeKey: 'json', desc: '将抽取结果生成可校验的 JSON，支撑聚类与研判。' }),
         ],
       },
@@ -720,7 +723,7 @@ export const platforms = [
           )),
           leaf('sim', '相似度与聚类', crud('融合技术标签、场景标识、应用领域，计算余弦相似度并自动分类、关联文献。', 'innovations')),
           leaf('tree', '三级技术体系', { type: 'report', reportKey: 'tree', desc: '按技术原理、试验类型、应用领域生成三级架构。' }),
-          leaf('graph', '技术体系图谱', { type: 'graph', graphKey: 'tech', desc: '展示创新点之间的技术关系。' }),
+          leaf('graph', '技术体系图谱', { type: 'm30', desc: '三级技术体系树（1领域→6二级→18三级）+ SVG图谱画布，温补技术节点下挂本次试验沉淀案例。' }),
         ],
       },
       {
@@ -745,8 +748,31 @@ export const platforms = [
             ],
           )),
           leaf('tpl', '模板管理配置', { type: 'cards', cardKey: 'judgeTpl', desc: '维护技术领域、试验类型、应用场景、成熟度、趋势和高价值方向等板块，支持自动推荐。' }),
-          leaf('rpt', '研判报告', { type: 'report', reportKey: 'judge', desc: '自动生成图表、指标对比和结论摘要，支持在线编辑与多格式导出。' }),
+          leaf('rpt', '技术研判报告生成', { type: 'm31', desc: '三栏布局（模板+对象+报告列表），报告预览页含ECharts图表与麦金色高亮建议块。' }),
           leaf('dup', '查重与相似度', crud('从项目名称、目标、内容、技术路线、创新点、指标、预期成果、应用场景八个维度查重，并溯源立项文件。', 'dupChecks')),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'cockpit',
+    group: 'infra',
+    no: 'A0',
+    name: '管理端总览驾驶舱',
+    brief: '三大底座平台运行状态总览',
+    tags: ['管理端', '训推', '编排', '资源库'],
+    icon: 'chart',
+    systems: [
+      {
+        id: 'cockpit-main',
+        name: '管理端',
+        full: '管理端总览驾驶舱',
+        menus: [
+          leaf('home', '管理端入口', {
+            type: 'm32',
+            stage: 'home',
+            desc: '三大底座平台入口总览。',
+          }),
         ],
       },
     ],

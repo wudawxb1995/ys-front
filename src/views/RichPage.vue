@@ -236,8 +236,9 @@
     </template>
 
     <template v-else-if="page.type === 'graph'">
-      <div class="toolbar">
+      <div class="toolbar" style="margin-bottom:16px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 16px">
         <input v-model="gkey" class="g-search" placeholder="搜索节点名称或类型" />
+        <span class="spacer"></span>
         <button class="btn btn-outline" @click="toast('已切换为三维布局预览')">三维展示</button>
         <button class="btn btn-primary" @click="toast('节点已加入画布，可在右侧编辑属性')">新建节点</button>
         <button class="btn btn-outline" @click="toast('图谱压缩包已开始导出')">导出压缩包</button>
@@ -2382,6 +2383,634 @@
       </template>
     </template>
 
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         M29  创新点抽取结果
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template v-else-if="page.type === 'm29'">
+
+      <!-- 顶部统计条 -->
+      <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+        <div class="kpi">
+          <div class="label">收录科技文献</div>
+          <div class="value">326 <small>篇</small></div>
+        </div>
+        <div class="kpi">
+          <div class="label">技术创新点</div>
+          <div class="value">58 <small>个</small></div>
+        </div>
+        <div class="kpi">
+          <div class="label">覆盖技术方向</div>
+          <div class="value">6 <small>个</small></div>
+        </div>
+      </div>
+
+      <!-- 筛选栏 + 表格（同一 crud-body 容器） -->
+      <div class="crud-body">
+        <div class="filter-bar filter-panel">
+          <div class="field">
+            <label>技术方向</label>
+            <SelectField v-model="m29FilterDirection" :options="m29DirectionOpts" />
+          </div>
+          <div class="field">
+            <label>来源文献</label>
+            <input v-model="m29FilterSource" placeholder="请输入" />
+          </div>
+          <button class="btn btn-primary" @click="()=>{}">查询</button>
+          <button class="btn btn-outline" @click="m29FilterDirection='';m29FilterSource=''">重置</button>
+        </div>
+
+        <!-- 表格 -->
+        <div class="table-inner">
+          <table style="table-layout:fixed;width:100%">
+            <thead>
+              <tr>
+                <th>创新点名称</th>
+                <th>来源文献</th>
+                <th>技术方向</th>
+                <th>置信度</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-for="inn in m29Filtered" :key="inn.id">
+                <tr @click="m29ExpandedId = m29ExpandedId===inn.id ? null : inn.id" style="cursor:pointer">
+                  <td>{{ inn.name }}</td>
+                  <td>{{ inn.source }}</td>
+                  <td>{{ inn.direction }}</td>
+                  <td><b style="color:var(--blue)">{{ inn.confidence }}</b></td>
+                  <td>
+                    <span class="link-btn">{{ m29ExpandedId===inn.id ? '收起' : '展开' }}</span>
+                  </td>
+                </tr>
+                <tr v-if="m29ExpandedId===inn.id" class="m29-expand-row">
+                  <td colspan="5" style="padding:0">
+                    <div class="m29-quadrant">
+                      <div class="m29-cell">
+                        <div class="m29-cell-title">问题定义</div>
+                        <p class="m29-cell-body">{{ inn.q }}</p>
+                        <span class="ref-tag">{{ inn.qRef }}</span>
+                      </div>
+                      <div class="m29-cell">
+                        <div class="m29-cell-title">技术原理</div>
+                        <p class="m29-cell-body">{{ inn.p }}</p>
+                        <span class="ref-tag">{{ inn.pRef }}</span>
+                      </div>
+                      <div class="m29-cell">
+                        <div class="m29-cell-title">创新点</div>
+                        <p class="m29-cell-body">{{ inn.i }}</p>
+                        <span class="ref-tag">{{ inn.iRef }}</span>
+                      </div>
+                      <div class="m29-cell">
+                        <div class="m29-cell-title">应用效果</div>
+                        <p class="m29-cell-body">{{ inn.e }}</p>
+                        <span class="ref-tag">{{ inn.eRef }}</span>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <div class="pager"><span>共 <b>{{ m29Filtered.length }}</b> 条记录</span></div>
+        </div>
+      </div>
+
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         M30  技术体系知识图谱
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template v-else-if="page.type === 'm30'">
+
+      <div style="display:grid;grid-template-columns:240px 1fr;gap:14px;align-items:start">
+
+        <!-- 左：三级体系树 -->
+        <div class="panel" style="padding:14px 0">
+          <div style="font-size:13px;font-weight:700;color:var(--navy-2);padding:0 14px 10px">技术体系</div>
+          <div v-for="dir in m30Tree.children" :key="dir.name">
+            <!-- 二级 -->
+            <div class="m30-dir" :class="{on: m30ExpandedDir===dir.name}" @click="m30ExpandedDir = m30ExpandedDir===dir.name ? null : dir.name">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;transition:transform .2s" :style="{transform: m30ExpandedDir===dir.name?'rotate(90deg)':'rotate(0)'}"><polyline points="9 18 15 12 9 6"/></svg>
+              {{ dir.name }}
+            </div>
+            <template v-if="m30ExpandedDir===dir.name">
+              <div v-for="sub in dir.children" :key="sub.name"
+                class="m30-sub" :class="{highlight: sub.highlight}">
+                <span v-if="sub.highlight" style="color:var(--gold);margin-right:4px">★</span>{{ sub.name }}
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- 右：SVG 图谱画布 -->
+        <div class="panel" style="padding:16px;overflow:hidden">
+          <div style="font-size:13px;font-weight:700;color:var(--navy-2);margin-bottom:12px">技术体系知识图谱</div>
+          <svg viewBox="0 0 800 540" width="100%" style="display:block">
+
+            <!-- ── 中心节点 (340, 290) ── -->
+            <circle cx="340" cy="290" r="46" fill="var(--navy)"/>
+            <text x="340" y="286" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">试验鉴定</text>
+            <text x="340" y="302" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">技术</text>
+
+            <!-- ── 6个二级方向节点（r=168，等角度，0°朝右） ── -->
+            <!-- 0°  定位定向技术  (508, 290) -->
+            <line x1="340" y1="290" x2="508" y2="290" stroke="#b7cbe0" stroke-width="1.5"/>
+            <circle cx="508" cy="290" r="36" fill="var(--blue)"/>
+            <text x="508" y="287" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">定位定向</text>
+            <text x="508" y="300" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">技术</text>
+
+            <!-- 60°  弹道修正技术  (424, 145) -->
+            <line x1="340" y1="290" x2="424" y2="145" stroke="#b7cbe0" stroke-width="1.5"/>
+            <circle cx="424" cy="145" r="36" fill="var(--blue)"/>
+            <text x="424" y="142" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">弹道修正</text>
+            <text x="424" y="155" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">技术</text>
+
+            <!-- 120°  惯导技术  (172, 145) -->
+            <line x1="340" y1="290" x2="172" y2="145" stroke="#b7cbe0" stroke-width="1.5"/>
+            <circle cx="172" cy="145" r="36" fill="var(--blue)"/>
+            <text x="172" y="142" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">惯导</text>
+            <text x="172" y="155" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">技术</text>
+
+            <!-- 180°  遥测技术  (172, 290) -->
+            <line x1="340" y1="290" x2="172" y2="290" stroke="#b7cbe0" stroke-width="1.5"/>
+            <circle cx="172" cy="290" r="36" fill="var(--blue)"/>
+            <text x="172" y="287" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">遥测</text>
+            <text x="172" y="300" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">技术</text>
+
+            <!-- 240°  气象修正  (256, 435) -->
+            <line x1="340" y1="290" x2="256" y2="435" stroke="#b7cbe0" stroke-width="1.5"/>
+            <circle cx="256" cy="435" r="36" fill="var(--blue)"/>
+            <text x="256" y="432" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">气象</text>
+            <text x="256" y="445" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">修正</text>
+
+            <!-- 300°  信号处理  (424, 435) -->
+            <line x1="340" y1="290" x2="424" y2="435" stroke="#b7cbe0" stroke-width="1.5"/>
+            <circle cx="424" cy="435" r="36" fill="var(--blue)"/>
+            <text x="424" y="432" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">信号</text>
+            <text x="424" y="445" text-anchor="middle" fill="#fff" font-size="10.5" font-weight="600">处理</text>
+
+            <!-- ── 定位定向技术三级节点（右侧展开，偏上/平/偏下） ── -->
+            <!-- 温补技术  (640, 210) -->
+            <line x1="508" y1="290" x2="640" y2="210" stroke="#b7cbe0" stroke-width="1.2"/>
+            <circle cx="640" cy="210" r="28" fill="#e8f2fb" stroke="#b8d9f4" stroke-width="1.2"/>
+            <text x="640" y="207" text-anchor="middle" fill="var(--navy-2)" font-size="10.5" font-weight="600">温补</text>
+            <text x="640" y="220" text-anchor="middle" fill="var(--navy-2)" font-size="10.5" font-weight="600">技术</text>
+
+            <!-- 定向精度校准  (660, 290) -->
+            <line x1="508" y1="290" x2="660" y2="290" stroke="#b7cbe0" stroke-width="1.2"/>
+            <circle cx="660" cy="290" r="28" fill="#e8f2fb" stroke="#b8d9f4" stroke-width="1.2"/>
+            <text x="660" y="287" text-anchor="middle" fill="var(--navy-2)" font-size="10">定向精度</text>
+            <text x="660" y="299" text-anchor="middle" fill="var(--navy-2)" font-size="10">校准</text>
+
+            <!-- 初始对准  (640, 370) -->
+            <line x1="508" y1="290" x2="640" y2="370" stroke="#b7cbe0" stroke-width="1.2"/>
+            <circle cx="640" cy="370" r="28" fill="#e8f2fb" stroke="#b8d9f4" stroke-width="1.2"/>
+            <text x="640" y="367" text-anchor="middle" fill="var(--navy-2)" font-size="10.5">初始</text>
+            <text x="640" y="380" text-anchor="middle" fill="var(--navy-2)" font-size="10.5">对准</text>
+
+            <!-- ── 温补技术 → 麦金色案例子节点 ── -->
+            <!-- 连线：温补技术顶部(640,182) → 案例矩形底部(640,140) -->
+            <line x1="640" y1="182" x2="640" y2="140" stroke="var(--gold)" stroke-width="1.8" stroke-dasharray="4 2"/>
+
+            <!-- 案例节点矩形 -->
+            <rect x="572" y="90" width="136" height="50" rx="8" fill="#fff8e0" stroke="var(--gold)" stroke-width="1.8"/>
+            <text x="640" y="111" text-anchor="middle" fill="#8a6000" font-size="10" font-weight="600">第19发超差事件</text>
+            <text x="640" y="126" text-anchor="middle" fill="#8a6000" font-size="10" font-weight="600">温补失效案例</text>
+
+            <!-- 徽标（案例矩形顶部居中）-->
+            <rect x="597" y="68" width="86" height="20" rx="10" fill="var(--gold)"/>
+            <text x="640" y="82" text-anchor="middle" fill="#fff" font-size="10" font-weight="600">本次试验沉淀</text>
+
+          </svg>
+        </div>
+      </div>
+
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         M31  技术研判报告生成
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template v-else-if="page.type === 'm31'">
+
+      <!-- ══ 第二级：报告预览页 ══ -->
+      <template v-if="m31Detail">
+
+        <!-- 顶部标题行 + 操作按钮 -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="back-bar" style="margin-bottom:0" @click="m31Detail=null;m31ResetCharts()">← 返回</div>
+            <span style="color:#b0bfc8;font-size:13px">|</span>
+            <span style="font-size:15px;font-weight:700;color:var(--navy-2)">{{ m31Detail.title }}</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <button class="btn btn-outline" @click="toast('在线编辑功能即将开放')">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              在线编辑
+            </button>
+            <button class="btn btn-primary" @click="toast('正在导出…')">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              导出
+            </button>
+          </div>
+        </div>
+
+        <!-- 双栏：左侧章节导航 + 右侧正文 -->
+        <div style="display:grid;grid-template-columns:170px 1fr;gap:14px;align-items:start">
+
+          <!-- 左侧章节导航 -->
+          <div class="panel" style="padding:10px 0;position:sticky;top:16px">
+            <div style="font-size:12px;color:#8a99a8;font-weight:600;padding:4px 14px 10px;letter-spacing:.5px">章节目录</div>
+            <div v-for="sec in m31Sections" :key="sec.no"
+              class="m31-nav-item" :class="{on: activeReportSection===sec.no}"
+              @click="m31GoSection(sec.no)">
+              <span style="font-size:11px;color:inherit;margin-right:6px;opacity:.6">0{{ sec.no }}</span>{{ sec.title }}
+            </div>
+            <!-- 状态信息 -->
+            <div style="margin:14px 14px 4px;padding-top:12px;border-top:1px solid var(--line)">
+              <div style="font-size:12px;color:#7a8b9a;margin-bottom:4px">研判方向</div>
+              <div style="font-size:12.5px;color:var(--navy-2);font-weight:600">{{ m31Detail.direction }}</div>
+              <div style="font-size:12px;color:#7a8b9a;margin-top:8px;margin-bottom:4px">生成时间</div>
+              <div style="font-size:12.5px;color:#4a5a6a">{{ m31Detail.time }}</div>
+              <div style="margin-top:10px">
+                <span class="badge" :class="m31Detail.statusClass">{{ m31Detail.status }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧正文区 -->
+          <div style="display:flex;flex-direction:column;gap:14px">
+
+            <!-- 第1节：技术现状综述 -->
+            <div id="m31sec1" class="panel" :class="{'m31-section-active': activeReportSection===1}" style="padding:22px 26px" @click="activeReportSection=1">
+              <div class="m31-section-anchor">
+                <span class="m31-section-no">01</span>
+                <h3 class="report-section-title" style="margin-bottom:0">技术现状综述</h3>
+              </div>
+              <template v-if="activeReportSection===1">
+                <p class="report-body" style="margin-top:14px">定位定向技术是现代精确制导武器系统和试验鉴定领域的核心支撑技术之一。近年来，随着装备对精度要求的持续提高，定位定向技术在温度补偿、初始对准、误差建模等方面取得了一系列进展。本报告基于收录的326篇科技文献（含本次试验报告V2），系统分析定位定向技术方向创新点的现状与趋势。</p>
+                <p class="report-body">当前该方向共收录创新点12个，覆盖温补技术、定向精度校准、初始对准三个三级方向。其中温补技术方向在近2年产出了5个创新点，是当前研究最活跃的子方向，与本次试验第19发超差事件的根因直接相关。</p>
+                <div style="margin-top:14px;background:#f5f9fd;border-radius:8px;padding:12px 14px">
+                  <div style="font-size:12px;font-weight:600;color:#7a8b9a;margin-bottom:8px">主要参考文献（6篇）</div>
+                  <div style="font-size:12.5px;color:#4a5a6a;line-height:2">
+                    <div>[1] 温补系数自校准方法研究，2023</div>
+                    <div>[2] 定向系统误差补偿综述，2022</div>
+                    <div>[3] 试验报告V2·第19发超差分析，2024</div>
+                    <div>[4] 自适应惯导对准技术，2021</div>
+                    <div>[5] 定向精度评估标准研究，2020</div>
+                    <div>[6] 某型装备温补失效案例分析，2019</div>
+                  </div>
+                </div>
+              </template>
+              <p v-else class="report-body" style="margin-top:10px;color:#8a99a8;font-size:13px">涵盖定位定向技术领域现状综述，引用6篇核心文献……</p>
+            </div>
+
+            <!-- 第2节：创新点分布分析 -->
+            <div id="m31sec2" class="panel" :class="{'m31-section-active': activeReportSection===2}" style="padding:22px 26px" @click="activeReportSection=2">
+              <div class="m31-section-anchor">
+                <span class="m31-section-no">02</span>
+                <h3 class="report-section-title" style="margin-bottom:0">创新点分布分析</h3>
+              </div>
+              <template v-if="activeReportSection===2">
+                <p class="report-body" style="margin-top:14px">58个技术创新点按6个技术方向分布如下图所示，其中<b style="color:var(--blue)">定位定向技术</b>方向创新点数量最多（12个），与本次试验异常事件直接相关。</p>
+                <!-- 两栏：左柱状图 + 右技术体系子图 -->
+                <div style="display:grid;grid-template-columns:1fr 220px;gap:16px;margin:14px 0">
+                  <div>
+                    <div style="font-size:12px;color:#7a8b9a;margin-bottom:8px;font-weight:500">各方向创新点数量分布</div>
+                    <div ref="innovBarEl" style="width:100%;height:200px"></div>
+                  </div>
+                  <!-- 右：技术体系子图（SVG） -->
+                  <div style="background:#f8fbfe;border:1px solid var(--line);border-radius:8px;padding:12px 10px">
+                    <div style="font-size:12px;color:#7a8b9a;margin-bottom:10px;font-weight:500">定位定向技术体系</div>
+                    <svg viewBox="0 0 160 190" width="100%" style="display:block;overflow:visible">
+                      <!-- 根节点 -->
+                      <rect x="20" y="4" width="120" height="28" rx="6" fill="var(--blue)"/>
+                      <text x="80" y="22" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">定位定向技术</text>
+                      <!-- 竖线主干 -->
+                      <line x1="80" y1="32" x2="80" y2="50" stroke="#b7cbe0" stroke-width="1.2"/>
+                      <!-- 横线 -->
+                      <line x1="26" y1="50" x2="134" y2="50" stroke="#b7cbe0" stroke-width="1.2"/>
+                      <!-- 三根竖线到子节点 -->
+                      <line x1="26" y1="50" x2="26" y2="62" stroke="#b7cbe0" stroke-width="1.2"/>
+                      <line x1="80" y1="50" x2="80" y2="62" stroke="#b7cbe0" stroke-width="1.2"/>
+                      <line x1="134" y1="50" x2="134" y2="62" stroke="#b7cbe0" stroke-width="1.2"/>
+                      <!-- 温补技术（麦金色） -->
+                      <rect x="2" y="62" width="48" height="26" rx="5" fill="#fff8e0" stroke="var(--gold)" stroke-width="1.5"/>
+                      <text x="26" y="79" text-anchor="middle" fill="#8a6000" font-size="10" font-weight="600">温补技术</text>
+                      <!-- 数量气泡 -->
+                      <circle cx="46" cy="62" r="8" fill="var(--blue)"/>
+                      <text x="46" y="66" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">5</text>
+                      <!-- 定向精度校准 -->
+                      <rect x="56" y="62" width="48" height="26" rx="5" fill="#e8f2fb" stroke="#b8d9f4" stroke-width="1.2"/>
+                      <text x="80" y="73" text-anchor="middle" fill="var(--navy-2)" font-size="9.5">定向精度</text>
+                      <text x="80" y="84" text-anchor="middle" fill="var(--navy-2)" font-size="9.5">校准</text>
+                      <circle cx="100" cy="62" r="7" fill="#8ab4cc"/>
+                      <text x="100" y="66" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">4</text>
+                      <!-- 初始对准 -->
+                      <rect x="110" y="62" width="48" height="26" rx="5" fill="#e8f2fb" stroke="#b8d9f4" stroke-width="1.2"/>
+                      <text x="134" y="79" text-anchor="middle" fill="var(--navy-2)" font-size="10">初始对准</text>
+                      <circle cx="154" cy="62" r="7" fill="#8ab4cc"/>
+                      <text x="154" y="66" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">3</text>
+                      <!-- 本次试验沉淀徽标 -->
+                      <rect x="2" y="93" width="56" height="16" rx="8" fill="var(--gold)"/>
+                      <text x="30" y="104" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">本次试验沉淀</text>
+                      <!-- 图例 -->
+                      <rect x="2" y="120" width="8" height="8" rx="2" fill="#fff8e0" stroke="var(--gold)" stroke-width="1.2"/>
+                      <text x="14" y="128" fill="#8a6000" font-size="9">研究热点方向</text>
+                      <circle cx="6" cy="142" r="5" fill="var(--blue)"/>
+                      <text x="14" y="146" fill="#7a8b9a" font-size="9">创新点数量</text>
+                    </svg>
+                  </div>
+                </div>
+                <!-- 分布汇总表 -->
+                <table class="inner-table" style="width:100%;margin-top:4px">
+                  <thead><tr><th>技术方向</th><th>创新点数量</th><th>占比</th><th>备注</th></tr></thead>
+                  <tbody>
+                    <tr style="background:#fffaf0">
+                      <td><b style="color:#8a6000">定位定向技术</b> <span style="background:var(--gold);color:#fff;font-size:11px;padding:1px 6px;border-radius:6px;margin-left:4px">重点</span></td>
+                      <td><b style="color:var(--blue)">12</b></td><td>20.7%</td><td style="color:#8a6000;font-size:12px">含本次试验沉淀</td>
+                    </tr>
+                    <tr v-for="(name,i) in innovBarData.xData.slice(1)" :key="i">
+                      <td>{{ name }}</td><td>{{ innovBarData.yData[i+1] }}</td><td>{{ (innovBarData.yData[i+1]/58*100).toFixed(1) }}%</td><td style="color:#8a99a8;font-size:12px">—</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </template>
+              <p v-else class="report-body" style="margin-top:10px;color:#8a99a8;font-size:13px">58个创新点按6个方向分布，定位定向技术方向12个（含本次试验沉淀）……</p>
+            </div>
+
+            <!-- 第3节：技术发展趋势研判 -->
+            <div id="m31sec3" class="panel" :class="{'m31-section-active': activeReportSection===3}" style="padding:22px 26px" @click="activeReportSection=3">
+              <div class="m31-section-anchor">
+                <span class="m31-section-no">03</span>
+                <h3 class="report-section-title" style="margin-bottom:0">技术发展趋势研判</h3>
+              </div>
+              <template v-if="activeReportSection===3">
+                <p class="report-body" style="margin-top:14px">近5年技术创新点数量呈持续上升趋势，年均增长约2.5个，表明该领域研究热度持续攀升。</p>
+                <div ref="trendLineEl" style="width:100%;height:220px;margin:12px 0 16px"></div>
+                <p class="report-body">从发展脉络看，<b>2020—2022年</b>以基础算法创新为主（误差建模、温补系数优化）；<b>2023—2024年</b>工程化应用创新比例显著提升，温补技术与自校准算法融合成为热点方向。预计2025年该方向将持续保持6—8个新增创新点的增速。</p>
+              </template>
+              <p v-else class="report-body" style="margin-top:10px;color:#8a99a8;font-size:13px">近5年创新点数量持续上升，年均增长约2.5个……</p>
+            </div>
+
+            <!-- 第4节：建议方向与对策 -->
+            <div id="m31sec4" class="panel" :class="{'m31-section-active': activeReportSection===4}" style="padding:22px 26px" @click="activeReportSection=4">
+              <div class="m31-section-anchor">
+                <span class="m31-section-no">04</span>
+                <h3 class="report-section-title" style="margin-bottom:0">建议方向与对策</h3>
+              </div>
+              <template v-if="activeReportSection===4">
+                <!-- 首条：麦金色高亮 -->
+                <div class="m31-highlight-block" style="margin-top:16px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                    <span style="background:var(--gold);color:#fff;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600">首要建议</span>
+                    <div class="m31-highlight-title" style="margin-bottom:0">温补技术工程化改进</div>
+                  </div>
+                  <p style="font-size:13.5px;line-height:1.85;color:#4a5a6a">推进低成本温补方案与自校准算法融合，形成可工程化复制的温补系数分级修正流程，重点解决高温差场景下的鲁棒性问题。</p>
+                  <div class="m31-source-note" style="margin-top:10px;display:flex;align-items:center;gap:6px">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    实证支撑：第19发超差事件（D-07）· 定位定向系统温补失效根因分析
+                  </div>
+                </div>
+                <!-- 建议2 -->
+                <div style="margin-top:14px;padding:14px 16px;background:#f8fbfe;border-radius:8px;border-left:3px solid var(--blue)">
+                  <p class="report-body" style="margin-bottom:0"><b style="color:var(--navy-2)">② 初始对准快速收敛能力提升</b><br/>结合多位置观测与卡尔曼滤波融合方法，将对准时间压缩至4分钟以内，提高装备快速反应能力。</p>
+                </div>
+                <!-- 建议3 -->
+                <div style="margin-top:10px;padding:14px 16px;background:#f8fbfe;border-radius:8px;border-left:3px solid var(--blue)">
+                  <p class="report-body" style="margin-bottom:0"><b style="color:var(--navy-2)">③ 定向精度评估标准完善</b><br/>建立涵盖温度、振动、电磁干扰多因素的综合评估体系，为后续型号定型试验提供判据依据。</p>
+                </div>
+                <!-- 页底查重入口 -->
+                <div class="m31-bottom-bar">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#b0bfc8" stroke-width="1.8" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <span style="color:#b0bfc8;cursor:not-allowed;font-size:13px">科研项目方案多维查重（即将开放）</span>
+                </div>
+              </template>
+              <p v-else class="report-body" style="margin-top:10px;color:#8a99a8;font-size:13px">首条建议：温补技术工程化改进；另含2条建议方向……</p>
+            </div>
+
+          </div>
+        </div>
+      </template>
+
+      <!-- ══ 第一级：报告生成页 ══ -->
+      <template v-else>
+
+        <div style="display:grid;grid-template-columns:210px 1fr 1.3fr;gap:14px;align-items:start">
+
+          <!-- ── 左栏：研判模板 ── -->
+          <div class="panel" style="padding:0;overflow:hidden">
+            <!-- 标题栏 -->
+            <div style="padding:14px 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:13px;font-weight:700;color:var(--navy-2)">研判模板</span>
+              <span style="font-size:11px;color:#8a99a8;background:var(--head);padding:2px 8px;border-radius:8px">{{ m31Templates.length }} 套</span>
+            </div>
+            <!-- 模板列表 -->
+            <div v-for="(tpl, idx) in m31Templates" :key="tpl.id"
+              class="m31-tpl-row" :class="{on: m31SelectedTpl===tpl.id}"
+              @click="m31SelectedTpl=tpl.id">
+              <!-- 序号 -->
+              <div class="m31-tpl-no">T{{ idx+1 }}</div>
+              <!-- 内容 -->
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:600;color:var(--navy-2);line-height:1.4">{{ tpl.name }}</div>
+                <div v-if="tpl.recommended" style="margin-top:5px">
+                  <span class="m31-recommend-badge">
+                    <svg viewBox="0 0 24 24" width="9" height="9" fill="currentColor" style="margin-right:3px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    智能推荐
+                  </span>
+                </div>
+                <div v-else style="font-size:11px;color:#b0bfc8;margin-top:4px">点击选择</div>
+              </div>
+              <!-- 选中箭头 -->
+              <svg v-if="m31SelectedTpl===tpl.id" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--gold)" stroke-width="2.5" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+
+          <!-- ── 中栏：研判对象 ── -->
+          <div class="panel" style="padding:0;overflow:hidden">
+            <!-- 标题栏 -->
+            <div style="padding:14px 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:13px;font-weight:700;color:var(--navy-2)">研判对象</span>
+              <span style="font-size:11px;color:var(--blue);background:#e8f3fb;padding:2px 8px;border-radius:8px">自动带入</span>
+            </div>
+            <!-- 核心指标 2×2 -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--line)">
+              <div style="padding:14px 16px;border-right:1px solid var(--line)">
+                <div style="font-size:11px;color:#8a99a8;margin-bottom:6px;font-weight:500">技术方向</div>
+                <div style="font-size:15px;font-weight:700;color:var(--navy-2);line-height:1.3">定位定向技术</div>
+                <div style="font-size:11px;color:var(--blue);margin-top:4px">来自图谱浏览</div>
+              </div>
+              <div style="padding:14px 16px">
+                <div style="font-size:11px;color:#8a99a8;margin-bottom:6px;font-weight:500">创新点统计</div>
+                <div style="font-size:24px;font-weight:800;color:var(--blue);line-height:1.1">7 <span style="font-size:13px;font-weight:400;color:#7a8b9a">个</span></div>
+                <div style="font-size:11px;color:#8a99a8;margin-top:4px">置信度均值 0.88</div>
+              </div>
+            </div>
+            <!-- 三级体系子树 -->
+            <div style="padding:12px 16px">
+              <div style="font-size:11px;color:#8a99a8;font-weight:600;letter-spacing:.5px;margin-bottom:8px">三级体系子树</div>
+              <div style="font-size:12.5px">
+                <div style="color:var(--blue);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:5px">
+                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  定位定向技术
+                </div>
+                <div style="padding-left:16px;line-height:2.1;color:#4a5a6a">
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
+                    温补技术
+                    <span style="background:#fff8e0;border:1px solid var(--gold);color:#8a6000;font-size:10px;padding:1px 6px;border-radius:5px">本次试验沉淀</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#c5d9ea;flex-shrink:0;display:inline-block"></span>
+                    定向精度校准
+                  </div>
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#c5d9ea;flex-shrink:0;display:inline-block"></span>
+                    初始对准
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 右栏：已生成报告 ── -->
+          <div class="panel" style="padding:0;overflow:hidden">
+            <!-- 标题栏 -->
+            <div style="padding:14px 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:13px;font-weight:700;color:var(--navy-2)">已生成报告</span>
+              <span style="font-size:11px;color:#8a99a8;background:var(--head);padding:2px 8px;border-radius:8px">{{ m31Reports.length }} 份</span>
+            </div>
+            <!-- 搜索栏 -->
+            <div style="padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#b0bfc8" stroke-width="2" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input v-model="m31FilterDirection" placeholder="搜索报告名称或研判方向"
+                style="flex:1;height:30px;border:none;outline:none;font-size:13px;color:var(--text-2);background:transparent"/>
+            </div>
+            <!-- 报告行 -->
+            <div v-for="rpt in m31Reports" :key="rpt.id"
+              class="m31-report-row"
+              @click="m31Detail=rpt;activeReportSection=1;nextTick(()=>initM31Charts())">
+              <!-- 左侧文件图标 -->
+              <div style="flex-shrink:0;width:36px;height:36px;border-radius:9px;background:var(--head);display:grid;place-items:center">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--blue)" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+              <!-- 报告信息 -->
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13.5px;font-weight:600;color:var(--blue);line-height:1.4;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ rpt.title }}</div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:12px;color:#7a8b9a">{{ rpt.direction }}</span>
+                  <span style="font-size:12px;color:#c5d9ea">·</span>
+                  <span style="font-size:12px;color:#b0bfc8">{{ rpt.time }}</span>
+                  <span class="badge" :class="rpt.statusClass" style="height:18px;font-size:10.5px;padding:0 7px">{{ rpt.status }}</span>
+                </div>
+              </div>
+              <!-- 进入箭头 -->
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#c5d9ea" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <div v-if="!m31Reports.length" style="padding:28px;text-align:center;color:#9fb0c0;font-size:13px">暂无报告</div>
+          </div>
+
+        </div>
+      </template>
+
+    </template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         M32  管理端底座
+    ═══════════════════════════════════════════════════════════════════════ -->
+    <template v-else-if="page.type === 'm32'">
+
+      <!-- 顶部返回条（非首页时显示） -->
+      <div v-if="m32Stage!=='home'" class="back-bar" style="margin-bottom:14px" @click="m32Stage='home'">← 返回管理端入口</div>
+
+      <!-- ── stage: home 入口页 ── -->
+      <template v-if="m32Stage==='home'">
+        <div style="text-align:center;margin-bottom:24px">
+          <div style="font-size:22px;font-weight:800;color:var(--navy-2);letter-spacing:.5px">管理端总览驾驶舱</div>
+          <div style="font-size:13.5px;color:#7d90a3;margin-top:6px">三大底座平台运行状态总览</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;margin:0 auto">
+          <div class="m32-platform-card" @click="m32Stage='train'">
+            <div class="m32-platform-icon"><Icon name="model" /></div>
+            <div class="m32-platform-name">大模型训推平台</div>
+            <div class="m32-platform-sub">试验鉴定专域预训练</div>
+            <div class="m32-platform-link">训练监控看板 →</div>
+          </div>
+          <div class="m32-platform-card" @click="m32Stage='agent'">
+            <div class="m32-platform-icon"><Icon name="flow" /></div>
+            <div class="m32-platform-name">智能体编排平台</div>
+            <div class="m32-platform-sub">试验鉴定领域智能体工作流</div>
+            <div class="m32-platform-link">模板库 →</div>
+          </div>
+          <div class="m32-platform-card" @click="m32Stage='resource'">
+            <div class="m32-platform-icon"><Icon name="book" /></div>
+            <div class="m32-platform-name">领域资源库</div>
+            <div class="m32-platform-sub">试验鉴定数据资源库</div>
+            <div class="m32-platform-link">资产总览 →</div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ── stage: train 训练监控看板 ── -->
+      <template v-else-if="m32Stage==='train'">
+        <div class="toolbar" style="margin-bottom:14px;align-items:center">
+          <span style="font-size:14px;font-weight:700;color:var(--navy-2)">{{ trainTask.name }}</span>
+          <span class="badge on" style="margin-left:12px">{{ trainTask.statusLabel }}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:14px">
+          <div class="panel" style="padding:14px">
+            <div class="m32-chart-title">训练损失曲线</div>
+            <div :ref="el=>{ lossChartEl=el }" style="width:100%;height:200px"></div>
+          </div>
+          <div class="panel" style="padding:14px">
+            <div class="m32-chart-title">评估指标变化</div>
+            <div :ref="el=>{ evalChartEl=el }" style="width:100%;height:200px"></div>
+          </div>
+          <div class="panel" style="padding:14px">
+            <div class="m32-chart-title">GPU 利用率</div>
+            <div :ref="el=>{ gpuChartEl=el }" style="width:100%;height:200px"></div>
+          </div>
+          <div class="panel" style="padding:14px">
+            <div class="m32-chart-title">显存占用</div>
+            <div :ref="el=>{ memChartEl=el; el&&initM32TrainCharts() }" style="width:100%;height:200px"></div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ── stage: agent 智能体编排平台 ── -->
+      <template v-else-if="m32Stage==='agent'">
+        <div style="font-size:16px;font-weight:700;color:var(--navy-2);margin-bottom:16px">智能体模板库</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <div v-for="agt in m32Agents" :key="agt.id" class="panel" style="padding:20px">
+            <div style="font-size:15px;font-weight:700;color:var(--navy-2);margin-bottom:8px">{{ agt.name }}</div>
+            <div style="font-size:12px;color:#7a8b9a;margin-bottom:4px">场景：{{ agt.scene }}</div>
+            <div style="font-size:12px;color:#7a8b9a;margin-bottom:16px">累计运行：<b style="color:var(--blue)">{{ agt.runs }}</b> 次</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-outline" style="font-size:12px;padding:5px 14px" @click="toast('配置功能即将开放')">配置</button>
+              <button class="btn btn-primary" style="font-size:12px;padding:5px 14px" @click="toast('运行功能即将开放')">运行</button>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- ── stage: resource 领域资源库 ── -->
+      <template v-else-if="m32Stage==='resource'">
+        <div style="font-size:16px;font-weight:700;color:var(--navy-2);margin-bottom:16px">资产总览</div>
+        <div class="kpi-row" style="grid-template-columns:repeat(6,1fr);margin-bottom:16px">
+          <div v-for="kpi in m32ResourceKpis" :key="kpi.label" class="kpi">
+            <div class="label">{{ kpi.label }}</div>
+            <div class="value">{{ kpi.value }}</div>
+          </div>
+        </div>
+        <div class="panel" style="padding:18px">
+          <div class="m32-chart-title">近30日资产增长趋势</div>
+          <div :ref="el=>{ resGrowthEl=el; el&&initM32ResourceChart() }" style="width:100%;height:240px"></div>
+        </div>
+      </template>
+
+    </template>
+
   </div>
 </template>
 
@@ -2397,6 +3026,13 @@ import M05TreeNode from '@/components/M05TreeNode.vue'
 import M03TreeNode from '@/components/M03TreeNode.vue'
 import SelectField from '@/components/SelectField.vue'
 import { resourceDetails } from '@/data/mock'
+import {
+  judgeInnovations, techTree as judgeTree,
+  judgeTemplates, judgeReports, judgeReportSections,
+  innovBarData, trendLineData,
+  trainTask, lossChartData, evalChartData, gpuChartData, memChartData,
+  agentTemplates, resourceKpis as judgeResourceKpis, resGrowthData,
+} from '@/data/mock'
 
 function kpiIcon(label = '') {
   if (/卡片/.test(label)) return 'card'
@@ -3416,10 +4052,10 @@ let scanTimer = null
 
 // echarts 初速时序曲线
 import * as echarts from 'echarts/core'
-import { LineChart, ScatterChart } from 'echarts/charts'
-import { GridComponent, MarkLineComponent, MarkPointComponent, TooltipComponent } from 'echarts/components'
+import { LineChart, ScatterChart, BarChart } from 'echarts/charts'
+import { GridComponent, MarkLineComponent, MarkPointComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
-echarts.use([LineChart, ScatterChart, GridComponent, MarkLineComponent, MarkPointComponent, TooltipComponent, CanvasRenderer])
+echarts.use([LineChart, ScatterChart, BarChart, GridComponent, MarkLineComponent, MarkPointComponent, TooltipComponent, LegendComponent, CanvasRenderer])
 
 const v0ChartEl = ref(null)
 let v0Chart = null
@@ -3628,12 +4264,246 @@ const m22Sections = [
   { no:5, title:'证据清单' },
 ]
 
+// ── M29 创新点抽取结果 ──────────────────────────────────────────────────
+const m29ExpandedId      = ref('INN-001')
+const m29FilterDirection = ref('')
+const m29FilterSource    = ref('')
+const m29DirectionOpts   = ['全部方向', '定位定向技术', '弹道修正技术', '惯导技术', '遥测技术', '气象修正', '信号处理']
+const m29Filtered = computed(() => judgeInnovations.filter(inn => {
+  if (m29FilterDirection.value && m29FilterDirection.value !== '全部方向' && inn.direction !== m29FilterDirection.value) return false
+  if (m29FilterSource.value && !inn.source.includes(m29FilterSource.value)) return false
+  return true
+}))
+
+// ── M30 技术体系知识图谱 ────────────────────────────────────────────────
+const m30Tree        = judgeTree
+const m30ExpandedDir = ref('定位定向技术')
+
+// ── M31 技术研判报告 ────────────────────────────────────────────────────
+const m31Detail           = ref(null)
+const m31SelectedTpl      = ref('TPL-01')
+const activeReportSection = ref(1)
+const m31FilterDirection  = ref('')
+const m31Templates        = judgeTemplates
+const m31Reports          = judgeReports
+const m31Sections         = judgeReportSections
+
+const innovBarEl    = ref(null)
+const trendLineEl   = ref(null)
+let innovBarChart   = null
+let trendLineChart  = null
+
+function initM31Charts() {
+  nextTick(() => {
+    if (innovBarEl.value) {
+      if (innovBarChart) { innovBarChart.dispose(); innovBarChart = null }
+      innovBarChart = echarts.init(innovBarEl.value)
+      innovBarChart.setOption({
+        grid: { top: 28, right: 20, bottom: 48, left: 48 },
+        tooltip: { trigger: 'axis' },
+        xAxis: {
+          type: 'category', data: innovBarData.xData,
+          axisLabel: { color: '#8a99a8', fontSize: 11, rotate: 20 },
+          axisLine: { lineStyle: { color: '#dce8f2' } },
+          axisTick: { show: false },
+        },
+        yAxis: {
+          type: 'value', name: '数量',
+          nameTextStyle: { color: '#8a99a8', fontSize: 11 },
+          axisLabel: { color: '#8a99a8', fontSize: 11 },
+          splitLine: { lineStyle: { color: '#eef3f8' } },
+          axisLine: { show: false },
+          axisTick: { show: false },
+        },
+        series: [{
+          type: 'bar', data: innovBarData.yData,
+          itemStyle: {
+            color: (p) => p.dataIndex === 0 ? '#d0ab68' : '#1668a8',
+            borderRadius: [3, 3, 0, 0],
+          },
+          barWidth: '50%',
+        }],
+      })
+    }
+    if (trendLineEl.value) {
+      if (trendLineChart) { trendLineChart.dispose(); trendLineChart = null }
+      trendLineChart = echarts.init(trendLineEl.value)
+      trendLineChart.setOption({
+        grid: { top: 28, right: 20, bottom: 28, left: 48 },
+        tooltip: { trigger: 'axis' },
+        xAxis: {
+          type: 'category', data: trendLineData.xData,
+          axisLabel: { color: '#8a99a8', fontSize: 12 },
+          axisLine: { lineStyle: { color: '#dce8f2' } },
+          axisTick: { show: false },
+        },
+        yAxis: {
+          type: 'value', name: '个',
+          nameTextStyle: { color: '#8a99a8', fontSize: 11 },
+          axisLabel: { color: '#8a99a8', fontSize: 12 },
+          splitLine: { lineStyle: { color: '#eef3f8' } },
+          axisLine: { show: false },
+          axisTick: { show: false },
+        },
+        series: [{
+          type: 'line', data: trendLineData.yData,
+          lineStyle: { color: '#1668a8', width: 2 },
+          symbol: 'circle', symbolSize: 6,
+          itemStyle: { color: '#1668a8' },
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(22,104,168,.18)' }, { offset: 1, color: 'rgba(22,104,168,0)' }] } },
+        }],
+      })
+    }
+  })
+}
+
+function m31SelectTemplate(tpl) {
+  m31SelectedTpl.value = tpl.id
+  // 有匹配报告时直接跳转预览
+  const matched = m31Reports.find(r => r.direction === '定位定向技术')
+  if (matched && tpl.recommended) {
+    m31Detail.value = matched
+    activeReportSection.value = 1
+    nextTick(() => initM31Charts())
+  }
+}
+
+function m31ResetCharts() {
+  if (innovBarChart)  { innovBarChart.dispose();  innovBarChart  = null }
+  if (trendLineChart) { trendLineChart.dispose(); trendLineChart = null }
+  innovBarEl.value  = null
+  trendLineEl.value = null
+}
+
+function m31GoSection(no) {
+  activeReportSection.value = no
+  nextTick(() => {
+    // 滚动到目标节
+    const el = document.getElementById(`m31sec${no}`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // 切换到第2节或第3节时初始化图表
+    if (no === 2 || no === 3) {
+      nextTick(() => initM31Charts())
+    }
+  })
+}
+
+// ── M32 管理端底座 ──────────────────────────────────────────────────────
+const m32Stage       = ref('home')
+const m32Agents      = agentTemplates
+const m32ResourceKpis = judgeResourceKpis
+
+const lossChartEl   = ref(null)
+const evalChartEl   = ref(null)
+const gpuChartEl    = ref(null)
+const memChartEl    = ref(null)
+const resGrowthEl   = ref(null)
+let lossChart       = null
+let evalChart       = null
+let gpuChart        = null
+let memChart        = null
+let resGrowthChart  = null
+
+const chartAxisStyle = {
+  axisLabel: { color: '#8a99a8', fontSize: 11 },
+  axisLine: { show: false },
+  axisTick: { show: false },
+  splitLine: { lineStyle: { color: '#eef3f8' } },
+}
+
+function initM32TrainCharts() {
+  nextTick(() => {
+    // 训练损失曲线
+    if (lossChartEl.value) {
+      if (lossChart) { lossChart.dispose(); lossChart = null }
+      lossChart = echarts.init(lossChartEl.value)
+      lossChart.setOption({
+        grid: { top: 24, right: 16, bottom: 28, left: 48 },
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: lossChartData.xData, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
+        yAxis: { type: 'value', name: 'Loss', nameTextStyle: { color: '#8a99a8', fontSize: 11 }, ...chartAxisStyle },
+        series: [{ type: 'line', data: lossChartData.yData, lineStyle: { color: '#1668a8', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#1668a8' } }],
+      })
+    }
+    // 评估指标（准确率+召回率双折线）
+    if (evalChartEl.value) {
+      if (evalChart) { evalChart.dispose(); evalChart = null }
+      evalChart = echarts.init(evalChartEl.value)
+      evalChart.setOption({
+        grid: { top: 32, right: 16, bottom: 28, left: 48 },
+        tooltip: { trigger: 'axis' },
+        legend: { top: 4, right: 8, textStyle: { fontSize: 11, color: '#7a8b9a' }, itemWidth: 12, itemHeight: 8 },
+        xAxis: { type: 'category', data: evalChartData.xData, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
+        yAxis: { type: 'value', min: 0.6, max: 1.0, axisLabel: { color: '#8a99a8', fontSize: 11, formatter: v => v.toFixed(2) }, ...chartAxisStyle },
+        series: [
+          { name: '准确率', type: 'line', data: evalChartData.accuracy, lineStyle: { color: '#1668a8', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#1668a8' } },
+          { name: '召回率', type: 'line', data: evalChartData.recall,   lineStyle: { color: '#d0ab68', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#d0ab68' } },
+        ],
+      })
+    }
+    // GPU 利用率
+    if (gpuChartEl.value) {
+      if (gpuChart) { gpuChart.dispose(); gpuChart = null }
+      gpuChart = echarts.init(gpuChartEl.value)
+      gpuChart.setOption({
+        grid: { top: 24, right: 16, bottom: 28, left: 48 },
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: gpuChartData.xData, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
+        yAxis: { type: 'value', min: 70, max: 100, name: '%', nameTextStyle: { color: '#8a99a8', fontSize: 11 }, ...chartAxisStyle },
+        series: [{ type: 'bar', data: gpuChartData.yData, itemStyle: { color: '#1668a8', borderRadius: [3, 3, 0, 0] }, barWidth: '50%' }],
+      })
+    }
+    // 显存占用
+    if (memChartEl.value) {
+      if (memChart) { memChart.dispose(); memChart = null }
+      memChart = echarts.init(memChartEl.value)
+      memChart.setOption({
+        grid: { top: 24, right: 16, bottom: 28, left: 48 },
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: memChartData.xData, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
+        yAxis: { type: 'value', name: 'GB', nameTextStyle: { color: '#8a99a8', fontSize: 11 }, ...chartAxisStyle },
+        series: [{ type: 'line', data: memChartData.yData, lineStyle: { color: '#22913c', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#22913c' } }],
+      })
+    }
+  })
+}
+
+function initM32ResourceChart() {
+  nextTick(() => {
+    if (resGrowthEl.value) {
+      if (resGrowthChart) { resGrowthChart.dispose(); resGrowthChart = null }
+      resGrowthChart = echarts.init(resGrowthEl.value)
+      resGrowthChart.setOption({
+        grid: { top: 28, right: 20, bottom: 36, left: 52 },
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: resGrowthData.xData, axisLabel: { color: '#8a99a8', fontSize: 11, rotate: 20 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
+        yAxis: { type: 'value', name: '资产数', nameTextStyle: { color: '#8a99a8', fontSize: 11 }, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#eef3f8' } } },
+        series: [{
+          type: 'line', data: resGrowthData.yData,
+          lineStyle: { color: '#1668a8', width: 2 }, symbol: 'circle', symbolSize: 5,
+          itemStyle: { color: '#1668a8' },
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(22,104,168,.18)' }, { offset: 1, color: 'rgba(22,104,168,0)' }] } },
+        }],
+      })
+    }
+  })
+}
+
 onBeforeUnmount(() => {
   if (scanTimer) clearInterval(scanTimer)
   if (v0Chart) { v0Chart.dispose(); v0Chart = null }
   if (pitchChart)   { pitchChart.dispose();   pitchChart   = null }
   if (scatterChart) { scatterChart.dispose(); scatterChart = null }
   if (tempChart)    { tempChart.dispose();    tempChart    = null }
+  // m31 charts
+  if (innovBarChart)  { innovBarChart.dispose();  innovBarChart  = null }
+  if (trendLineChart) { trendLineChart.dispose(); trendLineChart = null }
+  // m32 charts
+  if (lossChart)      { lossChart.dispose();      lossChart      = null }
+  if (evalChart)      { evalChart.dispose();       evalChart      = null }
+  if (gpuChart)       { gpuChart.dispose();        gpuChart       = null }
+  if (memChart)       { memChart.dispose();        memChart       = null }
+  if (resGrowthChart) { resGrowthChart.dispose();  resGrowthChart = null }
 })
 
 </script>

@@ -10,6 +10,12 @@
           </div>
         </div>
         <div class="p-user">
+          <button class="hub-btn cockpit-btn" @click="$router.push('/p/cockpit/cockpit-main/home')">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7">
+              <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+            </svg>
+            总览驾驶舱
+          </button>
           <button class="hub-btn" @click="$router.push('/hub')">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7">
               <rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" />
@@ -94,6 +100,8 @@ function enter(app) {
   color: #27445f; font-size: 14px; height: 34px; padding: 0 12px; border-radius: 8px;
 }
 .hub-btn:hover { border-color: #9ec0de; color: #0d4e83; }
+.cockpit-btn { border: 1px solid rgba(208,171,104,.4); color: #a07020; }
+.cockpit-btn:hover { border-color: var(--gold); color: #8a6000; background: #fffaf0; }
 .live { display: inline-flex; align-items: center; gap: 6px; color: #3d7a52; font-size: 13px; }
 .live i { width: 7px; height: 7px; border-radius: 50%; background: #2fbf4a; box-shadow: 0 0 0 4px rgba(47,191,74,.15); }
 .mona {
