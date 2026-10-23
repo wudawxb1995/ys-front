@@ -26,7 +26,7 @@
             </svg>
             后台管理系统
           </button>
-          <span class="mona">Mona</span>
+          <span class="mona">管理员</span>
         </div>
       </div>
     </header>

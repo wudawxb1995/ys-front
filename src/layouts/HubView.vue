@@ -10,7 +10,7 @@
       </div>
       <div class="p-user">
         <button class="hub-btn" @click="$router.push('/')">返回门户</button>
-        <span class="mona">Mona</span>
+        <span class="mona">管理员</span>
       </div>
     </header>
     <main class="p-main">
@@ -22,11 +22,9 @@
       <section class="flow">
         <div class="fnode">资源库<br><small>原始 / 基础 / 推理</small></div>
         <div class="farrow">→</div>
-        <div class="fnode">训推平台<br><small>32B 微调与推理</small></div>
+        <div class="fnode">训推平台<br><small>专域预训练监控</small></div>
         <div class="farrow">→</div>
         <div class="fnode">智能体编排<br><small>工作流与插件</small></div>
-        <div class="farrow">→</div>
-        <div class="fnode wide">五大业务应用<br><small>再造 · 探针 · 设计 · 审校 · 研判</small></div>
       </section>
       <section class="cards">
         <article v-for="app in infras" :key="app.id" class="pcard" @click="enter(app)">
@@ -51,8 +49,20 @@ import Mark from '@/components/Mark.vue'
 import { firstLeaf, infraPlatforms } from '@/data/catalog'
 
 const router = useRouter()
-const infras = infraPlatforms()
+const infras = infraPlatforms().filter((item) => item.id !== 'cockpit')
 function enter(app) {
+  if (app.id === 'train') {
+    router.push({ name: 'train-board' })
+    return
+  }
+  if (app.id === 'agent') {
+    router.push({ name: 'agent-studio' })
+    return
+  }
+  if (app.id === 'resource') {
+    router.push({ name: 'resource-library' })
+    return
+  }
   const system = app.systems[0]
   const leaf = firstLeaf(system)
   router.push({ name: 'app', params: { pid: app.id, sid: system.id, mid: leaf.id } })
@@ -80,8 +90,7 @@ function enter(app) {
 .hero h1 { margin-top: 14px; font-size: 34px; color: #0d3f73; }
 .hero p { margin-top: 10px; color: #7d90a3; }
 .flow { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 28px; }
-.fnode { background: #fff; border: 1px solid #e3edf6; border-radius: 12px; padding: 12px 16px; text-align: center; color: #0d4e83; font-weight: 700; min-width: 140px; }
-.fnode.wide { min-width: 220px; }
+.fnode { background: #fff; border: 1px solid #e3edf6; border-radius: 12px; padding: 12px 16px; text-align: center; color: #0d4e83; font-weight: 700; min-width: 160px; }
 .fnode small { display: block; font-weight: 400; color: #7d90a3; margin-top: 4px; }
 .farrow { color: #c6a15a; font-size: 20px; }
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }

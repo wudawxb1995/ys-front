@@ -2,6 +2,9 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import PortalView from '@/layouts/PortalView.vue'
 import HubView from '@/layouts/HubView.vue'
 import AppShell from '@/layouts/AppShell.vue'
+import TrainBoardView from '@/views/TrainBoardView.vue'
+import AgentStudioView from '@/views/AgentStudioView.vue'
+import ResourceLibraryView from '@/views/ResourceLibraryView.vue'
 import { findMenu, firstLeaf, getPlatform } from '@/data/catalog'
 
 const router = createRouter({
@@ -9,13 +12,17 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'portal', component: PortalView },
     { path: '/hub', name: 'hub', component: HubView },
+    { path: '/train-board', name: 'train-board', component: TrainBoardView },
+    { path: '/agent-studio', name: 'agent-studio', component: AgentStudioView },
+    { path: '/resource-library', name: 'resource-library', component: ResourceLibraryView },
     { path: '/p/:pid/:sid?/:mid?', name: 'app', component: AppShell },
   ],
 })
 
 router.afterEach((to) => {
   const platform = to.name === 'app' ? getPlatform(to.params.pid) : null
-  document.title = platform?.name || (to.name === 'hub' ? '后台管理系统' : '试验鉴定综合服务平台')
+  const titles = { 'train-board': '大模型训推态势', 'agent-studio': '智能体编排', 'resource-library': '领域资源库', hub: '后台管理系统' }
+  document.title = platform?.name || titles[to.name] || '试验鉴定综合服务平台'
 })
 
 router.beforeEach((to) => {
