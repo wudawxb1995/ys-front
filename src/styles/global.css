@@ -49,6 +49,8 @@ button { cursor: pointer; }
   border-bottom: 2px solid rgba(208, 171, 104, 0.45);
   flex: 0 0 auto;
   z-index: 20;
+  min-width: 0;
+  overflow: hidden;
 }
 .app-shell.doc-platform .topbar { background: #004878; }
 .app-shell.doc-platform .brand h1 { font-size: 20px; letter-spacing: 1px; }
@@ -126,7 +128,7 @@ button { cursor: pointer; }
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-left: 22px;
+  padding-left: 18px;
   position: relative;
   z-index: 2;
   cursor: pointer;
@@ -138,9 +140,9 @@ button { cursor: pointer; }
   flex: 0 0 auto;
 }
 .brand h1 {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   background: linear-gradient(180deg, #f7e2a8 0%, #e3bd6a 55%, #caa04e 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -161,28 +163,22 @@ button { cursor: pointer; }
 .topnav {
   display: flex;
   align-items: stretch;
-  gap: 2px;
-  margin-left: 28px;
+  gap: 4px;
+  margin-left: 20px;
   height: 100%;
   position: relative;
   z-index: 2;
   flex: 1;
   min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,.18) transparent;
+  overflow: hidden;
 }
-.topnav::-webkit-scrollbar { height: 3px; }
-.topnav::-webkit-scrollbar-track { background: transparent; }
-.topnav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 2px; }
-.topnav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.35); }
 .topnav a {
   display: inline-flex;
   align-items: center;
-  padding: 0 14px;
+  padding: 0 12px;
   color: #c6d9ea;
-  font-size: 15.5px;
-  letter-spacing: 0.4px;
+  font-size: 14px;
+  letter-spacing: .2px;
   text-decoration: none;
   white-space: nowrap;
   position: relative;
@@ -197,7 +193,7 @@ button { cursor: pointer; }
 .topnav a.active::after {
   content: "";
   position: absolute;
-  left: 14px; right: 14px; bottom: 8px;
+  left: 12px; right: 12px; bottom: 8px;
   height: 3px; border-radius: 2px;
   background: linear-gradient(90deg, #d0ab68, #e8cf96);
 }
@@ -205,8 +201,8 @@ button { cursor: pointer; }
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-right: 22px;
+  gap: 14px;
+  padding-right: 18px;
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
