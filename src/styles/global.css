@@ -63,6 +63,54 @@ button { cursor: pointer; }
 .app-shell.doc-platform .post-head { display: none; }
 .app-shell.doc-platform .main { padding-left: 18px; padding-right: 18px; background: #eef5fb; }
 .app-shell.doc-platform .crumb { padding: 13px 2px; }
+.demo-chain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid #e0eaf3;
+  border-radius: 8px;
+}
+.demo-chain > span {
+  flex: 0 0 auto;
+  color: #8a6a2b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .5px;
+}
+.demo-chain button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid #d5e3ef;
+  border-radius: 15px;
+  background: #f7fbfe;
+  color: #4d6478;
+  font-size: 13px;
+}
+.demo-chain button b {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #d7e4ef;
+  color: #3d5870;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+}
+.demo-chain button.on {
+  border-color: #0d4e83;
+  background: #0d4e83;
+  color: #fff;
+  font-weight: 700;
+}
+.demo-chain button.on b { background: #d0ab68; color: #3d2a08; }
+.demo-chain button.done { border-color: #b7d7c0; background: #f3faf5; color: #1f7a3a; }
+.demo-chain button.done b { background: #1f7a3a; color: #fff; }
 /* topbar 装饰图 */
 .topbar-bg {
   position: absolute;

@@ -42,7 +42,7 @@
             v-if="item.children"
             class="menu-item parent"
             :class="{ open: open[item.id], 'child-on': childOn(item) }"
-            @click="open[item.id] = !open[item.id]"
+            @click="toggleMenu(item)"
           >
             <Icon class="mi" :name="iconFor(item)" />
             <span>{{ item.name }}</span>
@@ -79,6 +79,16 @@
           </template>
           <span class="current">{{ menu.name }}</span>
         </div>
+        <nav v-if="platform.id === 'doc'" class="demo-chain" aria-label="录屏链路">
+          <span>录屏链路</span>
+          <button
+            v-for="(step, index) in docChain"
+            :key="step.mid"
+            type="button"
+            :class="{ on: chainIndex === index, done: chainIndex > index }"
+            @click="goChain(step)"
+          ><b>{{ index + 1 }}</b>{{ step.label }}</button>
+        </nav>
         <PageHost :page="menu.page" :title="menu.name" />
       </main>
     </div>
@@ -108,6 +118,25 @@ const platform = computed(() => located.value.platform)
 const system = computed(() => located.value.system)
 const menu = computed(() => located.value.menu)
 const groupName = computed(() => located.value.groupName || menu.value?.name || '')
+const docChain = [
+  { label: '报告生成', sid: 'write', mid: 'draft' },
+  { label: '智能审查', sid: 'review', mid: 'run' },
+  { label: '定稿归集', sid: 'collect', mid: 'document-type-archive' },
+]
+const demoEntry = {
+  'knowledge-generate': 'draft',
+  'strategy-review': 'run',
+  'doc-collect': 'document-type-archive',
+}
+const chainIndex = computed(() => {
+  const sid = route.params.sid
+  const mid = route.params.mid
+  const index = docChain.findIndex((step) => step.sid === sid && step.mid === mid)
+  if (index >= 0) return index
+  if (sid === 'review' && mid === 'issues') return 1
+  if (sid === 'write' && (mid === 'outline' || mid === 'trace')) return 0
+  return -1
+})
 
 watch(system, (sys) => {
   if (!sys) return
@@ -118,6 +147,18 @@ watch(system, (sys) => {
 
 function go(mid) {
   router.push({ name: 'app', params: { pid: platform.value.id, sid: system.value.id, mid } })
+}
+function toggleMenu(item) {
+  const target = platform.value?.id === 'doc' ? demoEntry[item.id] : null
+  if (target && !open[item.id]) {
+    open[item.id] = true
+    go(target)
+    return
+  }
+  open[item.id] = !open[item.id]
+}
+function goChain(step) {
+  router.push({ name: 'app', params: { pid: 'doc', sid: step.sid, mid: step.mid } })
 }
 function openSystem(sys) {
   const first = sys.menus[0].page ? sys.menus[0] : sys.menus[0].children[0]

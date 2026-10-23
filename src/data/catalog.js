@@ -18,15 +18,18 @@ function home(title, desc, steps, kpis, chartTitle = '近7日业务量') {
 }
 
 const postTrialPages = {
-  'write/outline-design/outline': { type: 'post-trial', stage: 'outline', module: 'M23' },
-  'write/knowledge-generate/draft': { type: 'post-trial', stage: 'compose', module: 'M24' },
-  'write/generation-trace/trace': { type: 'post-trial', stage: 'trace', module: 'M25' },
-  'review/strategy-review/run': { type: 'post-trial', stage: 'review', module: 'M26 / M27' },
-  'review/review-result/issues': { type: 'post-trial', stage: 'review', entry: 'result', module: 'M27' },
-  'collect/doc-collect/document-type-archive': { type: 'post-trial', stage: 'archive', module: 'M28' },
+  'write/outline-design/outline': { type: 'post-trial', stage: 'outline', module: 'M23', desc: '按性能鉴定试验报告模板整理 8 章提纲，供初稿装配使用。' },
+  'write/knowledge-generate/draft': { type: 'post-trial', stage: 'compose', module: 'M24', desc: '报告生成向导：汇集指标树、30 发数据与第 19 发异常解读，一键装配《性能鉴定试验报告》初稿。' },
+  'write/generation-trace/trace': { type: 'post-trial', stage: 'trace', module: 'M25', desc: '每项判定回到指标树、原始记录和第 19 发异常解读报告。' },
+  'review/strategy-review/run': { type: 'post-trial', stage: 'review', module: 'M26 / M27', desc: '术语规范、数据勾稽、判据引用三类意见自动给出，点击即可定位原文。' },
+  'review/review-result/issues': { type: 'post-trial', stage: 'review', entry: 'result', module: 'M27', desc: '术语规范、数据勾稽、判据引用三类意见自动给出，点击即可定位原文。' },
+  'collect/doc-collect/document-type-archive': { type: 'post-trial', stage: 'archive', module: 'M28', desc: '确认后一键定稿归集，试验报告 V2 状态为已入库。' },
 }
 
 function docFeaturePage(systemId, module, feature) {
+  if (`${systemId}/${module.id}/${feature.id}` === 'write/template-manage/template-custom-config') {
+    return { type: 'template-config' }
+  }
   return postTrialPages[`${systemId}/${module.id}/${feature.id}`] || {
     type: 'doc-feature',
     scene: module.scene,

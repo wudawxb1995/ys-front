@@ -43,7 +43,7 @@
           </div>
           <button class="btn btn-outline" @click="addPoint">＋ 添加要点</button>
           <div class="recommend-box"><b>智能建议</b><p>建议在“符合性判定”章保留指标树版本与第19发事件关联字段，便于后续审查和溯源。</p></div>
-          <div class="editor-actions"><button class="btn btn-outline" @click="toast('章节调整已撤销')">撤销</button><button class="btn btn-primary" @click="saveOutline">保存提纲</button></div>
+          <div class="editor-actions"><button class="btn btn-outline" @click="saveOutline">保存提纲</button><button class="btn btn-primary" @click="goTo('write', 'draft')">下一步：生成初稿</button></div>
         </section>
       </div>
     </template>
@@ -68,13 +68,13 @@
             <div class="chapter-preview" v-for="item in outlineRows" :key="item.no"><b>{{ item.no }} {{ item.name }}</b><span>{{ item.children.join(' · ') }}</span><em>{{ item.source }}</em></div>
           </section>
           <section class="post-panel generate-panel">
-            <div class="panel-title"><span>生成配置</span><span class="good-tag">素材校验通过</span></div>
+            <div class="panel-title"><span>报告生成向导</span><span class="good-tag">素材校验通过</span></div>
             <div class="config-row"><span>报告模板</span><b>性能鉴定试验报告标准模板 V3.2</b></div>
             <div class="config-row"><span>判据版本</span><b>指标树 V1.0</b></div>
             <div class="config-row"><span>试验数据</span><b>30发 + 复测数据</b></div>
             <div class="config-row"><span>生成策略</span><b>装配式生成 · 强制溯源</b></div>
             <div class="check-list"><span>✓ 素材完整</span><span>✓ 提纲完整</span><span>✓ 引用有效</span><span>✓ 数据勾稽通过</span></div>
-            <button class="generate-btn" @click="generateDraft"><span>一键生成初稿</span><small>预置结果即时呈现，无等待</small></button>
+            <button class="generate-btn" :disabled="assembling" @click="generateDraft"><span>{{ assembling ? '正在装配…' : '生成初稿' }}</span><small>章节、数据、图表自动装配</small></button>
           </section>
         </div>
       </template>
@@ -82,7 +82,7 @@
       <template v-else>
         <div class="document-toolbar">
           <div><b>某型装备性能鉴定试验报告</b><span>V1（初稿）</span><span class="good-tag">已生成</span></div>
-          <div><button class="btn btn-outline" @click="composeMode = 'wizard'">返回编写向导</button><button class="btn btn-outline" @click="goTo('write', 'trace')">查看溯源与版本</button><button class="btn btn-primary" @click="submitReview">提交智能审查</button></div>
+          <div><button class="btn btn-outline" @click="composeMode = 'wizard'">返回编写向导</button><button class="btn btn-outline" @click="goTo('write', 'trace')">查看数据溯源</button><button class="btn btn-primary" @click="submitReview">进入智能审查</button></div>
         </div>
         <div class="report-layout">
           <aside class="report-nav post-panel">
@@ -99,10 +99,11 @@
               <div class="source-note">来源：第19发异常解读报告 · 探针平台 · V1.1</div>
             </template>
             <template v-else>
+              <div v-if="postTrialState.selectedChapter === '符合性判定'" class="event-summary"><b>第19发判定：复测后符合</b><span>首测 0.42 mil 超差，温补校准后复测 0.18 mil，判据 ≤ 0.30 mil</span></div>
               <p class="paper-text">依据指标树 V1.0、30发试验数据汇总表及复测记录，对28项性能指标逐项完成符合性判定。27项直接符合，立靶高低偏差经温补校准后复测符合。</p>
               <div class="metric-table-wrap">
                 <table class="metric-table"><thead><tr><th>序号</th><th>指标名称</th><th>实测值</th><th>判据</th><th>符合性结论</th><th>引用</th></tr></thead><tbody>
-                  <tr v-for="metric in postTrialMetrics" :key="metric.no" :class="{ focus: metric.event }"><td>{{ metric.no }}</td><td><b>{{ metric.name }}</b><small v-if="metric.event">{{ metric.event }}</small></td><td>{{ metric.value }}</td><td>{{ metric.criterion }}</td><td><span class="result-tag" :class="{ gold: metric.event }">{{ metric.conclusion }}</span></td><td><button class="source-link" @click="toast(`${metric.name}：引自${metric.source}`)">⌁ {{ metric.source }}</button></td></tr>
+                  <tr v-for="metric in postTrialMetrics" :key="metric.no" :class="{ focus: metric.event }"><td>{{ metric.no }}</td><td><b>{{ metric.name }}</b><small v-if="metric.event">{{ metric.event }}</small></td><td>{{ metric.value }}</td><td>{{ metric.criterion }}</td><td><span class="result-tag" :class="{ gold: metric.event }">{{ metric.conclusion }}</span></td><td><button class="source-link" @click="showSource(metric)">⌁ {{ metric.source }}</button></td></tr>
                 </tbody></table>
               </div>
             </template>
@@ -115,7 +116,7 @@
     <template v-else-if="stage === 'trace'">
       <div class="document-toolbar">
         <div><b>文档生成溯源与版本管控</b><span>某型装备性能鉴定试验报告</span></div>
-        <div><button class="btn btn-outline" @click="toast('版本对比视图已打开')">版本对比</button><button class="btn btn-primary" @click="goTo('write', 'draft')">查看文档</button></div>
+        <div><button class="btn btn-outline" @click="goTo('write', 'draft')">返回初稿</button><button class="btn btn-primary" @click="submitReview">进入智能审查</button></div>
       </div>
       <div class="kpi-row post-kpis">
         <div class="kpi"><div class="label">过程节点</div><div class="value">8</div></div><div class="kpi"><div class="label">引用依据</div><div class="value">36</div></div><div class="kpi"><div class="label">文档版本</div><div class="value">2</div></div><div class="kpi"><div class="label">修改记录</div><div class="value">11</div></div>
@@ -137,14 +138,14 @@
         <section class="post-panel"><div class="filter-row"><input v-model="taskSearch" placeholder="搜索任务名称或审查对象" /><select v-model="taskStatus"><option>全部状态</option><option>已完成</option><option>待复核</option></select><button class="btn btn-outline">查询</button></div><table class="simple-table task-table"><thead><tr><th>任务名称</th><th>审查对象</th><th>审查规则集</th><th>意见数</th><th>状态</th><th>完成时间</th><th>操作</th></tr></thead><tbody><tr v-for="task in filteredTasks" :key="task.id" :class="{ important: task.id === 'review-v1' }" @click="openReview(task)"><td><b>{{ task.name }}</b><small v-if="task.id === 'review-v1'">D-14 演示任务</small></td><td>{{ task.target }}</td><td>{{ task.rules }}</td><td><span class="issue-count">{{ task.issues }}</span></td><td><span class="result-tag" :class="{ gold: task.status !== '已完成' }">{{ task.status }}</span></td><td>{{ task.time }}</td><td><button class="link-btn">查看结果</button></td></tr></tbody></table></section>
       </template>
       <template v-else>
-        <div class="review-toolbar"><button class="back-button" @click="reviewMode = 'tasks'">‹ 返回任务列表</button><div><b>试验报告V1审查</b><span>7条意见 · 三类策略联合审查</span></div><div class="review-progress"><span>处理进度 {{ processedCount }}/7</span><i><em :style="{ width: `${processedCount / 7 * 100}%` }"></em></i></div><button class="btn btn-primary" @click="finalizeArchive">生成定稿并归集</button></div>
+        <div class="review-toolbar"><button class="back-button" @click="reviewMode = 'tasks'">‹ 返回任务列表</button><div><b>试验报告V1审查</b><span>术语规范 · 数据勾稽 · 判据引用</span></div><div class="review-progress"><span>处理进度 {{ processedCount }}/7</span><i><em :style="{ width: `${processedCount / 7 * 100}%` }"></em></i></div><button class="btn btn-primary" @click="finalizeArchive">一键定稿归集</button></div>
         <div class="review-layout">
           <section class="review-document post-panel">
             <div class="doc-toolbar"><span>某型装备性能鉴定试验报告 V1</span><div><button class="mini-btn" @click="toast('已定位上一条意见')">上一条</button><button class="mini-btn" @click="toast('已定位下一条意见')">下一条</button></div></div>
             <div class="doc-page">
               <small>{{ activeIssue.location }}</small><h2>{{ activeIssue.type === '判据引用' ? '6 符合性判定' : activeIssue.type === '数据勾稽' ? '8 结论与建议' : '1 试验任务概述' }}</h2>
               <p>根据试验任务安排，本次试验依据性能试验提纲组织实施，试验数据完整，过程记录可追溯。</p>
-              <p class="highlight-line">{{ activeIssue.snippet }}<span>审查意见 {{ activeIssue.id }}</span></p>
+              <p class="highlight-line" :class="{ pulse: locating }">{{ activeIssue.snippet }}<span>审查意见 {{ activeIssue.id }}</span></p>
               <p>经逐项核对指标树、原始记录与数据汇总表，报告所列结果具备判定依据；相关修改将在定稿版本中保留处理记录。</p>
               <div class="located-tip">已定位到：{{ activeIssue.location }}</div>
             </div>
@@ -164,6 +165,13 @@
       <section class="post-panel archive-table"><div class="panel-title"><span>归集文档列表</span><div><button class="mini-btn" @click="toast('已导出归集清单')">导出清单</button><button class="mini-btn gold" @click="toast('已生成归集校验报告')">归集校验</button></div></div><table class="simple-table"><thead><tr><th>文档编号</th><th>文档名称</th><th>类型</th><th>密级</th><th>版本</th><th>归集时间</th><th>状态</th><th>操作</th></tr></thead><tbody><tr v-for="row in filteredArchive" :key="row.id" :class="{ archived: row.id.startsWith('RPT') }"><td>{{ row.id }}</td><td><b>{{ row.name }}</b><small v-if="row.id.startsWith('RPT')">审查闭环成果 · 接入第四部分知识沉淀</small></td><td>{{ row.type }}</td><td>{{ row.secret }}</td><td>{{ row.version }}</td><td>{{ row.time }}</td><td><span class="result-tag">{{ row.status }}</span></td><td><button class="link-btn" @click="viewArchive(row)">查看</button><button class="link-btn" @click="toast(`${row.name} 已下载`)">下载</button></td></tr></tbody></table></section>
       <div class="archive-foot"><span>✓ 试验报告V2（定稿）已完成版本固化、元数据校验与归档入库</span><b>下一阶段：归档报告知识化转化 →</b></div>
     </template>
+    <div v-if="assembling || archiving" class="work-mask">
+      <div>
+        <b>{{ assembling ? '正在装配《性能鉴定试验报告》初稿' : '正在定稿归集' }}</b>
+        <p>{{ workStage }}</p>
+        <i><em :style="{ width: workProgress + '%' }"></em></i>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -195,6 +203,11 @@ const taskStatus = ref('全部状态')
 const issueFilter = ref('全部类型')
 const archiveSearch = ref('')
 const archiveType = ref('全部类型')
+const assembling = ref(false)
+const archiving = ref(false)
+const locating = ref(false)
+const workProgress = ref(0)
+const workStage = ref('')
 
 const lineage = [
   { icon: '需', name: '需求配置', time: '14:56', desc: '报告类型与生成范围' },
@@ -246,22 +259,58 @@ function removePoint(index) {
 function saveOutline() {
   toast('提纲已保存，并同步到知识驱动文档生成')
 }
+function runWork(flag, stages, done) {
+  if (assembling.value || archiving.value) return
+  flag.value = true
+  workProgress.value = 6
+  workStage.value = stages[0]
+  let step = 0
+  const timer = setInterval(() => {
+    step += 1
+    workProgress.value = Math.min(100, step * 25)
+    workStage.value = stages[Math.min(stages.length - 1, step)]
+    if (step < stages.length) return
+    clearInterval(timer)
+    flag.value = false
+    done()
+  }, 420)
+}
 function generateDraft() {
-  postTrialState.generated = true
-  postTrialState.currentVersion = 'V1（初稿）'
-  composeMode.value = 'preview'
-  toast('初稿已完成装配，28项指标判定已写入')
+  runWork(assembling, [
+    '汇集指标树判据、数据汇总表、第19发异常解读',
+    '按 8 章提纲装配章节与图表',
+    '写入 28 项符合性判定',
+    '挂接溯源出处',
+  ], () => {
+    postTrialState.generated = true
+    postTrialState.currentVersion = 'V1（初稿）'
+    postTrialState.selectedChapter = '符合性判定'
+    composeMode.value = 'preview'
+    toast('初稿已装配，28 项判定已写入')
+  })
+}
+function showSource(metric) {
+  openDrawer(`${metric.name} · 原文溯源`, [
+    { label: '文书位置', value: '第六章 符合性判定' },
+    { label: '实测值', value: metric.value },
+    { label: '判据', value: metric.criterion },
+    { label: '结论', value: metric.conclusion },
+    { label: '出处', value: metric.source },
+    { label: '原始记录', value: metric.event ? '第19发原始记录及复测记录' : '30发试验数据汇总表' },
+  ])
 }
 function submitReview() {
-  toast('初稿已提交智能审查')
-  setTimeout(() => goTo('review', 'run'), 280)
+  toast('进入智能审查任务')
+  goTo('review', 'run')
 }
 function openReview() {
   reviewMode.value = 'result'
-  postTrialState.activeIssueId = 7
+  locateIssue(reviewIssues.find((issue) => issue.id === 7) || reviewIssues[0])
 }
 function locateIssue(issue) {
   postTrialState.activeIssueId = issue.id
+  locating.value = false
+  requestAnimationFrame(() => { locating.value = true })
   toast(`已定位：${issue.location}`)
 }
 function acceptIssue() {
@@ -275,11 +324,18 @@ function ignoreIssue() {
   toast('已记录忽略原因，意见保留在审查轨迹中')
 }
 function finalizeArchive() {
-  reviewIssues.forEach((issue) => { issue.status = '已采纳' })
-  postTrialState.archived = true
-  postTrialState.currentVersion = 'V2（定稿）'
-  toast('定稿V2已生成并归集入库')
-  setTimeout(() => goTo('collect', 'docs'), 320)
+  runWork(archiving, [
+    '固化审查留痕与版本 V2',
+    '写入文档归集库',
+    '更新状态为已入库',
+    '归集完成',
+  ], () => {
+    reviewIssues.forEach((issue) => { issue.status = '已采纳' })
+    postTrialState.archived = true
+    postTrialState.currentVersion = 'V2（定稿）'
+    toast('试验报告 V2 已入库')
+    goTo('collect', 'document-type-archive')
+  })
 }
 function viewArchive(row) {
   openDrawer(row.name, [
@@ -299,7 +355,15 @@ function scatterStyle(index) {
 </script>
 
 <style scoped>
-.post-trial { min-width: 1040px; color: #2f465b; }
+.post-trial { min-width: 1040px; color: #2f465b; position: relative; }
+.work-mask { position: fixed; inset: 0; z-index: 30; background: rgba(244, 248, 252, .82); display: grid; place-items: center; }
+.work-mask > div { width: min(460px, 86%); background: #fff; border: 1px solid #d5e4f0; border-radius: 10px; padding: 22px 24px; box-shadow: 0 12px 32px rgba(13, 62, 102, .12); }
+.work-mask b { color: #07518f; font-size: 16px; }
+.work-mask p { margin: 8px 0 14px; color: #5d7388; font-size: 13px; min-height: 20px; }
+.work-mask i { display: block; height: 8px; border-radius: 6px; background: #e3edf5; overflow: hidden; }
+.work-mask em { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #0b6dbd, #d0ab68); transition: width .35s ease; }
+.highlight-line.pulse { animation: locatePulse .7s ease; }
+@keyframes locatePulse { 0% { box-shadow: 0 0 0 0 rgba(208, 171, 104, .7); } 100% { box-shadow: 0 0 0 8px rgba(208, 171, 104, 0); } }
 .post-head, .document-toolbar, .review-overview, .review-toolbar, .archive-banner { background: #fff; border: 1px solid #e0eaf3; border-radius: 9px; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; box-shadow: 0 5px 16px rgba(18,61,96,.04); }
 .post-head h2 { color: #074b88; font-size: 23px; margin-top: 2px; }
 .post-head p { color: #75889b; font-size: 13.5px; margin-top: 5px; }
