@@ -38,7 +38,7 @@
 
     <!-- 递归子节点 -->
     <template v-if="node.children?.length && localOpen">
-      <m03-tree-node
+      <metric-tree-node
         v-for="child in node.children"
         :key="child.id"
         :node="child"

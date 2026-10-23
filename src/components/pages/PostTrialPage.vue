@@ -56,9 +56,13 @@
           </div>
         </section>
         <div class="material-grid">
-          <article v-for="material in postTrialMaterials" :key="material.id" class="material-card" :class="material.tone">
+          <article v-for="material in materials" :key="material.id" class="material-card" :class="material.tone">
             <div class="material-icon">{{ material.id === 'rule' ? '树' : material.id === 'data' ? '表' : '析' }}</div>
-            <div><h3>{{ material.name }}</h3><p>{{ material.meta }}</p><small>来源：{{ material.source }}</small></div>
+            <div>
+              <h3>{{ material.name }}</h3>
+              <p>{{ material.id === 'rule' ? metricTreeLabel : material.meta }}</p>
+              <small>来源：{{ material.source }}</small>
+            </div>
             <span class="status-badge">{{ material.status }}</span>
           </article>
         </div>
@@ -179,6 +183,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUi } from '@/composables/ui'
+import { useDemoStore, finalizeTrialReport } from '@/composables/demo-store'
 import {
   archiveRows,
   postTrialMaterials,
@@ -192,6 +197,26 @@ import {
 const props = defineProps({ page: Object, title: String })
 const router = useRouter()
 const { toast, openDrawer } = useUi()
+const demoStore = useDemoStore()
+
+// 素材卡：第3张（解读报告）动态读取 demo-store
+const materials = computed(() => postTrialMaterials.map(m => {
+  if (m.id !== 'event') return m
+  const r = demoStore.reportArchived
+  if (!r?.title) return m
+  return {
+    ...m,
+    name: r.title,
+    meta: `${r.rootCause} · ${r.retest}`,
+    source: `${r.source}（${r.archivedAt?.slice(0, 10)}归档）`,
+    status: '已引用',
+  }
+}))
+
+// 指标树版本从 store 读取（素材卡1 + 报告正文 source 字段）
+const metricTreeLabel = computed(() =>
+  `指标树 ${demoStore.metricTreeVersion} · ${demoStore.metricTreeCount} 项`
+)
 const stage = computed(() => props.page.stage)
 const wizardSteps = ['汇集素材', '设计提纲', '生成初稿', '审校定稿']
 const outlineRows = ref(postTrialOutline.map((item) => ({ ...item, children: [...item.children] })))
@@ -333,6 +358,7 @@ function finalizeArchive() {
     reviewIssues.forEach((issue) => { issue.status = '已采纳' })
     postTrialState.archived = true
     postTrialState.currentVersion = 'V2（定稿）'
+    finalizeTrialReport()
     toast('试验报告 V2 已入库')
     goTo('collect', 'document-type-archive')
   })

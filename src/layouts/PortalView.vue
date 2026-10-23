@@ -16,6 +16,9 @@
             </svg>
             总览驾驶舱
           </button>
+          <button class="hub-btn cockpit-btn" @click="$router.push('/p/cockpit/cockpit-main/deviations')">
+            正偏离汇总
+          </button>
           <button class="hub-btn" @click="$router.push('/hub')">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7">
               <rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" />

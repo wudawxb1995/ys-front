@@ -991,7 +991,7 @@ export const resourceDetails = {
     name: '某型装备研制总要求（D-01）',
     fmt: 'PDF', size: '12.4 MB', pages: 48,
     parsedAt: '2026-10-08 09:26:47',
-    tableCount: 6, imageCount: 3, paraCount: 186,
+    tableCount: 12, imageCount: 9, paraCount: 326,
     indexStatus: '已建立', indexName: 'idx-d01-20261008', indexAt: '2026-10-08 09:27:03',
     entities: [
       { label: '农业机械型号', count: 8 },
@@ -1153,8 +1153,8 @@ export const evidence = [
 
 export const candidates = [
   { rank:1, name:'定位定向系统温补失效', confidence:0.86, basis:'温度跳变记录+姿态角时序异常+历史案例吻合' },
-  { rank:2, name:'惯导传感器偏置误差',   confidence:0.41, basis:'姿态角偏差但无温度异常支撑' },
-  { rank:3, name:'弹体初始扰动过大',     confidence:0.22, basis:'前18发正常，排除批次因素' },
+  { rank:2, name:'火控解算软件异常',     confidence:0.41, basis:'姿态角偏差但无温度异常支撑' },
+  { rank:3, name:'气象修正误差',         confidence:0.22, basis:'前18发正常，排除批次因素' },
 ]
 
 // ════════════════════════════════════════════════════════════════════
