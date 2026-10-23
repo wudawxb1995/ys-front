@@ -8,16 +8,23 @@ const state = reactive({
   drawer: null,
 })
 
+function inferToastType(text) {
+  if (/失败|错误|无法|不能|禁止|无效|不支持/.test(text) || /^请/.test(text)) return 'error'
+  if (/已加入|已暂存|已确认|已完成|完成|成功|已移除|已保存|已提交|已同步|已采纳|已开始|已获取|已生成|已选择|已删除|已取消/.test(text)) return 'success'
+  return 'info'
+}
+
 export function useUi() {
-  /** Toast → ElMessage，保持原调用签名 */
-  function toast(msg) {
+  /** Toast → ElMessage。第二参为 success / error / warning / info；省略则按文案推断 */
+  function toast(msg, type) {
     const text = String(msg || '')
+    const kind = type || inferToastType(text)
     state.toast = text
     clearTimeout(state.timer)
     state.timer = setTimeout(() => { state.toast = '' }, 2200)
     ElMessage({
       message: text,
-      type: 'info',
+      type: kind,
       duration: 2200,
       grouping: true,
     })

@@ -18,7 +18,7 @@
         </div>
       </div>
 
-      <!-- 四算法 Tab（并排，当前"多维度综合"麦金色下划线） -->
+      <!-- 四算法 Tab（默认「基于规则」） -->
       <div style="display:flex;gap:0;border-bottom:2px solid #e2ebf3;margin-bottom:14px">
         <button
           v-for="t in m11Tabs"

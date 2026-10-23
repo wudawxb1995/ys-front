@@ -11,9 +11,9 @@
         <div class="panel upload-card">
           <div
             class="dropzone"
-            :class="{ over: dragOver }"
+            :class="{ over: dragOver, busy: uploading }"
             @click="openPicker"
-            @dragover.prevent="dragOver = true"
+            @dragover.prevent="!uploading && (dragOver = true)"
             @dragleave.prevent="dragOver = false"
             @drop.prevent="onDrop"
           >
@@ -36,7 +36,13 @@
               </div>
               <div class="drop-title">拖拽文件至此处，或点击选择文件</div>
               <div class="drop-sub">支持 Word、PDF、Excel、图片及扫描件</div>
-              <el-button type="primary" class="pick-btn" @click.stop="openPicker">选择文件</el-button>
+              <el-button type="primary" class="pick-btn" :disabled="uploading" @click.stop="openPicker">选择文件</el-button>
+            </div>
+            <div v-if="uploading" class="upload-mask" @click.stop>
+              <div class="spin" aria-hidden="true"></div>
+              <div class="upload-title">正在上传文件</div>
+              <div class="upload-name">{{ uploadHint }}</div>
+              <el-progress :percentage="uploadPct" :stroke-width="8" />
             </div>
             <input
               ref="fileInput"
@@ -248,8 +254,13 @@ export default {
     const { toast, confirm, openDrawer } = useUi()
     const fileInput = ref(null)
     const dragOver = ref(false)
+    const uploading = ref(false)
+    const uploadPct = ref(0)
+    const uploadHint = ref('')
     const activeType = ref('定型资料')
     let seq = 4
+    const ALLOW_EXT = /\.(doc|docx|pdf|xls|xlsx|csv|jpg|jpeg|png|tif|tiff|bmp)$/i
+    const MAX_BYTES = 500 * 1024 * 1024
 
     const isResourceEntry = computed(() => !props.page?.entryKey && props.page?.dataset === 'resources')
 
@@ -312,34 +323,91 @@ export default {
     }
 
     function openPicker() {
+      if (uploading.value) return
       fileInput.value?.click()
     }
 
-    function addFiles(fileList) {
+    function readSlice(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve()
+        reader.onerror = () => reject(new Error('read'))
+        const chunk = file.size > 2 * 1024 * 1024 ? file.slice(0, 2 * 1024 * 1024) : file
+        reader.readAsArrayBuffer(chunk)
+      })
+    }
+
+    function runProgress(ms, onTick) {
+      return new Promise((resolve) => {
+        const start = Date.now()
+        const timer = setInterval(() => {
+          const pct = Math.min(90, Math.round(((Date.now() - start) / ms) * 90))
+          onTick(pct)
+          if (pct >= 90) {
+            clearInterval(timer)
+            resolve()
+          }
+        }, 80)
+      })
+    }
+
+    async function addFiles(fileList) {
       const files = Array.from(fileList || [])
       if (!files.length) return
-      files.forEach((file) => {
-        seq += 1
-        const fmt = extOf(file.name)
-        tasks.value.unshift({
-          id: seq,
-          name: file.name,
-          cat: meta.cat || activeType.value,
-          catLabel: catLabelOf(meta.cat || activeType.value),
-          size: formatSize(file.size),
-          version: meta.version || 'V1.0',
-          status: '待提交',
-          fmt,
-          org: meta.org,
-          project: meta.project,
-          date: meta.date,
-          remark: meta.remark,
-        })
-      })
-      if (!meta.name || meta.name === '某型装备定型技术资料') {
-        meta.name = files[0].name.replace(/\.[^.]+$/, '')
+      if (uploading.value) {
+        toast('文件正在上传，请稍候', 'warning')
+        return
       }
-      toast(`已加入 ${files.length} 个文件，待确认录入`)
+      const ok = []
+      let badFmt = 0
+      let tooBig = 0
+      files.forEach((file) => {
+        if (!ALLOW_EXT.test(file.name)) badFmt += 1
+        else if (file.size > MAX_BYTES) tooBig += 1
+        else ok.push(file)
+      })
+      if (badFmt) toast(`有 ${badFmt} 个文件格式不支持`, 'error')
+      if (tooBig) toast(`有 ${tooBig} 个文件超过 500 MB，无法上传`, 'error')
+      if (!ok.length) return
+
+      const total = ok.reduce((sum, f) => sum + (f.size || 0), 0)
+      const duration = Math.min(4800, Math.max(700, Math.round(total / (1024 * 1024) * 380 + 600)))
+      uploading.value = true
+      uploadPct.value = 0
+      uploadHint.value = ok.length === 1 ? ok[0].name : `共 ${ok.length} 个文件（${formatSize(total)}）`
+      try {
+        await runProgress(duration, (pct) => { uploadPct.value = pct })
+        await readSlice(ok[0])
+        uploadPct.value = 100
+        ok.forEach((file) => {
+          seq += 1
+          const fmt = extOf(file.name)
+          tasks.value.unshift({
+            id: seq,
+            name: file.name,
+            cat: meta.cat || activeType.value,
+            catLabel: catLabelOf(meta.cat || activeType.value),
+            size: formatSize(file.size),
+            version: meta.version || 'V1.0',
+            status: '待提交',
+            fmt,
+            org: meta.org,
+            project: meta.project,
+            date: meta.date,
+            remark: meta.remark,
+          })
+        })
+        if (!meta.name || meta.name === '某型装备定型技术资料') {
+          meta.name = ok[0].name.replace(/\.[^.]+$/, '')
+        }
+        toast(`已加入 ${ok.length} 个文件，待确认录入`, 'success')
+      } catch {
+        toast('文件上传失败，请重试', 'error')
+      } finally {
+        uploading.value = false
+        uploadPct.value = 0
+        uploadHint.value = ''
+      }
     }
 
     function onPick(e) {
@@ -348,12 +416,16 @@ export default {
     }
     function onDrop(e) {
       dragOver.value = false
+      if (uploading.value) {
+        toast('文件正在上传，请稍候', 'warning')
+        return
+      }
       addFiles(e.dataTransfer?.files)
     }
 
     function requiredOk() {
       if (!meta.name?.trim() || !meta.project || !meta.cat || !meta.version?.trim() || !meta.org?.trim() || !meta.date) {
-        toast('请填写资源名称、所属项目、资料类别、资源版本、来源单位与资料日期')
+        toast('请填写资源名称、所属项目、资料类别、资源版本、来源单位与资料日期', 'error')
         return false
       }
       return true
@@ -398,7 +470,7 @@ export default {
       if (!requiredOk()) return
       const pending = tasks.value.filter((t) => t.status === '待提交')
       if (!pending.length) tasks.value.unshift(taskFromForm())
-      toast('已暂存，可在录入任务中继续提交')
+      toast('已暂存，可在录入任务中继续提交', 'success')
     }
 
     function confirmEntry() {
@@ -418,12 +490,12 @@ export default {
         row.date = row.date || meta.date
         pushResource(row, '解析中')
       })
-      toast(`已确认录入 ${ids.length} 项，正在处理`)
+      toast(`已确认录入 ${ids.length} 项，正在处理`, 'success')
       setTimeout(() => {
         tasks.value.forEach((row) => {
           if (ids.includes(row.id) && row.status === '处理中') row.status = '已完成'
         })
-        toast('录入处理完成')
+        toast('录入处理完成', 'success')
       }, 1400)
     }
 
@@ -442,7 +514,7 @@ export default {
     function removeTask(row) {
       confirm(`确认移除「${row.name}」？`, () => {
         tasks.value = tasks.value.filter((t) => t.id !== row.id)
-        toast('已移除')
+        toast('已移除', 'success')
       })
     }
 
@@ -459,6 +531,9 @@ export default {
       stats,
       fileInput,
       dragOver,
+      uploading,
+      uploadPct,
+      uploadHint,
       openPicker,
       onPick,
       onDrop,
@@ -510,6 +585,40 @@ export default {
   transition: border-color .16s, background .16s;
 }
 .dropzone.over, .dropzone:hover { border-color: #3d9adf; background: #f3f9fe; }
+.dropzone.busy { cursor: wait; pointer-events: auto; }
+.upload-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: rgba(247, 251, 254, .92);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 32px;
+}
+.spin {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #c8e0f5;
+  border-top-color: #1668a8;
+  border-radius: 50%;
+  animation: spin .75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.upload-title { margin-top: 12px; font-size: 15px; font-weight: 700; color: #0d4e83; }
+.upload-name {
+  margin: 6px 0 14px;
+  max-width: 280px;
+  color: #6d8092;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.upload-mask :deep(.el-progress) { width: 240px; }
+.upload-mask :deep(.el-progress__text) { color: #1668a8 !important; min-width: 36px; }
 
 .type-tabs {
   position: absolute;

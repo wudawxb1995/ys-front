@@ -18,7 +18,7 @@ alwaysApply: false
   | 下拉 | `SelectField` → `el-select` |
   | 日期 | `DateField` → `el-date-picker` |
   | 多行文字域 | `TextAreaField` → `el-input` textarea + `show-word-limit`（字数在**框内右下角**） |
-  | Toast | `useUi().toast` → `ElMessage` |
+  | Toast | `useUi().toast(msg, type?)` → `ElMessage`；成功用 `success`，失败用 `error`（可省略，按文案推断） |
   | 确认 | `useUi().confirm` → `ElMessageBox` |
   | 表单弹窗/抽屉 | `ModalHost` → `ElDialog` / `ElDrawer` |
 - 新代码可直接写 `el-button` / `el-input` / `el-select` / `el-checkbox` / `el-pagination`，样式吃 `element-theme.css`
@@ -56,6 +56,7 @@ alwaysApply: false
 
 ### A. 入库页
 - 上传虚线渐变区；有页签浮框顶（Case），无页签标题在框内（Tpl）
+- 选择/拖入文件后走上传过程：体积越大 loading 越明显（转圈 + 进度条）；成功 `toast(..., 'success')`，格式不支持/超限/失败 `toast(..., 'error')`
 - 「重置」描边蓝 +「确认入库」主色；任务表在虚线框内无表外框
 
 ### B. 多段配置（NeedConfig）
@@ -99,7 +100,7 @@ alwaysApply: false
 - **无预填**：名称/描述/检查重点/期望输出为空；检查范围不预勾；上传区默认无文件，预览显示「未选择文件」；由用户自行填写、上传或从库中选择
 - EP：`el-form` / `el-radio-group` / `el-checkbox-group` / `el-input`；描述/检查重点/期望输出用 `TextAreaField`
 - 「检查要求」文字域压矮（约 2 行 / `min-height:52px`），勿高于左侧检查范围
-- 上传区：虚线渐变 + 云图标；已传文件用橙色扩展名芯片，可移除；支持拖拽/点击，读入文本后刷新只读预览
+- 上传区：虚线渐变 + 云图标；**大文件须有上传 loading / 进度**，成功 Toast 用 `success`、失败用 `error`；已传文件用橙色扩展名芯片，可移除；支持拖拽/点击，读入文本后刷新只读预览
 - 「从已有代码中选择」切 `SelectField`，不要继续用 Chat 会话页冒充本页
 - 预览：浅底 + 行号 + 关键字着色，只读；代码框宽度跟右栏走，不随长行撑宽；内容过长在框内上下（及必要时横向）滚动
 - 检查范围：全选 + 4 列复选；两行 `row-gap: 20px`；标签可换行、不压虚线框；底栏右对齐「保存配置」描边蓝 +「提交检查任务」主色白字，`gap: 8px`

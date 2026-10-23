@@ -755,7 +755,7 @@ const m08Versions = [
 // 需求摘要标签（自动解析自定稿方案）
 const m11ReqTags = ['−41℃ 寒区环境能力', '2000 m 射击靶道', '遥测采集能力']
 
-const m11Tab = ref('hybrid')
+const m11Tab = ref('rule')
 
 const m11Tabs = [
   { key: 'rule',     label: '基于规则',       algo: '规则匹配', desc: '按需求标签逐条规则过滤，满足全部约束的资源才进入候选' },
