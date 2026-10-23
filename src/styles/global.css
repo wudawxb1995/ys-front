@@ -370,12 +370,14 @@ button { cursor: pointer; }
 .filter-panel { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 16px; }
 .field label { display: block; font-size: 13.5px; color: #4a5a6a; font-weight: 600; margin-bottom: 6px; }
 .field .req { color: #d4380d; margin-right: 2px; }
-.control, .field input, .field textarea {
+.control,
+.field > input,
+.field > textarea {
   height: 36px; border: 1px solid #d5e0ea; border-radius: 6px; background: #fff;
   padding: 0 10px; color: var(--text-2); font-size: 14px; outline: none; width: 100%;
 }
-.field textarea { height: 88px; padding: 8px 10px; resize: vertical; }
-.field input:focus, .field textarea:focus, .control:focus {
+.field > textarea { height: 88px; padding: 8px 10px; resize: vertical; }
+.field > input:focus, .field > textarea:focus, .control:focus {
   border-color: #7eadd4;
   box-shadow: none;
   outline: none;
@@ -392,19 +394,19 @@ button { cursor: pointer; }
   display: block; font-size: 14px; color: #4a5a6a; font-weight: 600; margin-bottom: 7px;
 }
 .form-row label .req { color: #f5222d; font-style: normal; margin-right: 2px; }
-.form-row input, .form-row textarea {
+.form-row > input, .form-row > textarea {
   width: 100%; height: 36px; border: 1px solid #d5e0ea; border-radius: 6px;
   background: #fff; padding: 0 12px; font-size: 14px; color: #3f5062;
   outline: none; font-family: inherit;
 }
 .form-row select { display: none; }
-.form-row textarea { height: 120px; padding: 10px 12px; resize: vertical; line-height: 1.8; }
-.form-row input:focus, .form-row textarea:focus { border-color: #7eadd4; outline: none; }
+.form-row > textarea { height: 120px; padding: 10px 12px; resize: vertical; line-height: 1.8; }
+.form-row > input:focus, .form-row > textarea:focus { border-color: #7eadd4; outline: none; }
 .form-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .radio-row { display: flex; gap: 20px; align-items: center; height: 36px; }
 .radio-row label { display: inline-flex; align-items: center; gap: 6px; font-weight: 400; color: #3f5062; cursor: pointer; margin: 0; white-space: nowrap; }
 .filter-bar .field { width: 200px; }
-.filter-actions { display: flex; gap: 10px; }
+.filter-actions { display: flex; align-items: center; gap: 8px; }
 
 .btn {
   height: 36px; padding: 0 16px; border-radius: 6px; border: 1px solid transparent;
@@ -421,7 +423,7 @@ button { cursor: pointer; }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 .btn-solid-danger { background: linear-gradient(#e2553a, #c03616); color: #fff; border-color: #c03616; }
 
-.toolbar { display: flex; align-items: center; gap: 14px; margin-bottom: 0; }
+.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 0; }
 .toolbar .spacer { flex: 1; }
 .hint { color: var(--muted); font-size: 13px; }
 

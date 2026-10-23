@@ -52,6 +52,17 @@
   font-size: 14px;
   color: #3f5062;
 }
+/* 避免旧 .field input 描边套在 EP 内层，出现双框 */
+.el-input__wrapper .el-input__inner,
+.el-select__input {
+  height: auto !important;
+  min-height: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
 /* EP 选中项也带 placeholder class，仅透明态才是真正占位 */
 .el-select__selected-item:not(.is-transparent) {
   color: #3f5062 !important;
@@ -114,6 +125,19 @@
   border-radius: 6px;
   font-size: 14px;
   letter-spacing: .5px;
+}
+
+/* 并排按钮间距统一 8px：去掉 EP 默认 margin-left，避免与父级 gap 叠加 */
+.el-button + .el-button {
+  margin-left: 0 !important;
+}
+.el-dialog__footer,
+.el-drawer__footer,
+.el-message-box__btns {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Message / MessageBox 贴近平台 */

@@ -404,7 +404,7 @@ export default {
 .entry-form :deep(.sf-select),
 .entry-form :deep(.date-field) { width: 100%; }
 .entry-form :deep(.ta-field) { grid-column: 2 / -1; }
-.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; padding-top: 16px; }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: auto; padding-top: 16px; }
 .form-actions :deep(.el-button) { min-width: 88px; }
 
 .task-card .table-wrap { border: 0; box-shadow: none; border-radius: 0; }

@@ -412,7 +412,7 @@ export default {
 .btn-link { border: 0; background: transparent; color: #e06a1a; cursor: pointer; font-size: 13px; }
 
 .page-actions {
-  display: flex; justify-content: center; gap: 12px; padding-top: 4px;
+  display: flex; justify-content: center; gap: 8px; padding-top: 4px;
 }
 .page-actions :deep(.el-button) { min-width: 108px; height: 38px; }
 .page-actions :deep(.el-button--primary),

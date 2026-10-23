@@ -446,7 +446,7 @@ export default {
 .entry-form :deep(.date-field) { width: 100%; }
 .entry-form .span-field,
 .entry-form :deep(.ta-field) { grid-column: 2 / -1; }
-.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; padding-top: 16px; }
+.form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: auto; padding-top: 16px; }
 .form-actions :deep(.el-button) { min-width: 88px; }
 
 .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }

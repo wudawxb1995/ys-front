@@ -1,6 +1,6 @@
 ---
 description: 平台 UI：Element Plus 优先 + 虚线框表单视觉。改表单/入库/控件封装/element-theme 时必读；改完同步迭代本 rule。
-globs: src/components/pages/rich/**/*.vue,src/components/SelectField.vue,src/components/DateField.vue,src/components/TextAreaField.vue,src/components/ModalHost.vue,src/composables/ui.js,src/styles/element-theme.css,src/main.js,src/data/designMenus.js,src/config/page-registry.js
+globs: src/components/pages/rich/**/*.vue,src/components/pages/CrudPage.vue,src/components/SelectField.vue,src/components/DateField.vue,src/components/TextAreaField.vue,src/components/ModalHost.vue,src/composables/ui.js,src/styles/element-theme.css,src/styles/global.css,src/main.js,src/data/designMenus.js,src/config/page-registry.js
 alwaysApply: false
 ---
 
@@ -34,9 +34,16 @@ alwaysApply: false
 | 段标题 | 框内 `h3` + 左竖条 `4×16` `var(--blue)` |
 | 描边次按钮 | 白底，字 `#1668a8`，边 `#8eb4d4` |
 | 主按钮 | 蓝底渐变 `#14639f→#0d4e83`，**文字必须纯白 `#fff`**（禁止蓝底深蓝字） |
+| 并排按钮间距 | **`8px`**（查询/重置、新增/批量删除、底栏、弹窗页脚均同） |
 | 上传区底 | `linear-gradient(180deg, #f7fbfe, #eef6fc)` |
 | Placeholder | `#a8b8c6` |
 | 文字域字数 | 框内右下角（`TextAreaField` / `show-word-limit`），禁止框外 `.counter` |
+
+### 按钮间距（全工程）
+- 相邻按钮 **固定 `8px`**，用父级 `display:flex; gap: 8px`
+- 必须覆盖 EP 默认 `.el-button + .el-button { margin-left }` 为 **`0`**，禁止 gap 与 margin 叠加（会变成 20px / 22px）
+- 覆盖范围：CRUD 筛选栏 `.filter-actions`、工具栏 `.toolbar`、查询区 `.query-actions`、页底 `.page-actions` / `.form-actions`、`ElDialog` / `ElDrawer` / `ElMessageBox` 页脚
+- 实现落在 `src/styles/element-theme.css`（EP 全局）和 `src/styles/global.css`（CRUD 筛选/工具栏），页面不要再各写一套间距
 
 ### 表格（全工程）
 - **表头必须完整显示**：禁止 `序...` / `字段...` 等省略，禁止表头换行
@@ -172,6 +179,7 @@ alwaysApply: false
 
 ## 5. 交付前
 
+- [ ] 并排按钮间距 8px，未叠加 EP `margin-left`
 - [ ] EP 控件 + theme 色未跑偏
 - [ ] 虚线框 `#b7d4ee`，标题在框内
 - [ ] 表头完整单行，不出现 `...`、不换行；不够宽就表内横滚
