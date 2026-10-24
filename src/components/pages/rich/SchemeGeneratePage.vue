@@ -259,7 +259,7 @@
             </span>
             <el-button @click="m08ExportWord">导出 Word</el-button>
           </div>
-          <div class="m08-outline-body">
+          <div v-if="m08Snap.previewReady || m08Snap.doneSteps >= 4" class="m08-outline-body">
             <div class="m08-chap-tree">
               <div
                 v-for="(ch, i) in m08Chapters"
@@ -277,6 +277,15 @@
               <div v-html="m08Chapters[m08ActiveChapter]?.content"></div>
             </div>
           </div>
+          <div v-else class="m08-outline-empty">
+            <div class="m08-outline-empty-title">大纲尚未生成</div>
+            <p>请先完成步骤「生成预览」后，此处展示大纲章节与正文。</p>
+            <el-button
+              v-if="m08IsDraft"
+              type="primary"
+              @click="m08ClickStep(3)"
+            >去生成预览</el-button>
+          </div>
         </div>
 
         <div id="m08-chat-panel" class="m08-panel m08-chat">
@@ -284,7 +293,10 @@
             <span class="m08-panel-title">多轮校核优化</span>
           </div>
           <div class="m08-chat-scroll">
-            <div v-if="!m08Rounds.length" class="m08-chat-empty">
+            <div v-if="!(m08Snap.previewReady || m08Snap.doneSteps >= 4)" class="m08-chat-empty">
+              请先完成「生成预览」后，再进行多轮校核优化。
+            </div>
+            <div v-else-if="!m08Rounds.length" class="m08-chat-empty">
               暂无校核记录。草稿可在下方输入框追加一轮优化要求。
             </div>
             <div
@@ -364,6 +376,8 @@
               <th>方案名称</th>
               <th style="text-align:center">版本</th>
               <th>关联指标树版本</th>
+              <th>大纲模板</th>
+              <th>备注</th>
               <th style="text-align:center">状态</th>
               <th>更新时间</th>
               <th style="text-align:center">操作</th>
@@ -376,6 +390,8 @@
                 <span class="m08-ver-pill">{{ row.ver }}</span>
               </td>
               <td style="color:#5c7084">{{ row.treeVer }}</td>
+              <td style="color:#3f5062;font-size:13px" :title="row.template || ''">{{ row.template || '—' }}</td>
+              <td class="m08-remark-cell" :title="row.remark || ''">{{ row.remark || '—' }}</td>
               <td style="text-align:center">
                 <span
                   class="badge"
@@ -679,6 +695,28 @@ export default {
 }
 .m08-outline, .m08-chat { display: flex; flex-direction: column; min-height: 400px; max-height: 420px; }
 .m08-outline-body { display: grid; grid-template-columns: 180px 1fr; flex: 1; min-height: 0; }
+.m08-outline-empty {
+  flex: 1;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  text-align: center;
+  color: #8a99a8;
+  font-size: 13px;
+  background: #f7fbfe;
+  border-radius: 8px;
+  margin: 4px 0 0;
+}
+.m08-outline-empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #5c7084;
+}
+.m08-outline-empty p { margin: 0 0 6px; max-width: 320px; line-height: 1.6; }
 .m08-chap-tree { border-right: 1px solid #eef3f8; padding: 8px 0; overflow: auto; }
 .m08-chap {
   padding: 8px 14px; cursor: pointer; border-left: 3px solid transparent;
@@ -744,6 +782,14 @@ export default {
   margin-left: 0; /* 禁止与 gap 叠加 */
 }
 
+.m08-remark-cell {
+  max-width: 160px;
+  color: #5c7084;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .m08-ver-pill {
   background: #e8f3fb; color: #0d4e83; font-size: 12px; padding: 2px 9px;
   border-radius: 10px; font-family: ui-monospace, monospace;

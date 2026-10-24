@@ -19,10 +19,58 @@ let pendingM22ReportId = null
 export function buildRichPartB({ toast, router, route, props, bag }) {
 // ── M14 探针配置管理 ────────────────────────────────────────────────────
 
-const probeList = ref(probes.map((p) => ({ ...p, enabled: true })))
+const probeList = ref(probes.map((p) => ({
+  ...p,
+  enabled: true,
+  lastTrigger: '—', // 待检测：尚无触发
+})))
 const m14Detail = ref(null)   // null=列表页；Object=详情页
 const m14PageNo = ref(1)
 const m14PageSize = 10
+const m14Search = ref('')
+const m14Query = ref('')
+/** 列表勾选 id */
+const m14CheckedIds = ref([])
+const m14CreateVisible = ref(false)
+/** null=新建；探针 id=编辑配置 */
+const m14EditingId = ref(null)
+const m14CreateForm = reactive({
+  name: '',
+  obj: '',
+  criteria: '',
+  srcNode: '散布精度指标',
+  metrics: 3,
+  dataSrc: '弹道测量文件',
+  bindParam: '',
+})
+const m14DialogTitle = computed(() => (m14EditingId.value ? '编辑探针配置' : '新建探针'))
+
+const m14SrcNodeOpts = [
+  '散布精度指标', '初速指标', '姿态稳定性', '热变形指标',
+  '温补系数', '气象修正', '信号完整性', '定向精度',
+  '时间同步', '惯导误差', '供电指标', '弹道偏差',
+]
+const m14ObjOpts = [
+  '立靶偏差', '炮口初速', '飞行姿态角', '身管温度',
+  '定位定向温补', '气象修正有效性', '遥测链路', '方位定向',
+  '时间同步', '惯导漂移', '弹载供电', '弹道CEP',
+]
+
+const m14FilteredList = computed(() => {
+  const q = m14Query.value.trim()
+  if (!q) return probeList.value
+  return probeList.value.filter((p) =>
+    p.name.includes(q) || p.obj.includes(q) || p.id.includes(q)
+  )
+})
+
+function applyM14Search() {
+  m14Query.value = m14Search.value
+  m14PageNo.value = 1
+  // 筛选变化后清理不在结果内的勾选
+  const keep = new Set(m14FilteredList.value.map((p) => p.id))
+  m14CheckedIds.value = m14CheckedIds.value.filter((id) => keep.has(id))
+}
 
 function syncActiveProbeCount() {
   const count = probeList.value.filter((p) => p.enabled).length
@@ -34,10 +82,165 @@ function toggleProbe(p) {
   const count = syncActiveProbeCount()
   toast(p.enabled ? `已启用：${p.name}（在用 ${count}）` : `已停用：${p.name}（在用 ${count}）`)
 }
-function enableAllProbes() {
-  probeList.value.forEach((p) => { p.enabled = true })
+
+function m14IsChecked(id) {
+  return m14CheckedIds.value.includes(id)
+}
+function m14ToggleOne(id, on) {
+  const set = new Set(m14CheckedIds.value)
+  if (on) set.add(id)
+  else set.delete(id)
+  m14CheckedIds.value = [...set]
+}
+function m14PageIds() {
+  const start = (m14PageNo.value - 1) * m14PageSize
+  return m14FilteredList.value.slice(start, start + m14PageSize).map((p) => p.id)
+}
+function m14AllPageChecked() {
+  const ids = m14PageIds()
+  return ids.length > 0 && ids.every((id) => m14CheckedIds.value.includes(id))
+}
+function m14SomePageChecked() {
+  const ids = m14PageIds()
+  const n = ids.filter((id) => m14CheckedIds.value.includes(id)).length
+  return n > 0 && n < ids.length
+}
+function m14ToggleAllPage(on) {
+  const pageIds = m14PageIds()
+  const set = new Set(m14CheckedIds.value)
+  if (on) pageIds.forEach((id) => set.add(id))
+  else pageIds.forEach((id) => set.delete(id))
+  m14CheckedIds.value = [...set]
+}
+
+function enableSelectedProbes() {
+  if (!m14CheckedIds.value.length) {
+    toast('请先勾选要启用的探针', 'warning')
+    return
+  }
+  const set = new Set(m14CheckedIds.value)
+  let n = 0
+  probeList.value.forEach((p) => {
+    if (set.has(p.id) && !p.enabled) {
+      p.enabled = true
+      n += 1
+    }
+  })
   const count = syncActiveProbeCount()
-  toast(`已批量启用全部探针（在用 ${count}）`)
+  toast(n ? `已批量启用 ${n} 个探针（在用 ${count}）` : `所选探针均已启用（在用 ${count}）`)
+}
+function disableSelectedProbes() {
+  if (!m14CheckedIds.value.length) {
+    toast('请先勾选要停用的探针', 'warning')
+    return
+  }
+  const set = new Set(m14CheckedIds.value)
+  let n = 0
+  probeList.value.forEach((p) => {
+    if (set.has(p.id) && p.enabled) {
+      p.enabled = false
+      n += 1
+    }
+  })
+  const count = syncActiveProbeCount()
+  toast(n ? `已批量停用 ${n} 个探针（在用 ${count}）` : `所选探针均已停用（在用 ${count}）`)
+}
+
+/** @deprecated 保留别名，避免旧引用报错 */
+function enableAllProbes() {
+  enableSelectedProbes()
+}
+
+function fillProbeForm(p) {
+  m14CreateForm.name = p?.name || ''
+  m14CreateForm.obj = p?.obj || m14ObjOpts[0]
+  m14CreateForm.criteria = p?.criteria || ''
+  m14CreateForm.srcNode = p?.srcNode || m14SrcNodeOpts[0]
+  m14CreateForm.metrics = Number(p?.metrics) || 3
+  m14CreateForm.dataSrc = p?.dataSrc || '弹道测量文件'
+  m14CreateForm.bindParam = p?.bindParam || (p?.obj === '立靶偏差' ? '立靶高低偏差' : (p?.obj || ''))
+}
+
+function openCreateProbe() {
+  m14EditingId.value = null
+  fillProbeForm(null)
+  m14CreateForm.obj = m14ObjOpts[0]
+  m14CreateForm.srcNode = m14SrcNodeOpts[0]
+  m14CreateForm.metrics = 3
+  m14CreateForm.dataSrc = '弹道测量文件'
+  m14CreateVisible.value = true
+}
+
+/** 列表「配置」：打开与新建相同弹窗，编辑该探针 */
+function openEditProbe(p) {
+  if (!p) return
+  m14EditingId.value = p.id
+  fillProbeForm(p)
+  m14CreateVisible.value = true
+}
+
+function todayStr() {
+  const today = new Date()
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+}
+
+function submitCreateProbe() {
+  const name = m14CreateForm.name.trim()
+  const obj = m14CreateForm.obj.trim()
+  const criteria = m14CreateForm.criteria.trim()
+  if (!name) { toast('请填写探针名称', 'warning'); return }
+  if (!obj) { toast('请选择监测对象', 'warning'); return }
+  if (!criteria) { toast('请填写判据阈值', 'warning'); return }
+
+  const editingId = m14EditingId.value
+  if (probeList.value.some((p) => p.name === name && p.id !== editingId)) {
+    toast('探针名称已存在', 'warning')
+    return
+  }
+
+  const patch = {
+    name,
+    obj,
+    criteria,
+    srcNode: m14CreateForm.srcNode || '散布精度指标',
+    metrics: Number(m14CreateForm.metrics) || 1,
+    bindParam: m14CreateForm.bindParam.trim() || (obj === '立靶偏差' ? '立靶高低偏差' : obj),
+    dataSrc: m14CreateForm.dataSrc || '弹道测量文件',
+    updated: todayStr(),
+  }
+
+  if (editingId) {
+    const hit = probeList.value.find((p) => p.id === editingId)
+    if (!hit) {
+      toast('探针不存在或已删除', 'error')
+      return
+    }
+    Object.assign(hit, patch)
+    if (m14Detail.value?.id === editingId) Object.assign(m14Detail.value, patch)
+    m14CreateVisible.value = false
+    m14EditingId.value = null
+    toast(`已更新探针「${name}」配置`, 'success')
+    return
+  }
+
+  const maxNum = probeList.value.reduce((m, p) => {
+    const n = Number(String(p.id || '').replace(/\D/g, ''))
+    return Number.isFinite(n) ? Math.max(m, n) : m
+  }, 0)
+  const row = {
+    id: `P${String(maxNum + 1).padStart(2, '0')}`,
+    ...patch,
+    lastTrigger: '—',
+    enabled: true,
+  }
+  probeList.value = [row, ...probeList.value]
+  m14CreateVisible.value = false
+  m14PageNo.value = 1
+  syncActiveProbeCount()
+  toast(`已新建探针「${name}」`, 'success')
+}
+function previewProbeCite(node) {
+  toast(`预览：${node || '指标项'} → 试验大纲第3章相关条款（录屏示意）`)
 }
 
 // ── M15 数据对接与融合监测 ──────────────────────────────────────────────
@@ -171,6 +374,96 @@ function doM22Archive(report) {
   if (!report) return
   archiveInterpretReport(report)
   toast('报告已归档，可在第三部分试验后阶段作为素材引用')
+}
+
+/** 解读报告导出 Word（与方案页 m08ExportWord 同路径：HTML → .doc 下载） */
+function m22ExportWord(report) {
+  const r = report || m22Detail.value
+  if (!r) {
+    toast('请先打开或选择一份报告', 'warning')
+    return
+  }
+  const title = r.title || '解读报告'
+  const candRows = (candidates || []).map((c) => {
+    const verdict = c.rank === 1 ? '采纳' : c.rank === 2 ? '参考' : '排除'
+    return `<tr><td>${c.rank}</td><td>${c.name}</td><td>${c.confidence}</td><td>${verdict}</td></tr>`
+  }).join('')
+  const evidRows = (evidence || []).map((e) =>
+    `<tr><td>${e.id}</td><td>${e.text}</td><td>${e.source}</td></tr>`
+  ).join('')
+
+  const html = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${title}</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->
+<style>
+body{font-family:SimSun,宋体,serif;font-size:12pt;line-height:1.8;color:#222}
+h1{font-size:18pt;text-align:center;color:#0d4e83}
+h2{font-size:14pt;color:#0d4e83;margin-top:1.2em;border-bottom:1px solid #ccc;padding-bottom:4px}
+table{border-collapse:collapse;width:100%;margin:8px 0 14px}
+th,td{border:1px solid #999;padding:6px 10px;text-align:left;vertical-align:top}
+th{background:#f3f8fd}
+.meta{color:#555;margin:8px 0 16px}
+.box{background:#f4f8fc;padding:10px 12px;margin:8px 0}
+.warn{background:#fff8e6;border-left:4px solid #d0ab68;padding:10px 12px;margin:8px 0}
+</style></head><body>
+<h1>${title}</h1>
+<p class="meta">关联事件：${r.event || '—'}　批次：${r.batch || '—'}　状态：${r.statusLabel || '—'}　时间：${r.time || '—'}</p>
+<hr/>
+
+<h2>1 事件概述</h2>
+<table>
+<tr><th>型号</th><td>某型精度武器系统</td><th>试验批次</th><td>${r.batch || 'D-07'}</td></tr>
+<tr><th>试验时间</th><td>${r.time || '2024-10-18'}</td><th>试验场地</th><td>某综合试验场寒区</td></tr>
+<tr><th>总发次</th><td>30 发</td><th>异常发次</th><td>第 19 发</td></tr>
+<tr><th>触发探针</th><td colspan="3">弹着点散布探针 P01</td></tr>
+</table>
+
+<h2>2 异常特征</h2>
+<p>第 19 发立靶高低偏差 <b>+0.42 mil</b>，超出判据阈值 ≤0.30 mil（超出 40%），触发立靶精度探针 P01 告警，判定为异常发次。同批次前 18 发偏差均在 ±0.25 mil 以内，排除弹药批次因素。</p>
+<p><b>探针告警记录：</b></p>
+<ul>
+<li>P01 立靶精度告警（2024-10-18 14:32:07）：高低偏差 +0.42 mil，超出判据 ≤0.30 mil，触发一级告警</li>
+<li>P04 身管温度预警（2024-10-18 14:31:52）：TH-03 传感器温度跳变 +2.1℃，触发预警</li>
+<li>P07 遥测信号（2024-10-18 14:32:10）：姿态角 pitch 偏移 +0.38°，超出阈值 ±0.25°</li>
+</ul>
+
+<h2>3 根因分析过程</h2>
+<p>推理思维链：弹着点散布异常 → 立靶偏差超限 → 姿态角漂移 + 温度跳变 → 温补系数失效（置信度 0.86）。</p>
+<p><b>候选根因置信度排序</b></p>
+<table>
+<thead><tr><th>排名</th><th>候选根因</th><th>置信度</th><th>结论</th></tr></thead>
+<tbody>${candRows}</tbody>
+</table>
+
+<h2>4 结论与处置建议</h2>
+<div class="box"><b>结论：</b>本批次弹道试验共 30 发，第 19 发出现弹着点散布异常（超判据 40%），根因推断为定位定向系统温补系数失效（置信度 0.86），前 18 发均正常，排除弹药批次性因素。</div>
+<div class="warn"><b>核心建议：</b>建议对定位定向系统执行温补校准后，复测第 19 发工况，以验证温补系数修正效果。</div>
+<p><b>详细处置步骤：</b></p>
+<ol>
+<li>对该定位定向系统重新进行温补系数标定，参照出厂校准规程执行；</li>
+<li>扩大 TH-03 传感器检测范围，在现有采样基础上增加温度梯度采样点（建议不少于 3 个）；</li>
+<li>下批次试验前完成上述修正后，在相同工况下对第 19 发场景执行复测验证；</li>
+<li>复测结果纳入 D-07 批次试验数据库，更新探针 P01 判据基线。</li>
+</ol>
+
+<h2>5 证据清单</h2>
+<table>
+<thead><tr><th>编号</th><th>证据内容</th><th>来源</th></tr></thead>
+<tbody>${evidRows}</tbody>
+</table>
+</body></html>`
+
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${title}.doc`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  toast('已导出 Word 文档', 'success')
 }
 
 // m19 三图 ECharts
@@ -590,9 +883,31 @@ onBeforeUnmount(() => {
     m14Detail,
     m14PageNo,
     m14PageSize,
+    m14Search,
+    m14Query,
+    m14CheckedIds,
+    applyM14Search,
+    m14IsChecked,
+    m14ToggleOne,
+    m14AllPageChecked,
+    m14SomePageChecked,
+    m14ToggleAllPage,
+    m14CreateVisible,
+    m14EditingId,
+    m14CreateForm,
+    m14DialogTitle,
+    m14SrcNodeOpts,
+    m14ObjOpts,
+    m14FilteredList,
     syncActiveProbeCount,
     toggleProbe,
     enableAllProbes,
+    enableSelectedProbes,
+    disableSelectedProbes,
+    openCreateProbe,
+    openEditProbe,
+    submitCreateProbe,
+    previewProbeCite,
     m15Detail,
     scanCol,
     alertVisible,
@@ -614,6 +929,7 @@ onBeforeUnmount(() => {
     demoStore,
     doM19ConfirmRootCause,
     doM22Archive,
+    m22ExportWord,
     pitchChartEl,
     scatterChartEl,
     tempChartEl,

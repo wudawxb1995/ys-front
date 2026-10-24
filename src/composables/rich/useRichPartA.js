@@ -11,6 +11,8 @@ import {
   persistM03List,
   getPersistedM08List,
   persistM08List,
+  setMatchContext,
+  useDemoStore,
 } from '@/composables/demo-store'
 import { m03TreeData } from '@/data/m03-tree'
 import { m02Domains, getM02RowsForDoc, getM02CountForDoc } from '@/data/m02-indicators'
@@ -1081,6 +1083,134 @@ const m08ChaptersFull = [
   { no: '第五章', title: '数据处理与判据', content: `5.1 判据引用自指标树 V1.0<br><br><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr style="background:#eaf3fa"><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">指标名称</th><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">判据</th><th style="padding:6px 10px;border:1px solid #dce8f2">来源</th></tr></thead><tbody><tr><td style="padding:6px 10px;border:1px solid #dce8f2">最大公路速度</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 65 km/h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">首发命中概率</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 0.85</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">MTBF</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 320 h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr></tbody></table>` },
 ]
 
+/** 按大纲模板 + 历史案例生成有差异的草稿大纲（生成预览用） */
+function m08BuildDraftChapters(row) {
+  const tpl = row?.template || '性能鉴定试验大纲模板'
+  const cs = row?.caseName || '某型定型性能鉴定案例（2024）'
+  const tree = row?.treeVer || '指标树 V1.0'
+  const ik = m08LinkIcon
+
+  if (tpl.includes('可靠性')) {
+    return [
+      {
+        no: '第一章',
+        title: '试验目的',
+        content: `本试验按<strong>可靠性鉴定试验大纲</strong>组织，验证某型在规定任务剖面下的 MTBF / MTTR / 使用可用度是否满足研制总要求。<br><br>大纲骨架：${tpl}<br>相似案例参考：${cs}<br>判据来源：${tree}`,
+      },
+      {
+        no: '第二章',
+        title: '试验条件',
+        content: '2.1 任务剖面<br>综合道路行驶、火力射击、待机贮存三类剖面，累计试验时间按 GJB 899A 统计。<br><br>2.2 受试与保障<br>受试编号：SB-REL-2026-001；保障按二级维修体制配置备件与检测设备。',
+      },
+      {
+        no: '第三章',
+        title: '试验项目与方法',
+        content: `3.1 可靠性增长与鉴定<br>3.1.1 MTBF：判据 <b style="color:#0d4e83">≥ 320 h ${ik}</b>（引自 ${tree}）<br>3.1.2 MTTR：判据 <b style="color:#0d4e83">≤ 2 h ${ik}</b><br>3.1.3 使用可用度：判据 <b style="color:#0d4e83">≥ 0.92 ${ik}</b><br><br>3.2 故障分类<br>按 GJB 451A 区分 A/B/C 类故障；参考案例「${cs}」中 A 类故障处置流程纳入本大纲。`,
+      },
+    ]
+  }
+
+  if (tpl.includes('环境')) {
+    return [
+      {
+        no: '第一章',
+        title: '试验目的',
+        content: `本试验按<strong>环境适应性试验大纲</strong>组织，考核某型在高低温、湿热、砂尘等环境应力下的功能保持与性能衰减。<br><br>大纲骨架：${tpl}<br>相似案例参考：${cs}<br>关联指标树：${tree}`,
+      },
+      {
+        no: '第二章',
+        title: '试验条件',
+        content: '2.1 环境应力<br>温度：−41℃ 贮存 / −41℃ 工作 / +55℃ 工作；湿度：湿热循环按 GJB 150.9A；砂尘：扬尘浓度按任务剖面设置。<br><br>2.2 场地与工装<br>寒区场、湿热箱、扬尘道联合使用；受试编号：SB-ENV-2026-001。',
+      },
+      {
+        no: '第三章',
+        title: '试验项目与方法',
+        content: `3.1 高低温适应性<br>3.1.1 低温贮存后启动：判据满足功能恢复时限（引自 ${tree}） ${ik}<br>3.1.2 高温工作稳定性：关键参数漂移不超过门限 ${ik}<br><br>3.2 湿热与砂尘<br>参照案例「${cs}」补入湿热长时浸泡与扬尘密封检查条目。`,
+      },
+    ]
+  }
+
+  // 性能鉴定模板：再按案例侧重拉开差异
+  if (cs.includes('寒区') || cs.includes('电磁')) {
+    return [
+      {
+        no: '第一章',
+        title: '试验目的',
+        content: `本试验在<strong>性能鉴定</strong>框架下，突出<strong>寒区环境 + 电磁兼容</strong>联合考核，验证机动与 EMC 指标是否满足研制总要求。<br><br>大纲骨架：${tpl}<br>案例取材：${cs}<br>指标树：${tree}`,
+      },
+      {
+        no: '第二章',
+        title: '试验条件',
+        content: '2.1 寒区环境<br>−41℃ 贮存与工作分列考核；路面含硬路面、砂石、泥泞。<br><br>2.2 EMC 试验条件<br>按 GJB 1389B 布置屏蔽室与传导/辐射测点；受试编号：SB-EMC-2026-019。',
+      },
+      {
+        no: '第三章',
+        title: '试验项目与方法',
+        content: `3.1 寒区机动<br>3.1.1 最大公路速度：判据 <b style="color:#0d4e83">≥ 65 km/h ${ik}</b><br>3.1.2 涉水深度：判据 <b style="color:#0d4e83">≥ 1.2 m ${ik}</b><br><br>3.2 电磁兼容（案例强化）<br>传导发射 ≤ RE102 B类；辐射敏感度 ≥ RS103 C类；条目结构参考「${cs}」。`,
+      },
+    ]
+  }
+
+  if (cs.includes('高原')) {
+    return [
+      {
+        no: '第一章',
+        title: '试验目的',
+        content: `本试验在<strong>性能鉴定</strong>框架下，突出<strong>高原低气压与动力保持</strong>考核，验证机动与信息能力在海拔工况下的达标情况。<br><br>大纲骨架：${tpl}<br>案例取材：${cs}<br>指标树：${tree}`,
+      },
+      {
+        no: '第二章',
+        title: '试验条件',
+        content: '2.1 高原条件<br>试验海拔约 4200 m；气温与气压按高原场实测记录。<br><br>2.2 受试配置<br>受试编号：SB-PLT-2026-007；燃油、润滑按高原规程调整。',
+      },
+      {
+        no: '第三章',
+        title: '试验项目与方法',
+        content: `3.1 高原机动<br>3.1.1 最大越野速度：判据 <b style="color:#0d4e83">≥ 35 km/h ${ik}</b>（高原修正）<br>3.1.2 爬坡度：判据 <b style="color:#0d4e83">≥ 30° ${ik}</b><br><br>3.2 信息与测控<br>遥测链路与态势刷新率按「${cs}」补充高原丢包容限说明。`,
+      },
+    ]
+  }
+
+  if (cs.includes('湿热')) {
+    return [
+      {
+        no: '第一章',
+        title: '试验目的',
+        content: `本试验在<strong>性能鉴定</strong>框架下，强化<strong>湿热长时考核</strong>与密封防潮条款，验证防护与可靠性相关指标。<br><br>大纲骨架：${tpl}<br>案例取材：${cs}<br>指标树：${tree}`,
+      },
+      {
+        no: '第二章',
+        title: '试验条件',
+        content: '2.1 湿热剖面<br>温度/湿度循环按 GJB 150.9A；长时浸泡不少于案例「' + cs + '」建议时长。<br><br>2.2 场地<br>湿热箱 + 露天湿热场；受试编号：SB-HUM-2026-011。',
+      },
+      {
+        no: '第三章',
+        title: '试验项目与方法',
+        content: `3.1 湿热后机动复测<br>恢复常温后复查最大公路速度、最大行程等关键机动指标 ${ik}<br><br>3.2 防护与密封<br>防尘防水等级复查（IP67 / IP6X）；霉菌与凝露检查条目引自案例「${cs}」。`,
+      },
+    ]
+  }
+
+  // 默认：标准性能鉴定 + 定型类案例
+  return [
+    {
+      no: '第一章',
+      title: '试验目的',
+      content: `本试验旨在对某型进行全面<strong>性能鉴定</strong>，验证各项技术指标是否满足研制总要求，为定型提供依据。<br><br>大纲骨架：${tpl}<br>相似案例参考：${cs}<br>试验依据：研制总要求、军标 GJB 4239-2001；判据映射自 ${tree}。`,
+    },
+    {
+      no: '第二章',
+      title: '试验条件',
+      content: '2.1 环境条件<br>温度范围 −41℃ 至 +55℃，分贮存工况与工作工况；路面覆盖硬路面、砂石、泥泞。<br><br>2.2 受试<br>受试编号：SB-2026-001，配置标准弹药基数，燃油满载。',
+    },
+    {
+      no: '第三章',
+      title: '试验项目与方法',
+      content: `3.1 机动性能试验<br>3.1.1 最大公路速度：判据 <b style="color:#0d4e83">≥ 65 km/h ${ik}</b>（引自 ${tree}）<br>3.1.2 最大越野速度：判据 <b style="color:#0d4e83">≥ 35 km/h ${ik}</b><br><br>3.2 火力与命中<br>首发命中概率判据 <b style="color:#0d4e83">≥ 0.85 ${ik}</b>；章节编排参考「${cs}」。`,
+    },
+  ]
+}
+
 const m08RoundsFull = [
   {
     time: '10-05 14:22',
@@ -1152,25 +1282,42 @@ function buildM08Snapshot(row) {
     ? row.versions.map((v, i, arr) => ({ ...v, final: i === arr.length - 1 }))
     : [{ ver: 'V1', label: '初稿', time: '10-04 09:11', final: true }]
   const lastVer = draftVersions[draftVersions.length - 1]
+  // 进度：显式 doneSteps 优先；有模板且已有 chapters 视为已生成预览；仅有模板则为待生成
+  let doneSteps = row?.doneSteps
+  if (doneSteps == null) {
+    if (row?.template && Array.isArray(row?.chapters) && row.chapters.length) doneSteps = 4
+    else if (row?.template) doneSteps = 3
+    else doneSteps = 2
+  }
+  doneSteps = Math.max(0, Math.min(4, Number(doneSteps) || 0))
+  const previewReady = doneSteps >= 4
   return {
-    doneSteps: row?.doneSteps != null ? row.doneSteps : 2,
+    doneSteps,
     factors: Array.isArray(row?.factors) && row.factors.length
       ? row.factors.map((f) => ({ ...f }))
       : m08FactorsFull.slice(0, 12).map((f) => (
         f.name === '温度' ? { ...f, levels: '−41℃ / 常温 / +55℃' } : f
       )),
     factorOk: false,
-    chapters: m08ChaptersFull.slice(0, 3).map((c, i) => (i === 2
-      ? { ...c, content: '3.1 机动性能试验（草稿，待补充电磁兼容与判据核对）<br>3.1.1 最大公路速度：判据待与指标树核对。' }
-      : c)),
+    // 大纲正文仅在「生成预览」完成后产出；此前为空
+    chapters: previewReady
+      ? (Array.isArray(row?.chapters) && row.chapters.length
+        ? row.chapters.map((c) => ({ ...c }))
+        : m08BuildDraftChapters(row))
+      : [],
     activeChapter: 0,
     rounds: draftRounds,
     versions: draftVersions,
-    previewBadge: lastVer ? `${lastVer.ver} ${lastVer.label}` : 'V1 草稿',
-    chatReadonly: false,
-    chatHint: '在此输入自然语言优化要求，将追加一轮校核并联动底部版本条',
+    previewBadge: previewReady
+      ? (lastVer ? `${lastVer.ver} ${lastVer.label}` : 'V1 草稿')
+      : '待生成',
+    chatReadonly: !previewReady,
+    chatHint: previewReady
+      ? '在此输入自然语言优化要求，将追加一轮校核并联动底部版本条'
+      : '请先完成步骤「生成预览」，再进行多轮校核优化',
     showMatch: false,
     readonlyFactors: false,
+    previewReady,
   }
 }
 
@@ -1296,23 +1443,36 @@ function m08SubmitCreate() {
   const ver = (m08CreateForm.ver || 'V1').toUpperCase().replace(/^V?/i, 'V')
   const baseName = m08CreateForm.name.trim().replace(/\s*V\d+(\.\d+)?\s*$/i, '')
   const name = `${baseName} ${ver}`
-  const row = {
-    id: `m-${Date.now()}`,
+  const hasTpl = !!m08CreateForm.template
+  const draftRow = {
     name,
     ver,
     treeVer: m08CreateForm.treeVer,
-    status: m08CreateForm.status || '草稿',
-    updatedAt: nowText(),
     template: m08CreateForm.template,
     caseName: m08CaseOptions[0],
     domains: [...m02Domains],
+  }
+  // 新建时已选大纲模板 → 默认完成「生成预览」；之后若改选模板再回退需手动生成
+  const chapters = hasTpl ? m08BuildDraftChapters(draftRow) : []
+  const row = {
+    id: `m-${Date.now()}`,
+    ...draftRow,
+    status: m08CreateForm.status || '草稿',
+    updatedAt: nowText(),
     factorStrategy: '标准',
     factorCats: [...m08FactorCatOptions],
-    remark: m08CreateForm.remark || '',
+    remark: (m08CreateForm.remark || '').trim(),
+    doneSteps: hasTpl ? 4 : 2,
+    chapters,
   }
   m08List.value.unshift(row)
   m08CreateVisible.value = false
-  toast(`已新建方案「${row.name}」，关联 ${row.treeVer}`, 'success')
+  toast(
+    hasTpl
+      ? `已新建方案「${row.name}」，已按模板生成大纲预览`
+      : `已新建方案「${row.name}」，关联 ${row.treeVer}`,
+    'success',
+  )
   if (m08CreateForm.openAfter) {
     m08OpenDetail(row)
   }
@@ -1502,6 +1662,28 @@ function m08SaveFactorStep() {
   return true
 }
 
+/** 模板/案例变更后：回退「生成预览」勾选，清空大纲，需手动重新生成 */
+function m08InvalidatePreviewAfterTplChange() {
+  if (!m08IsDraft.value) return
+  const wasReady = m08Snap.value.previewReady || (m08Snap.value.doneSteps || 0) >= 4
+  m08Snap.value.doneSteps = Math.min(m08Snap.value.doneSteps || 0, 3)
+  if (m08Snap.value.doneSteps < 3) m08Snap.value.doneSteps = 3
+  m08Snap.value.previewReady = false
+  m08Snap.value.chapters = []
+  m08Snap.value.previewBadge = '待生成'
+  m08Snap.value.chatReadonly = true
+  m08Snap.value.chatHint = wasReady
+    ? '模板/案例已变更，请重新完成「生成预览」'
+    : '请先完成步骤「生成预览」，再进行多轮校核优化'
+  m08ActiveChapter.value = 0
+  const row = m08CurrentRow.value
+  if (row) {
+    row.doneSteps = 3
+    row.chapters = []
+    row.updatedAt = nowText()
+  }
+}
+
 /** 保存步骤 3 的模板与案例选择 */
 function m08SaveTplCase() {
   if (!m08TplForm.template) {
@@ -1513,11 +1695,15 @@ function m08SaveTplCase() {
     return false
   }
   const row = m08CurrentRow.value
+  const changed = !row
+    || row.template !== m08TplForm.template
+    || row.caseName !== m08TplForm.caseName
   if (row) {
     row.template = m08TplForm.template
     row.caseName = m08TplForm.caseName
     row.updatedAt = nowText()
   }
+  if (changed) m08InvalidatePreviewAfterTplChange()
   return true
 }
 
@@ -1545,20 +1731,42 @@ function m08ContinueStep() {
     m08Snap.value.readonlyFactors = false
   }
   if (m08Snap.value.doneSteps >= 4) {
+    m08Snap.value.previewReady = true
     m08Snap.value.previewBadge = `${m08CurrentRow.value?.ver || 'V1'} 预览`
     m08Snap.value.chatHint = '四步已完成，可继续通过对话优化大纲（草稿）'
+    m08Snap.value.chatReadonly = false
+    // 每次「生成预览」都按当前模板/案例重算大纲（避免换模板后内容不变）
+    const chapters = m08BuildDraftChapters(m08CurrentRow.value)
+    m08Snap.value.chapters = chapters
+    m08ActiveChapter.value = 0
+    if (m08CurrentRow.value) {
+      m08CurrentRow.value.chapters = chapters.map((c) => ({ ...c }))
+    }
   }
   if (m08CurrentRow.value) m08CurrentRow.value.doneSteps = m08Snap.value.doneSteps
   m08StepDialog.value = false
   toast(`已完成「${m08Steps[idx].name}」`, 'success')
+  if (idx === 3) {
+    m08ScrollTo('#m08-outline-panel')
+  }
 }
 
 /** 步骤 1~3 弹窗：草稿保存配置并关闭 */
 function m08ConfirmStepConfig() {
   if (m08IsDraft.value) {
     if (!m08SaveCurrentStepConfig()) return
-    const tips = ['已更新考核指标选用', '已同步试验因子配置', '已更新模板与案例选用']
-    toast(tips[m08StepDialogIdx.value] || '已保存', 'success')
+    const tips = [
+      '已更新考核指标选用',
+      '已同步试验因子配置',
+      (m08Snap.value.previewReady || (m08Snap.value.doneSteps || 0) >= 4)
+        ? '已更新模板与案例；请重新「生成预览」'
+        : '已更新模板与案例选用',
+    ]
+    // 步骤3若已回退预览，提示以 invalidate 文案为准
+    const tip = m08StepDialogIdx.value === 2 && !(m08Snap.value.previewReady)
+      ? '已更新模板与案例，请重新完成「生成预览」'
+      : (tips[m08StepDialogIdx.value] || '已保存')
+    toast(tip, 'success')
   }
   m08StepDialog.value = false
 }
@@ -1697,8 +1905,16 @@ function m08ClickVersion(ver, vi) {
 }
 
 function m08ExportWord() {
+  if (!m08Snap.value.previewReady && (m08Snap.value.doneSteps || 0) < 4) {
+    toast('请先完成「生成预览」后再导出', 'warning')
+    return
+  }
   const name = m08CurrentRow.value?.name || '试验大纲'
   const chapters = m08Snap.value.chapters || []
+  if (!chapters.length) {
+    toast('暂无大纲内容可导出', 'warning')
+    return
+  }
   const body = chapters.map((ch) => {
     const html = String(ch.content || '').replace(/<svg[\s\S]*?<\/svg>/gi, '')
     return `<h2>${ch.no} ${ch.title}</h2><div>${html}</div>`
@@ -1889,17 +2105,18 @@ function goResourceMatch() {
     toast('请先打开已定稿方案再进行资源匹配', 'warning')
     return
   }
+  setMatchContext(m08CurrentRow.value)
   router.push({ name: 'app', params: { pid: 'design', sid: 'match', mid: 'rec' } })
+  toast(`已带入方案「${m08CurrentRow.value?.name || ''}」需求`, 'success')
 }
 
 
 
-// ── 镜头五（M11）资源推荐四算法 ─────────────────────────────────────
+// ── 镜头五（M11）资源推荐四算法（与定稿方案上下文联动） ───────────────
 
-// 需求摘要标签（自动解析自定稿方案）
-const m11ReqTags = ['−41℃ 寒区环境能力', '2000 m 射击靶道', '遥测采集能力']
-
+const demoStore = useDemoStore()
 const m11Tab = ref('rule')
+const m11SelIdx = ref(0)
 
 const m11Tabs = [
   { key: 'rule',     label: '基于规则',       algo: '规则匹配', desc: '按需求标签逐条规则过滤，满足全部约束的资源才进入候选' },
@@ -1908,52 +2125,234 @@ const m11Tabs = [
   { key: 'hybrid',   label: '多维度综合',     algo: '多维度综合（加权融合）', desc: '规则×0.35 + 内容相似度×0.35 + 协同过滤×0.30，融合排序' },
 ]
 
-const m11BaseResults = [
-  {
-    res: '某综合试验场寒区',
-    cat: '试验场地',
-    spec: '−50℃ 低温实验室 + 2400 m 靶道',
-    case: '2024 年某型定型案例',
-    reason: '满足全部 3 条需求标签：寒区能力 / 2000 m 靶道 / 遥测采集',
-  },
-  {
-    res: '高原综合试验场',
-    cat: '试验场地',
-    spec: '海拔 4200 m，2200 m 靶道',
-    case: '2023 年高原环境试验案例',
-    reason: '满足靶道与遥测需求，缺−41℃寒区低温环境',
-  },
-  {
-    res: '某电磁兼容试验中心',
-    cat: '专项场地',
-    spec: '全域屏蔽，满足 GJB 1389B',
-    case: '2025 年电磁兼容专项案例',
-    reason: '满足遥测采集需求，不满足靶道与寒区需求',
-  },
-  {
-    res: '某机动性能试验跑道',
-    cat: '试验场地',
-    spec: '1500 m 混凝土跑道',
-    case: '2023 年机动性能试验案例',
-    reason: '靶道长度 1500 m，不满足 2000 m 要求',
-  },
-  {
-    res: '室内环境模拟舱（B 型）',
-    cat: '试验设备',
-    spec: '−40℃ ~ +80℃，内尺寸 3×3×3 m',
-    case: '部件环境耐受性案例',
-    reason: '可满足寒区温度，但无法容纳整车级试验',
-  },
-]
-const m11Results = {
-  rule:    m11BaseResults.map((r, i) => ({ ...r, score: [0.91, 0.78, 0.62, 0.54, 0.43][i] })),
-  content: m11BaseResults.map((r, i) => ({ ...r, score: [0.88, 0.82, 0.71, 0.65, 0.58][i] })),
-  collab:  m11BaseResults.map((r, i) => ({ ...r, score: [0.86, 0.79, 0.68, 0.60, 0.52][i] })),
-  hybrid:  m11BaseResults.map((r, i) => ({ ...r, score: [0.91, 0.80, 0.67, 0.59, 0.49][i] })),
+/** 左侧菜单 mid → 页面侧重（避免各叶子完全同页） */
+const m11ViewMeta = computed(() => {
+  const mid = String(route.params.mid || 'rec')
+  if (mid.startsWith('rec-feat')) {
+    return { mid, title: '新试验任务特征提取', focus: 'feat', hint: '从关联方案抽取结构化需求特征，作为相似度匹配输入' }
+  }
+  if (mid.startsWith('rec-sim')) {
+    return { mid, title: '相似度计算配置', focus: 'sim', hint: '按当前算法权重对候选资源打分；切换算法 Tab 可对比' }
+  }
+  if (mid.startsWith('rec-cmp')) {
+    return { mid, title: '历史资源对比', focus: 'cmp', hint: '横向对比 TOP 资源在各算法下的综合匹配度' }
+  }
+  if (mid.startsWith('show')) {
+    return { mid, title: '推荐资源可视化展示', focus: 'show', hint: '以列表+图文方式展示当前方案的推荐结果' }
+  }
+  if (mid.startsWith('trace')) {
+    return { mid, title: '推荐资源历史案例溯源', focus: 'trace', hint: '突出资源关联的历史试验案例与来源说明' }
+  }
+  return { mid, title: '历史资源相似度匹配', focus: 'match', hint: '四算法并行匹配，结果随关联定稿方案联动' }
+})
+
+const m11SchemeOptions = computed(() => {
+  const list = Array.isArray(m08List.value) ? m08List.value : []
+  const finalized = list.filter((r) => r.status === '已定稿' || r.status === '已归档')
+  return (finalized.length ? finalized : list).map((r) => ({
+    value: r.id,
+    label: `${r.name}${r.status ? `（${r.status}）` : ''}`,
+  }))
+})
+
+function m11EnsureMatchContext() {
+  const ctx = demoStore.matchContext
+  if (ctx?.schemeId) {
+    const hit = m08List.value.find((r) => r.id === ctx.schemeId)
+    if (hit) {
+      // 用列表最新行刷新（模板/案例可能已改）
+      setMatchContext(hit)
+      return
+    }
+  }
+  const prefer = m08List.value.find((r) => r.status === '已定稿')
+    || m08List.value.find((r) => r.status === '已归档')
+    || m08List.value[0]
+  if (prefer) setMatchContext(prefer)
 }
+
+function m11SelectScheme(id) {
+  const hit = m08List.value.find((r) => r.id === id)
+  if (!hit) {
+    toast('未找到该方案', 'warning')
+    return
+  }
+  setMatchContext(hit)
+  m11SelIdx.value = 0
+  toast(`已切换关联方案：${hit.name}`, 'success')
+}
+
+function m11ReparseScheme() {
+  m11EnsureMatchContext()
+  m11SelIdx.value = 0
+  toast('已按当前方案重新解析需求摘要', 'success')
+}
+
+/** 从方案上下文推导需求标签 */
+function m11DeriveTags(ctx) {
+  const tags = []
+  const tpl = ctx?.template || ''
+  const cs = ctx?.caseName || ''
+  const factors = Array.isArray(ctx?.factors) ? ctx.factors : []
+  const domains = Array.isArray(ctx?.domains) ? ctx.domains : []
+
+  if (tpl.includes('可靠性')) {
+    tags.push('MTBF ≥ 320 h', '使用可用度 ≥ 0.92', '二级维修保障能力')
+  } else if (tpl.includes('环境')) {
+    tags.push('−41℃ 寒区贮存/工作', '湿热循环考核', '砂尘密封 IP6X')
+  } else {
+    tags.push('−41℃ 寒区环境能力', '机动性能综合考核', '火力命中考核')
+  }
+
+  if (cs.includes('高原')) tags.push('海拔 4200 m 高原工况')
+  if (cs.includes('电磁') || cs.includes('寒区')) tags.push('电磁兼容 GJB 1389B')
+  if (cs.includes('湿热')) tags.push('湿热长时浸泡')
+  if (cs.includes('定型') && !tags.some((t) => t.includes('靶道'))) tags.push('2000 m 射击靶道')
+
+  const temp = factors.find((f) => f.name === '温度')
+  if (temp?.levels && !tags.some((t) => t.includes('℃'))) {
+    tags.push(`温度水平：${String(temp.levels).split('/')[0].trim()}`)
+  }
+  const range = factors.find((f) => /射程|靶道/.test(f.name || ''))
+  if (range?.levels) tags.push(`${range.name} ${range.levels}`)
+
+  domains.slice(0, 2).forEach((d) => {
+    if (d && !tags.includes(d)) tags.push(`性能域·${d}`)
+  })
+
+  // 去重保序，最多 5 个
+  const seen = new Set()
+  return tags.filter((t) => {
+    if (seen.has(t)) return false
+    seen.add(t)
+    return true
+  }).slice(0, 5)
+}
+
+/** 按方案画像生成候选资源池（内容随模板/案例变化） */
+function m11BuildBaseResults(ctx) {
+  const tpl = ctx?.template || ''
+  const cs = ctx?.caseName || ''
+  const nameHint = (ctx?.schemeName || '').slice(0, 18)
+
+  if (tpl.includes('可靠性')) {
+    return [
+      { res: '可靠性综合试验室（A 区）', cat: '专项场地', spec: '任务剖面台架 + 故障注入', case: '2024 可靠性鉴定案例', reason: `贴合模板「${tpl}」：MTBF/MTTR 剖面齐全` },
+      { res: '二级维修保障演练场', cat: '保障资源', spec: '备件库 + 检测工位', case: cs || '保障演练案例', reason: '满足二级维修与可用度验证需求' },
+      { res: '某综合试验场寒区', cat: '试验场地', spec: '−50℃ 实验室', case: '寒区可靠性叠加案例', reason: '可叠加寒区应力，可靠性主指标非其强项' },
+      { res: '高原综合试验场', cat: '试验场地', spec: '海拔 4200 m', case: '高原长时运行案例', reason: '偏环境应力，可靠性统计样本偏少' },
+      { res: '室内环境模拟舱（B 型）', cat: '试验设备', spec: '部件级温箱', case: '部件可靠性筛试', reason: '仅部件级，不满足整机剖面' },
+    ]
+  }
+  if (tpl.includes('环境')) {
+    return [
+      { res: '湿热综合试验箱群', cat: '试验设备', spec: 'GJB 150.9A 循环', case: cs || '湿热长时案例', reason: `匹配环境大纲与案例「${cs || '湿热'}」` },
+      { res: '某综合试验场寒区', cat: '试验场地', spec: '−50℃ 贮存/工作分列', case: '寒区环境案例', reason: '满足 −41℃ 贮存与工作分列考核' },
+      { res: '扬尘密封试验道', cat: '试验场地', spec: '可控扬尘浓度', case: '砂尘防护案例', reason: '覆盖砂尘/密封条款' },
+      { res: '高原综合试验场', cat: '试验场地', spec: '低气压工况', case: '高原环境案例', reason: '低气压可用，湿热条款需另配' },
+      { res: '某电磁兼容试验中心', cat: '专项场地', spec: '屏蔽室', case: 'EMC 专项', reason: '偏 EMC，非环境主体' },
+    ]
+  }
+  if (cs.includes('高原')) {
+    return [
+      { res: '高原综合试验场', cat: '试验场地', spec: '海拔 4200 m，2200 m 靶道', case: cs, reason: `案例「${cs}」主场匹配，高原机动/测控齐全` },
+      { res: '高原遥测接力站', cat: '试验设备', spec: '低气压抗干扰链路', case: '高原测控案例', reason: '补强高原丢包容限与刷新率' },
+      { res: '某综合试验场寒区', cat: '试验场地', spec: '−50℃ + 靶道', case: '寒区定型案例', reason: '有靶道但海拔不足' },
+      { res: '某机动性能试验跑道', cat: '试验场地', spec: '1500 m 跑道', case: '平原机动案例', reason: '海拔与靶道均不满足高原需求' },
+      { res: '室内环境模拟舱（B 型）', cat: '试验设备', spec: '部件温箱', case: '部件试验', reason: '无法开展整车高原试验' },
+    ]
+  }
+  if (cs.includes('电磁') || cs.includes('寒区')) {
+    return [
+      { res: '某综合试验场寒区', cat: '试验场地', spec: '−50℃ 实验室 + 2400 m 靶道', case: cs || '寒区定型案例', reason: `满足寒区 + 靶道；关联方案「${nameHint}」` },
+      { res: '某电磁兼容试验中心', cat: '专项场地', spec: '全域屏蔽，GJB 1389B', case: '电磁兼容专项案例', reason: '满足 EMC 条款，需与寒区场组合使用' },
+      { res: '高原综合试验场', cat: '试验场地', spec: '海拔 4200 m', case: '高原案例', reason: '缺寒区低温与 EMC 屏蔽条件' },
+      { res: '某机动性能试验跑道', cat: '试验场地', spec: '1500 m 跑道', case: '机动案例', reason: '靶道偏短，无寒区/EMC' },
+      { res: '室内环境模拟舱（B 型）', cat: '试验设备', spec: '−40℃ ~ +80℃', case: '部件环境', reason: '温度可模拟，非整车级' },
+    ]
+  }
+  if (cs.includes('湿热')) {
+    return [
+      { res: '湿热综合试验箱群', cat: '试验设备', spec: '长时湿热循环', case: cs, reason: `直接对齐案例「${cs}」湿热剖面` },
+      { res: '露天湿热试验场', cat: '试验场地', spec: '自然湿热 + 凝露', case: '湿热外场案例', reason: '补强外场凝露与霉菌检查' },
+      { res: '某综合试验场寒区', cat: '试验场地', spec: '低温为主', case: '寒区案例', reason: '温度能力反向，湿热非其强项' },
+      { res: '高原综合试验场', cat: '试验场地', spec: '低气压干燥', case: '高原案例', reason: '气候偏干，湿热条款弱' },
+      { res: '某机动性能试验跑道', cat: '试验场地', spec: '混凝土跑道', case: '机动案例', reason: '无湿热应力能力' },
+    ]
+  }
+  // 默认性能鉴定 / 定型
+  return [
+    { res: '某综合试验场寒区', cat: '试验场地', spec: '−50℃ 低温实验室 + 2400 m 靶道', case: '2024 年某型定型案例', reason: `满足寒区/靶道等需求；解析自「${nameHint || '定稿方案'}」` },
+    { res: '高原综合试验场', cat: '试验场地', spec: '海拔 4200 m，2200 m 靶道', case: '2023 年高原环境试验案例', reason: '满足靶道，缺寒区低温' },
+    { res: '某电磁兼容试验中心', cat: '专项场地', spec: '全域屏蔽，满足 GJB 1389B', case: '2025 年电磁兼容专项案例', reason: '满足 EMC/遥测类需求，靶道与寒区不足' },
+    { res: '某机动性能试验跑道', cat: '试验场地', spec: '1500 m 混凝土跑道', case: '2023 年机动性能试验案例', reason: '靶道长度不足 2000 m' },
+    { res: '室内环境模拟舱（B 型）', cat: '试验设备', spec: '−40℃ ~ +80℃，内尺寸 3×3×3 m', case: '部件环境耐受性案例', reason: '可模拟温度，无法容纳整车级试验' },
+  ]
+}
+
+function m11ScoreSet(focus, seed) {
+  // focus 微调分数，让不同菜单叶子结果排序略有差异
+  const base = {
+    match: [0.91, 0.78, 0.62, 0.54, 0.43],
+    feat:  [0.89, 0.81, 0.66, 0.55, 0.47],
+    sim:   [0.87, 0.83, 0.70, 0.58, 0.50],
+    cmp:   [0.90, 0.76, 0.68, 0.57, 0.45],
+    show:  [0.92, 0.79, 0.64, 0.53, 0.44],
+    trace: [0.88, 0.80, 0.69, 0.61, 0.48],
+  }[focus] || [0.91, 0.78, 0.62, 0.54, 0.43]
+  const jitter = (seed % 7) * 0.002
+  return {
+    rule: base.map((s, i) => Math.min(0.99, +(s + jitter - i * 0.001).toFixed(2))),
+    content: base.map((s, i) => Math.min(0.99, +(s - 0.03 + jitter + (i % 2) * 0.01).toFixed(2))),
+    collab: base.map((s, i) => Math.min(0.99, +(s - 0.05 + jitter).toFixed(2))),
+    hybrid: base.map((s, i) => Math.min(0.99, +((s * 0.35 + (s - 0.03) * 0.35 + (s - 0.05) * 0.3) + jitter).toFixed(2))),
+  }
+}
+
+const m11MatchCtx = computed(() => demoStore.matchContext || {})
+const m11ReqTags = computed(() => m11DeriveTags(m11MatchCtx.value))
+const m11SchemeTitle = computed(() => m11MatchCtx.value.schemeName || '未关联方案')
+const m11SchemeId = computed(() => m11MatchCtx.value.schemeId || '')
+
+const m11Results = computed(() => {
+  const ctx = m11MatchCtx.value
+  const focus = m11ViewMeta.value.focus
+  const seed = String(ctx.schemeId || ctx.schemeName || '').length
+  const base = m11BuildBaseResults(ctx)
+  const scores = m11ScoreSet(focus, seed)
+  // trace 页：理由更强调案例来源
+  const rows = base.map((r) => {
+    if (focus === 'trace') {
+      return { ...r, reason: `溯源：${r.case} · ${r.reason}` }
+    }
+    if (focus === 'feat') {
+      return { ...r, reason: `特征命中：${r.reason}` }
+    }
+    return { ...r }
+  })
+  return {
+    rule: rows.map((r, i) => ({ ...r, score: scores.rule[i] })),
+    content: rows.map((r, i) => ({ ...r, score: scores.content[i] })),
+    collab: rows.map((r, i) => ({ ...r, score: scores.collab[i] })),
+    hybrid: rows.map((r, i) => ({ ...r, score: scores.hybrid[i] })),
+  }
+})
+
 const m11CurrentTab = computed(() => m11Tabs.find((t) => t.key === m11Tab.value))
-const m11CurrentResults = computed(() => m11Results[m11Tab.value] || m11Results.hybrid)
-const m11SelIdx = ref(0)
+const m11CurrentResults = computed(() => m11Results.value[m11Tab.value] || m11Results.value.hybrid)
+
+// 进入匹配相关页时，若无上下文则回填最近定稿方案
+watch(
+  () => route.params.mid,
+  (mid) => {
+    if (String(mid || '').startsWith('rec') || String(mid || '').startsWith('show') || String(mid || '').startsWith('trace')) {
+      m11EnsureMatchContext()
+      m11SelIdx.value = 0
+      m11Tab.value = 'rule'
+    }
+  },
+  { immediate: true },
+)
 
 
   Object.assign(bag, {
@@ -2119,6 +2518,13 @@ const m11SelIdx = ref(0)
     m08StepDialogIdx,
     m08StepDetails,
     goResourceMatch,
+    m11ViewMeta,
+    m11SchemeOptions,
+    m11SchemeTitle,
+    m11SchemeId,
+    m11SelectScheme,
+    m11ReparseScheme,
+    m11EnsureMatchContext,
     m08Steps,
     m08Factors,
     m08SelFactor,
@@ -2129,10 +2535,9 @@ const m11SelIdx = ref(0)
     m11ReqTags,
     m11Tab,
     m11Tabs,
-    m11BaseResults,
     m11Results,
     m11CurrentTab,
     m11CurrentResults,
-    m11SelIdx
+    m11SelIdx,
   })
 }

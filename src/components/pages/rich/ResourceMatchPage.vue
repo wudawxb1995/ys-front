@@ -1,23 +1,42 @@
 <template>
   <div class="rich-type-m11">
     <div class="m11-shell">
-      <!-- 需求摘要卡（浅蓝底，自动解析自定稿方案） -->
+      <!-- 需求摘要卡（联动定稿方案） -->
       <div class="m11-req">
         <div class="m11-req-head">
           <svg viewBox="0 0 24 24" fill="none" stroke="#0d4e83" stroke-width="1.8" class="m11-req-ico"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
           <span class="m11-req-title">需求摘要</span>
-          <span class="m11-req-sub">自动解析自定稿方案《某型性能鉴定试验大纲 V4》</span>
-          <el-button class="m11-req-btn" @click="toast('已重新解析方案')">重新解析</el-button>
+          <span class="m11-req-sub">自动解析自定稿方案《{{ m11SchemeTitle }}》</span>
+          <el-button class="m11-req-btn" @click="m11ReparseScheme">重新解析</el-button>
+        </div>
+        <div class="m11-req-bind">
+          <span class="lab">关联方案</span>
+          <el-select
+            :model-value="m11SchemeId"
+            placeholder="选择定稿/归档方案"
+            filterable
+            style="width: min(420px, 100%)"
+            @change="m11SelectScheme"
+          >
+            <el-option
+              v-for="op in m11SchemeOptions"
+              :key="op.value"
+              :label="op.label"
+              :value="op.value"
+            />
+          </el-select>
+          <span class="m11-view-hint">{{ m11ViewMeta?.hint }}</span>
         </div>
         <div class="m11-req-tags">
           <span v-for="tag in m11ReqTags" :key="tag" class="m11-tag">
             <span class="m11-tag-dot"></span>
             {{ tag }}
           </span>
+          <span v-if="!m11ReqTags?.length" class="m11-tag muted">暂无需求标签，请先关联方案</span>
         </div>
       </div>
 
-      <!-- 四算法 Tab（默认「基于规则」） -->
+      <!-- 四算法 Tab -->
       <div class="m11-tabs">
         <button
           v-for="t in m11Tabs"
@@ -46,14 +65,14 @@
               <th>资源名称</th>
               <th>类型</th>
               <th class="col-score">综合匹配度</th>
-              <th>命中理由摘要</th>
+              <th>{{ m11ViewMeta?.focus === 'trace' ? '案例溯源 / 命中理由' : '命中理由摘要' }}</th>
               <th class="col-op">操作</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="(r, i) in m11CurrentResults"
-              :key="r.res"
+              :key="r.res + i"
               :class="{ 'm11-top': i === 0, 'm11-sel-row': m11SelIdx === i }"
               @click="m11SelIdx = i"
             >
@@ -81,6 +100,7 @@
               </td>
               <td class="reason">
                 <span v-if="i === 0" class="m11-star-txt">★</span>{{ r.reason }}
+                <div v-if="m11ViewMeta?.focus === 'trace' || m11ViewMeta?.focus === 'show'" class="m11-case">案例：{{ r.case }}</div>
               </td>
               <td class="col-op" @click.stop>
                 <el-button type="primary" size="small" @click="toast('已采纳：' + r.res)">采纳</el-button>
@@ -90,9 +110,9 @@
         </table>
       </div>
 
-      <!-- 四算法综合对比（TOP1 资源横排） -->
+      <!-- 四算法综合对比 -->
       <div class="m11-compare">
-        <div class="m11-compare-title">四算法综合对比（各算法 TOP1 资源）</div>
+        <div class="m11-compare-title">四算法综合对比（各算法 TOP1 · 关联《{{ m11SchemeTitle }}》）</div>
         <div class="m11-compare-grid">
           <div
             v-for="t in m11Tabs"
@@ -101,8 +121,8 @@
             :class="{ on: t.key === m11Tab, gold: t.key === 'hybrid' }"
           >
             <div class="m11-cmp-lab">{{ t.label }}</div>
-            <div class="m11-cmp-score">{{ (m11Results[t.key][0].score * 100).toFixed(0) }}%</div>
-            <div class="m11-cmp-res">{{ m11Results[t.key][0].res }}</div>
+            <div class="m11-cmp-score">{{ ((m11Results[t.key] || m11Results.hybrid)[0].score * 100).toFixed(0) }}%</div>
+            <div class="m11-cmp-res">{{ (m11Results[t.key] || m11Results.hybrid)[0].res }}</div>
           </div>
         </div>
       </div>
@@ -124,7 +144,6 @@ export default {
 </script>
 
 <style scoped>
-/* 白底整卡壳 —— 对齐 ys-form-ui：圆角 12px + 浅阴影 + var(--line) */
 .m11-shell {
   display: flex;
   flex-direction: column;
@@ -147,11 +166,31 @@ export default {
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 .m11-req-ico { width: 16px; height: 16px; flex: 0 0 auto; }
 .m11-req-title { font-weight: 700; font-size: 13.5px; color: #0d4e83; }
 .m11-req-sub { font-size: 12.5px; color: #4a7fa8; }
 .m11-req-btn { margin-left: auto; }
+
+.m11-req-bind {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.m11-req-bind .lab {
+  font-size: 13px;
+  color: #5c7084;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.m11-view-hint {
+  font-size: 12.5px;
+  color: #8a99a8;
+  line-height: 1.4;
+}
 
 .m11-req-tags { display: flex; gap: 10px; flex-wrap: wrap; }
 .m11-tag {
@@ -166,6 +205,7 @@ export default {
   color: #1668a8;
   font-weight: 500;
 }
+.m11-tag.muted { color: #8a99a8; border-style: dashed; font-weight: 400; }
 .m11-tag-dot {
   width: 6px;
   height: 6px;
@@ -300,6 +340,11 @@ export default {
   line-height: 1.5;
 }
 .m11-star-txt { color: #c8902a; font-weight: 600; margin-right: 4px; }
+.m11-case {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #1668a8;
+}
 
 .m11-compare-title {
   font-size: 13.5px;

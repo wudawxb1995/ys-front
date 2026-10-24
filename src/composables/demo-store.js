@@ -19,9 +19,41 @@ const M03_LIST_SEED = [
 ]
 
 const M08_LIST_SEED = [
-  { id: 'm1', name: '某型装备性能鉴定试验大纲 V4', ver: 'V4', treeVer: '指标树 V1.0', status: '已定稿', updatedAt: '2026-10-08 10:42' },
-  { id: 'm2', name: '某型装备性能鉴定试验大纲 V3', ver: 'V3', treeVer: '指标树 V0.9', status: '已归档', updatedAt: '2026-10-06 15:20' },
-  { id: 'm3', name: '某型装备性能鉴定试验大纲 V1', ver: 'V1', treeVer: '指标树 V0.9', status: '草稿', updatedAt: '2026-10-04 09:11' },
+  {
+    id: 'm1',
+    name: '某型装备性能鉴定试验大纲 V4',
+    ver: 'V4',
+    treeVer: '指标树 V1.0',
+    status: '已定稿',
+    updatedAt: '2026-10-08 10:42',
+    template: '性能鉴定试验大纲模板',
+    caseName: '寒区电磁兼容历史案例',
+    domains: ['机动', '火力', '环境适应性', '电磁兼容'],
+    remark: '定型性能鉴定主路径，含寒区与 EMC',
+  },
+  {
+    id: 'm2',
+    name: '某型装备性能鉴定试验大纲 V3',
+    ver: 'V3',
+    treeVer: '指标树 V0.9',
+    status: '已归档',
+    updatedAt: '2026-10-06 15:20',
+    template: '环境适应性试验大纲模板',
+    caseName: '湿热环境长时考核案例',
+    domains: ['环境适应性', '可靠性'],
+    remark: '归档快照，湿热长时考核',
+  },
+  {
+    id: 'm3',
+    name: '某型装备性能鉴定试验大纲 V1',
+    ver: 'V1',
+    treeVer: '指标树 V0.9',
+    status: '草稿',
+    updatedAt: '2026-10-04 09:11',
+    template: '性能鉴定试验大纲模板',
+    caseName: '某型定型性能鉴定案例（2024）',
+    remark: '',
+  },
 ]
 
 const DEFAULTS = {
@@ -70,6 +102,20 @@ const DEFAULTS = {
   lastM02IndicatorId: '',
   lastDeviationId: '',
   deviationViewedIds: [],
+
+  /** 试验方案 → 资源匹配：当前关联的定稿方案上下文 */
+  matchContext: {
+    schemeId: 'm1',
+    schemeName: '某型装备性能鉴定试验大纲 V4',
+    ver: 'V4',
+    treeVer: '指标树 V1.0',
+    template: '性能鉴定试验大纲模板',
+    caseName: '某型定型性能鉴定案例（2024）',
+    status: '已定稿',
+    domains: [],
+    factors: [],
+    updatedAt: '',
+  },
 }
 
 // ── sessionStorage 读写工具 ───────────────────────────────────────────────
@@ -150,6 +196,26 @@ export function updateActiveProbeCount(count) {
 }
 
 /**
+ * 方案页「资源匹配」/ 匹配页切方案：写入关联上下文
+ * @param {object} row m08 方案行
+ */
+export function setMatchContext(row) {
+  if (!row) return
+  store.matchContext = {
+    schemeId: row.id || '',
+    schemeName: row.name || '',
+    ver: row.ver || '',
+    treeVer: row.treeVer || '',
+    template: row.template || '性能鉴定试验大纲模板',
+    caseName: row.caseName || '某型定型性能鉴定案例（2024）',
+    status: row.status || '',
+    domains: Array.isArray(row.domains) ? [...row.domains] : [],
+    factors: Array.isArray(row.factors) ? row.factors.map((f) => ({ ...f })) : [],
+    updatedAt: row.updatedAt || '',
+  }
+}
+
+/**
  * Part2 m19：用户采纳候选根因
  * @param {object} candidate  来自 candidates mock 的行对象 { name, confidence }
  * @param {object} event      来自 m19Events 的行对象 { name, id }
@@ -211,6 +277,7 @@ export function resetDemoStore() {
     m03List: M03_LIST_SEED.map((r) => ({ ...r })),
     m08List: M08_LIST_SEED.map((r) => ({ ...r })),
     deviationViewedIds: [],
+    matchContext: { ...DEFAULTS.matchContext },
   })
   sessionStorage.removeItem(STORAGE_KEY)
 }

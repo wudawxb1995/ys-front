@@ -4,15 +4,16 @@
 
       <!-- 报告预览页 -->
       <template v-if="m22Detail">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-          <span @click="m22Detail=null" style="cursor:pointer;color:#1668a8;font-size:13px;display:flex;align-items:center;gap:4px">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><polyline points="15 18 9 12 15 6"/></svg>
+        <div class="m22-detail">
+        <div class="m22-topbar">
+          <span class="m22-back" @click="m22Detail=null">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
             返回报告列表
           </span>
-          <span style="color:#c4cdd6;font-size:13px">/</span>
-          <span style="font-size:13px;font-weight:600;color:#1a2b3c">{{ m22Detail.title }}</span>
-          <div style="margin-left:auto;display:flex;gap:8px">
-            <button class="btn btn-primary" @click="$emit('toast','正在导出报告…')">
+          <span class="m22-sep">/</span>
+          <span class="m22-title">{{ m22Detail.title }}</span>
+          <div class="m22-actions">
+            <button class="btn btn-primary" @click="m22ExportWord(m22Detail)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               导出
             </button>
@@ -30,31 +31,32 @@
         </div>
 
         <!-- 状态横幅 -->
-        <div style="background:#fff8e6;border-left:4px solid #d0ab68;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#d0ab68" stroke-width="2" style="width:18px;height:18px;flex-shrink:0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <div class="m22-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#d0ab68" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           <div>
-            <span style="font-weight:600;color:#7a5a10;margin-right:12px">已归档 · 待试验后引用</span>
-            <span style="font-size:13px;color:#9a7a30">本报告已归档，等待后续验证试验结果引用。</span>
+            <span class="m22-banner-lab">已归档 · 待试验后引用</span>
+            <span class="m22-banner-txt">本报告已归档，等待后续验证试验结果引用。</span>
           </div>
         </div>
 
-        <!-- 双栏：左导航 + 右正文 -->
-        <div style="display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start">
+        <!-- 双栏：左导航 + 右正文（满屏高度，各自可滚） -->
+        <div class="m22-split">
 
           <!-- 章节导航 -->
-          <div class="panel" style="position:sticky;top:12px">
-            <div style="font-size:12px;color:#8a99a8;margin-bottom:10px;font-weight:500;text-transform:uppercase">章节导航</div>
+          <div class="panel m22-pane m22-nav">
+            <div class="m22-nav-lab">章节导航</div>
             <div v-for="sec in m22Sections" :key="sec.no"
+              class="m22-nav-item"
+              :class="{ on: activeSection===sec.no }"
               @click="activeSection=sec.no"
-              :style="activeSection===sec.no?'color:#1668a8;background:#edf5fc;border-radius:6px':'color:#5a6978'"
-              style="padding:7px 10px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;margin-bottom:2px">
-              <span :style="activeSection===sec.no?'background:#1668a8;color:#fff':'background:#e4ecf4;color:#8a99a8'" style="width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">{{ sec.no }}</span>
+            >
+              <span class="m22-nav-no">{{ sec.no }}</span>
               {{ sec.title }}
             </div>
           </div>
 
           <!-- 正文 -->
-          <div class="panel" style="line-height:1.8">
+          <div class="panel m22-pane m22-body">
 
             <!-- 第1节 -->
             <div v-show="activeSection===1">
@@ -250,6 +252,7 @@
 
           </div>
         </div>
+        </div>
       </template>
 
       <!-- 报告列表页 -->
@@ -304,7 +307,7 @@
                   <td style="text-align:center">
                     <div class="ops" style="justify-content:center">
                       <button @click="m22Detail=r;activeSection=1">预览</button>
-                      <button @click="$emit('toast','正在导出…')">导出</button>
+                      <button @click="m22ExportWord(r)">导出</button>
                     </div>
                   </td>
                 </tr>
@@ -331,3 +334,106 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.m22-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* 顶栏 + 面包屑 + 页边距约 148；本页顶栏+横幅由 flex 占位，双栏吃满剩余视口 */
+  min-height: calc(100vh - 148px);
+}
+.m22-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.m22-back {
+  cursor: pointer;
+  color: #1668a8;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.m22-back svg { width: 15px; height: 15px; }
+.m22-back:hover { color: #0d4e83; }
+.m22-sep { color: #c4cdd6; font-size: 13px; }
+.m22-title { font-size: 13px; font-weight: 600; color: #1a2b3c; }
+.m22-actions { margin-left: auto; display: flex; gap: 8px; }
+
+.m22-banner {
+  flex: 0 0 auto;
+  background: #fff8e6;
+  border-left: 4px solid #d0ab68;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.m22-banner svg { width: 18px; height: 18px; flex-shrink: 0; }
+.m22-banner-lab { font-weight: 600; color: #7a5a10; margin-right: 12px; }
+.m22-banner-txt { font-size: 13px; color: #9a7a30; }
+
+.m22-split {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  /* 满屏剩余高度：视口 − 顶栏/面包屑 − 本页顶栏与横幅 */
+  height: calc(100vh - 260px);
+  max-height: calc(100vh - 260px);
+}
+.m22-pane {
+  min-height: 0;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+.m22-nav { padding: 14px 12px; }
+.m22-nav-lab {
+  font-size: 12px;
+  color: #8a99a8;
+  margin-bottom: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+.m22-nav-item {
+  padding: 7px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  color: #5a6978;
+  border-radius: 6px;
+}
+.m22-nav-item.on {
+  color: #1668a8;
+  background: #edf5fc;
+}
+.m22-nav-no {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  background: #e4ecf4;
+  color: #8a99a8;
+  flex: 0 0 auto;
+}
+.m22-nav-item.on .m22-nav-no {
+  background: #1668a8;
+  color: #fff;
+}
+.m22-body { line-height: 1.8; }
+</style>
