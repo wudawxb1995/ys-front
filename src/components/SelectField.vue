@@ -1,11 +1,13 @@
 <template>
   <el-select
+    ref="selectRef"
     class="sf-select"
     :model-value="modelValue === '' || modelValue === undefined || modelValue === null ? undefined : modelValue"
     :placeholder="placeholder"
     :clearable="clearable"
     style="width: 100%"
     @update:model-value="onUpdate"
+    @visible-change="onVisibleChange"
   >
     <el-option
       v-for="op in normalizedOptions"
@@ -19,8 +21,9 @@
 <script setup>
 /**
  * 平台下拉：Element Plus el-select 封装，保持原 SelectField API，视觉由 element-theme.css 对齐。
+ * 选中后主动 blur，避免残留蓝色聚焦框。
  */
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 
 const props = defineProps({
   modelValue: { default: '' },
@@ -29,6 +32,7 @@ const props = defineProps({
   clearable: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue'])
+const selectRef = ref(null)
 
 const normalizedOptions = computed(() =>
   props.options.map((op) =>
@@ -36,8 +40,22 @@ const normalizedOptions = computed(() =>
   ),
 )
 
+function blurSelf() {
+  nextTick(() => {
+    selectRef.value?.blur?.()
+    const el = document.activeElement
+    if (el && typeof el.blur === 'function') el.blur()
+    try { window.getSelection()?.removeAllRanges() } catch (_) { /* ignore */ }
+  })
+}
+
 function onUpdate(val) {
   emit('update:modelValue', val ?? '')
+  blurSelf()
+}
+
+function onVisibleChange(open) {
+  if (!open) blurSelf()
 }
 </script>
 

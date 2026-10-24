@@ -13,10 +13,25 @@
 import { reactive, watch } from 'vue'
 
 // ── 默认初始值（与各部分 mock 数据保持一致）─────────────────────────────
+const M03_LIST_SEED = [
+  { id: 'v1', version: '指标树 V1.0', srcDoc: 'D-01《某型研制总要求》', count: 28, status: '已发布', publishedAt: '2026-10-08 09:24' },
+  { id: 'v2', version: '指标树 V0.9', srcDoc: 'D-01《某型研制总要求》', count: 24, status: '草稿', publishedAt: null },
+]
+
+const M08_LIST_SEED = [
+  { id: 'm1', name: '某型装备性能鉴定试验大纲 V4', ver: 'V4', treeVer: '指标树 V1.0', status: '已定稿', updatedAt: '2026-10-08 10:42' },
+  { id: 'm2', name: '某型装备性能鉴定试验大纲 V3', ver: 'V3', treeVer: '指标树 V0.9', status: '已归档', updatedAt: '2026-10-06 15:20' },
+  { id: 'm3', name: '某型装备性能鉴定试验大纲 V1', ver: 'V1', treeVer: '指标树 V0.9', status: '草稿', updatedAt: '2026-10-04 09:11' },
+]
+
 const DEFAULTS = {
   // Part1
   metricTreeVersion: 'V1.0',
   metricTreeCount: 28,
+  /** 数据模型管理 · 指标树列表（sessionStorage，tab 关闭才清空） */
+  m03List: M03_LIST_SEED.map((r) => ({ ...r })),
+  /** 试验方案智能生成 · 方案列表 */
+  m08List: M08_LIST_SEED.map((r) => ({ ...r })),
 
   // Part2 — 探针平台
   activeProbeCount: 12,  // 12个探针全部启用
@@ -95,6 +110,38 @@ export function updateMetricTree(version, count) {
   store.metricTreeCount = count
 }
 
+/** 读取指标树列表快照（供 Rich 重建时 hydration） */
+export function getPersistedM03List() {
+  if (Array.isArray(store.m03List) && store.m03List.length) {
+    return store.m03List.map((r) => ({
+      ...r,
+      domains: Array.isArray(r.domains) ? [...r.domains] : r.domains,
+    }))
+  }
+  return M03_LIST_SEED.map((r) => ({ ...r }))
+}
+
+/** 写回指标树列表并自动进 sessionStorage */
+export function persistM03List(list) {
+  store.m03List = (list || []).map((r) => ({
+    ...r,
+    domains: Array.isArray(r.domains) ? [...r.domains] : r.domains,
+  }))
+}
+
+/** 读取试验方案列表快照 */
+export function getPersistedM08List() {
+  if (Array.isArray(store.m08List) && store.m08List.length) {
+    return store.m08List.map((r) => ({ ...r }))
+  }
+  return M08_LIST_SEED.map((r) => ({ ...r }))
+}
+
+/** 写回试验方案列表 */
+export function persistM08List(list) {
+  store.m08List = (list || []).map((r) => ({ ...r }))
+}
+
 /**
  * Part2 m14：探针启用状态变更
  */
@@ -159,7 +206,12 @@ export function markDeviationViewed(id) {
  * 重置所有状态为默认值（演示重置按钮用）
  */
 export function resetDemoStore() {
-  Object.assign(store, { ...DEFAULTS, deviationViewedIds: [] })
+  Object.assign(store, {
+    ...DEFAULTS,
+    m03List: M03_LIST_SEED.map((r) => ({ ...r })),
+    m08List: M08_LIST_SEED.map((r) => ({ ...r })),
+    deviationViewedIds: [],
+  })
   sessionStorage.removeItem(STORAGE_KEY)
 }
 

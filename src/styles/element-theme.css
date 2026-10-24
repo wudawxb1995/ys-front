@@ -18,6 +18,11 @@
 
   --el-border-color: #d5e0ea;
   --el-border-color-hover: #b8cfe4;
+  /* 工程统一：下拉类组件聚焦不走主色蓝框 */
+  --el-border-color-focus: #d5e0ea;
+  --el-input-focus-border-color: #b8cfe4;
+  --el-select-input-focus-border-color: #d5e0ea;
+  --el-cascader-menu-selected-text-color: #0d4e83;
   --el-border-radius-base: 6px;
   --el-font-size-base: 14px;
   --el-text-color-regular: #3f5062;
@@ -38,14 +43,87 @@
   box-shadow: 0 0 0 1px #d5e0ea inset !important;
   background: #fff !important;
 }
-.el-input__wrapper:hover,
-.el-select__wrapper:hover {
+.el-input__wrapper:hover {
   box-shadow: 0 0 0 1px #b8cfe4 inset !important;
 }
-.el-input__wrapper.is-focus,
-.el-select__wrapper.is-focused,
-.el-select__wrapper.is-hovering:not(.is-focused) {
-  box-shadow: 0 0 0 1px #7eadd4 inset !important;
+.el-input__wrapper.is-focus {
+  box-shadow: 0 0 0 1px #b8cfe4 inset !important;
+}
+/*
+ * ═══ 全工程下拉框：禁止蓝色聚焦边框 ═══
+ * 覆盖 el-select / select-v2 / cascader / tree-select，以及 filterable 内层输入
+ */
+.el-select,
+.el-select-v2,
+.el-cascader,
+.el-tree-select,
+.el-select:focus,
+.el-select:focus-within,
+.el-select-v2:focus,
+.el-select-v2:focus-within,
+.el-cascader:focus,
+.el-cascader:focus-within,
+.el-tree-select:focus,
+.el-tree-select:focus-within {
+  outline: none !important;
+  --el-select-input-focus-border-color: #d5e0ea;
+  --el-input-focus-border-color: #d5e0ea;
+  --el-border-color-hover: #b8cfe4;
+}
+
+.el-select .el-select__wrapper,
+.el-select .el-select__wrapper.is-focused,
+.el-select .el-select__wrapper.is-hovering,
+.el-select .el-select__wrapper:hover,
+.el-select .el-select__wrapper.is-filterable,
+.el-select.is-focused .el-select__wrapper,
+.el-select .el-tooltip__trigger .el-select__wrapper,
+.el-select-v2 .el-select-v2__wrapper,
+.el-select-v2 .el-select-v2__wrapper.is-focused,
+.el-select-v2 .el-select-v2__wrapper.is-hovering,
+.el-select-v2 .el-select-v2__wrapper:hover,
+.el-cascader .el-input__wrapper,
+.el-cascader .el-input__wrapper.is-focus,
+.el-cascader .el-input.is-focus .el-input__wrapper,
+.el-tree-select .el-select__wrapper,
+.el-tree-select .el-select__wrapper.is-focused,
+.el-tree-select .el-select__wrapper.is-hovering,
+.el-tree-select .el-select__wrapper:hover {
+  box-shadow: 0 0 0 1px #d5e0ea inset !important;
+  outline: none !important;
+  border: none !important;
+}
+
+.el-select .el-select__wrapper.is-hovering:not(.is-focused),
+.el-select-v2 .el-select-v2__wrapper.is-hovering:not(.is-focused),
+.el-tree-select .el-select__wrapper.is-hovering:not(.is-focused),
+.el-cascader .el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px #b8cfe4 inset !important;
+}
+
+.el-select .el-input.is-focus .el-input__wrapper,
+.el-select .el-input__wrapper.is-focus,
+.el-select .el-input__wrapper {
+  box-shadow: 0 0 0 1px #d5e0ea inset !important;
+  outline: none !important;
+}
+
+/* filterable 内层输入：取消蓝边与选中蓝底 */
+.el-select__input,
+.el-select__input:focus,
+.el-select .el-select__input,
+.el-select-v2__input,
+.el-select-v2__input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  caret-color: #3f5062;
+}
+.el-select__input::selection,
+.el-select .el-select__selected-item::selection,
+.el-select-v2__input::selection {
+  background: transparent !important;
+  color: inherit !important;
 }
 .el-input__inner,
 .el-select__selected-item {
@@ -152,8 +230,22 @@
 .el-message-box__title {
   color: #0d4e83;
 }
+/* 弹窗默认垂直水平居中（含未写 align-center 的页面） */
+.el-overlay-dialog {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
 .el-overlay-dialog .el-dialog {
   border-radius: 10px;
+  margin: 0 auto !important;
+  --el-dialog-margin-top: 0px;
+}
+.el-dialog {
+  --el-dialog-margin-top: 15vh;
+}
+.el-dialog.is-align-center {
+  margin-top: 0 !important;
 }
 .el-drawer {
   --el-drawer-padding-primary: 18px 20px;

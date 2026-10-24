@@ -697,8 +697,12 @@ pre.code .str { color: #e3bd6a; }
 .check-list { display: flex; flex-direction: column; gap: 8px; }
 .check-list label { display: flex; gap: 8px; align-items: center; font-size: 14px; color: var(--text-2); font-weight: 400; }
 
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
   outline: 2px solid #7eb6e0; outline-offset: 2px;
+}
+/* select 不走蓝色 focus-visible 描边 */
+select:focus-visible {
+  outline: none;
 }
 ::placeholder { color: #a8b8c6; }
 input[type="checkbox"], input[type="radio"] { accent-color: #0d4e83; }
@@ -911,8 +915,19 @@ input[type="checkbox"], input[type="radio"] { accent-color: #0d4e83; }
   cursor: pointer;
   transition: border-color .2s;
 }
-.filter-select:focus {
-  border-color: #1668a8;
+.filter-select:focus,
+.filter-select:focus-visible {
+  border-color: #d5e0ea;
+  outline: none;
+  box-shadow: none;
+}
+
+/* 原生 select：全工程聚焦不出现蓝框 */
+select:focus,
+select:focus-visible {
+  border-color: #d5e0ea !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* ════════════════════════════════════════════════════════════════════

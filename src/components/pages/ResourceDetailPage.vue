@@ -26,9 +26,24 @@
           </div>
         </div>
         <div class="fi-actions">
+          <el-button v-if="detail.fileUrl" @click="openOriginal">打开原文</el-button>
           <el-button @click="goParseTask">查看解析日志</el-button>
           <el-button type="primary" @click="goExtract">发起指标抽取</el-button>
         </div>
+      </div>
+    </div>
+
+    <div v-if="detail.fileUrl && /PDF/i.test(detail.fmt || '')" class="dash-frame preview-frame">
+      <h3>
+        <i></i>原文预览
+        <span class="chapter-count">可滚动查看全文</span>
+      </h3>
+      <div class="pdf-shell">
+        <iframe
+          class="pdf-frame"
+          :src="detail.fileUrl"
+          :title="detail.name"
+        />
       </div>
     </div>
 
@@ -137,6 +152,14 @@ const router = useRouter()
 
 // ── 路由跳转函数 ──────────────────────────────────────────────────────
 
+function openOriginal() {
+  if (!props.detail.fileUrl) {
+    toast('暂无原文文件', 'warning')
+    return
+  }
+  window.open(props.detail.fileUrl, '_blank')
+}
+
 // 查看解析日志 → 解析任务管理（parse-task），同系统
 function goParseTask() {
   router.push({ name: 'app', params: { pid: route.params.pid, sid: route.params.sid, mid: 'parse-task' } })
@@ -147,14 +170,22 @@ function goExtract() {
   router.push({ name: 'app', params: { pid: route.params.pid, sid: 'extract', mid: 'ind-data' } })
 }
 
-// 语义检索 → 向量化任务（vec-task，已向量化的资源才可检索）
+// 语义检索 → 向量化任务（vec-task），按当前资源名称筛选
 function goVecSearch() {
-  router.push({ name: 'app', params: { pid: route.params.pid, sid: route.params.sid, mid: 'vec-task' } })
+  router.push({
+    name: 'app',
+    params: { pid: route.params.pid, sid: route.params.sid, mid: 'vec-task' },
+    query: { name: props.detail.name },
+  })
 }
 
-// 查看向量化 → 向量成果管理（vec-chunks，查看分块文本与向量预览）
+// 查看向量化 → 向量成果管理（vec-chunks），按所属资源带入筛选
 function goVecTask() {
-  router.push({ name: 'app', params: { pid: route.params.pid, sid: route.params.sid, mid: 'vec-chunks' } })
+  router.push({
+    name: 'app',
+    params: { pid: route.params.pid, sid: route.params.sid, mid: 'vec-chunks' },
+    query: { res: props.detail.name },
+  })
 }
 
 // 章节展开状态，默认全部展开
@@ -286,6 +317,21 @@ const maxEntCount = computed(() => Math.max(...entitySummary.map((e) => e.count)
 .fi-attrs .dot { margin: 0 5px; }
 .fi-actions { display: flex; gap: 8px; flex: 0 0 auto; }
 
+.preview-frame { display: flex; flex-direction: column; min-height: 0; }
+.pdf-shell {
+  border: 1px solid #e0eaf3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f4f7fa;
+  height: min(62vh, 640px);
+}
+.pdf-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
 .detail-body {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -299,7 +345,16 @@ const maxEntCount = computed(() => Math.max(...entitySummary.map((e) => e.count)
   grid-row: 2 / 4;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  /* 固定高度：展开/收起章节时框高不变，过长在树内滚动 */
+  height: 460px;
+  min-height: 460px;
+  max-height: 460px;
+  overflow: hidden;
+  align-self: start;
+}
+.chapter-frame > h3 {
+  flex: 0 0 auto;
+  margin-bottom: 12px;
 }
 .index-frame { grid-column: 2; grid-row: 2; }
 .entity-frame {
@@ -317,7 +372,13 @@ const maxEntCount = computed(() => Math.max(...entitySummary.map((e) => e.count)
   padding: 2px 8px;
   border-radius: 9px;
 }
-.chapter-tree { padding: 2px 0 4px; flex: 1; }
+.chapter-tree {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 2px 4px 4px 0;
+}
 .chap-item {
   display: flex; align-items: center; gap: 7px;
   padding: 8px 8px; cursor: pointer; font-size: 13.5px; color: #3e5163;

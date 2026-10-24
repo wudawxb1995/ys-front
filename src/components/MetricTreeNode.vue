@@ -29,10 +29,14 @@
       <!-- 性能域：指标数徽标 -->
       <span v-if="node.level === 1 && node.badge" class="m03-badge-count">{{ node.badge }}</span>
 
-      <!-- 指标项：来源文档关联标识 -->
-      <span v-if="node.level === 3" class="m03-src-tag" title="来源文档：D-01·第12页">
+      <!-- 指标项：来源文档关联标识（页码与抽取结果联动） -->
+      <span
+        v-if="node.level === 3"
+        class="m03-src-tag"
+        :title="`来源：第 ${node.srcPage || 12} 页${node.srcSection ? ' · ' + node.srcSection : ''}`"
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:11px;height:11px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        D-01
+        p.{{ node.srcPage || 12 }}
       </span>
     </div>
 

@@ -41,8 +41,8 @@
 
       <!-- 算法描述条 -->
       <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px;font-size:13px;color:#5c7084">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;color:#1668a8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        算法：<b style="color:#0d4e83">{{ m11CurrentTab?.algo }}</b>&nbsp;·&nbsp;{{ m11CurrentTab?.desc }}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:14px;height:14px;color:#1668a8;flex:0 0 auto"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="1" fill="currentColor" stroke="none"/></svg>
+        算法：<b style="color:#0d4e83">{{ m11CurrentTab?.algo }}</b>&nbsp;{{ m11CurrentTab?.desc }}
       </div>
 
       <!-- 匹配结果列表 -->

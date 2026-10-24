@@ -1,11 +1,12 @@
 /**
- * M02 关键指标抽取结果（D-01 · 28 项）
+ * M02 关键指标抽取结果（D-01 / 某型装备研制总要求 · 28 项）
  * srcPage / srcText / highlight：点击行后原文溯源高亮用
+ * 列表「抽取指标数」必须与 getM02RowsForDoc(name).length 一致，禁止写死兜底数。
  */
 export const m02Domains = ['机动', '火力', '防护', '可靠性', '环境适应性', '电磁兼容', '信息能力']
 
+/** 非研制总要求类文档的抽取条数（详情用切片/占位行，数量与列表联动） */
 export const m02CountMap = {
-  '某型研制总要求（D-01）': 28,
   '雷沃谷神4LZ-8谷物联合收割机鉴定大纲': 15,
   'NY/T 2090-2025 农业机械试验鉴定通则': 21,
   '五征4YZP-4自走式玉米收获机可靠性试验报告': 18,
@@ -13,6 +14,10 @@ export const m02CountMap = {
   '农业机械智能化技术发展综述（2025）': 7,
   'DG/T 001-2025 农业轮式拖拉机鉴定技术规范': 12,
   '植保无人飞机作业性能测试数据集': 6,
+}
+
+export function isM02MasterDoc(name = '') {
+  return /某型装备研制总要求|某型研制总要求/.test(String(name))
 }
 
 function row( partial) {
@@ -54,3 +59,28 @@ export const m02IndRows = [
   row({ id: 'i27', name: '数据链吞吐量', value: '≥ 2', unit: 'Mbps', criteria: '≥ 1 Mbps（研制总要求 9.2.1）', domain: '信息能力', conf: 0.88, srcPage: 39, highlight: '数据链吞吐量不低于 2 Mbps', srcText: '9.2.1 数据链\n数据链吞吐量不低于 2 Mbps。' }),
   row({ id: 'i28', name: '目标识别距离', value: '≥ 3000', unit: 'm', criteria: '≥ 2500 m（研制总要求 9.2.2）', domain: '信息能力', conf: 0.86, srcPage: 39, highlight: '目标识别距离不低于 3000 m', srcText: '9.2.2 目标识别\n昼间目标识别距离不低于 3000 m。' }),
 ]
+
+/** 按来源文档取抽取结果行；列表 count 与详情共用此函数，保证联动 */
+export function getM02RowsForDoc(docName = '') {
+  const name = String(docName || '')
+  if (isM02MasterDoc(name)) {
+    return m02IndRows.map((r) => ({
+      ...r,
+      srcDoc: name.includes('.pdf') ? name : r.srcDoc,
+    }))
+  }
+  const mapped = m02CountMap[name]
+  if (mapped != null) {
+    const n = Math.min(mapped, m02IndRows.length)
+    return m02IndRows.slice(0, n).map((r, i) => ({
+      ...r,
+      id: `${name}-i${i + 1}`,
+      srcDoc: name,
+    }))
+  }
+  return []
+}
+
+export function getM02CountForDoc(docName = '') {
+  return getM02RowsForDoc(docName).length
+}

@@ -27,16 +27,34 @@
               >{{ tab.label }}</button>
             </div>
             <div class="drop-body">
-              <div class="cloud">
-                <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
-                  <path d="M46 42H20c-6 0-10-4.4-10-10.2C10 26 15 21 21.4 21c1.4-6.6 7-11.4 13.8-11.4 7.6 0 13.8 5.8 14.6 13.2C56 24.2 60 28.6 60 34c0 4.4-3.6 8-8 8h-6" stroke="#3d9adf" stroke-width="2.4" stroke-linecap="round"/>
-                  <path d="M32 28v18" stroke="#3d9adf" stroke-width="2.6" stroke-linecap="round"/>
-                  <path d="M24.5 35.5 32 28l7.5 7.5" stroke="#3d9adf" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+              <template v-if="!pendingFiles.length">
+                <div class="cloud">
+                  <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                    <path d="M46 42H20c-6 0-10-4.4-10-10.2C10 26 15 21 21.4 21c1.4-6.6 7-11.4 13.8-11.4 7.6 0 13.8 5.8 14.6 13.2C56 24.2 60 28.6 60 34c0 4.4-3.6 8-8 8h-6" stroke="#3d9adf" stroke-width="2.4" stroke-linecap="round"/>
+                    <path d="M32 28v18" stroke="#3d9adf" stroke-width="2.6" stroke-linecap="round"/>
+                    <path d="M24.5 35.5 32 28l7.5 7.5" stroke="#3d9adf" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="drop-title">拖拽文件至此处，或点击选择文件</div>
+                <div class="drop-sub">支持 Word、PDF、Excel、图片及扫描件</div>
+                <el-button type="primary" class="pick-btn" :disabled="uploading" @click.stop="openPicker">选择文件</el-button>
+              </template>
+              <div v-else class="pending-box" @click.stop>
+                <div class="pending-title">已选择 {{ pendingFiles.length }} 个文件</div>
+                <div class="pending-hint">请完善右侧资源信息后点击「确认录入」</div>
+                <div class="pending-list">
+                  <div v-for="(pf, i) in pendingFiles" :key="pf.uid" class="pending-chip">
+                    <span class="file-ico" :class="iconKind(pf.fmt)">{{ iconText(pf.fmt) }}</span>
+                    <span class="pending-name" :title="pf.name">{{ pf.name }}</span>
+                    <span class="pending-size">{{ pf.size }}</span>
+                    <button type="button" class="pending-rm" title="移除" @click="removePending(i)">×</button>
+                  </div>
+                </div>
+                <div class="pending-actions">
+                  <el-button @click="openPicker">继续添加</el-button>
+                  <el-button @click="clearPending">清空</el-button>
+                </div>
               </div>
-              <div class="drop-title">拖拽文件至此处，或点击选择文件</div>
-              <div class="drop-sub">支持 Word、PDF、Excel、图片及扫描件</div>
-              <el-button type="primary" class="pick-btn" :disabled="uploading" @click.stop="openPicker">选择文件</el-button>
             </div>
             <div v-if="uploading" class="upload-mask" @click.stop>
               <div class="spin" aria-hidden="true"></div>
@@ -121,7 +139,7 @@
             </thead>
             <tbody>
               <tr v-if="!tasks.length">
-                <td colspan="6" class="empty">暂无录入任务，请先选择文件或填写资源信息</td>
+                <td colspan="6" class="empty">暂无录入任务，请选择文件并完善资源信息后点击「确认录入」</td>
               </tr>
               <tr v-for="row in tasks" :key="row.id">
                 <td>
@@ -218,6 +236,14 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRichPage } from '@/composables/rich/useRichPage'
 import { useUi } from '@/composables/ui'
 import { useRows } from '@/composables/tables'
+import {
+  guessFileUrl,
+  registerResourceDetail,
+} from '@/composables/resourceRegistry'
+import {
+  buildEquipmentReqDetail,
+  isEquipmentReqDoc,
+} from '@/data/equipmentReqDetail'
 import { nowText } from '@/utils/format'
 import SelectField from '@/components/SelectField.vue'
 import DateField from '@/components/DateField.vue'
@@ -258,11 +284,15 @@ export default {
     const uploadPct = ref(0)
     const uploadHint = ref('')
     const activeType = ref('定型资料')
-    let seq = 4
+    let seq = 2
+    let pendingUid = 0
     const ALLOW_EXT = /\.(doc|docx|pdf|xls|xlsx|csv|jpg|jpeg|png|tif|tiff|bmp)$/i
     const MAX_BYTES = 500 * 1024 * 1024
 
     const isResourceEntry = computed(() => !props.page?.entryKey && props.page?.dataset === 'resources')
+
+    /** 已选文件暂存区：确认录入前不进入「录入任务」表 */
+    const pendingFiles = ref([])
 
     const meta = reactive({
       name: '某型定型技术资料',
@@ -276,9 +306,7 @@ export default {
 
     const tasks = ref([
       { id: 1, name: '定型技术资料.docx', cat: '定型资料', catLabel: '定型资料', size: '2.36 MB', version: 'V1.0', status: '已完成', fmt: 'DOCX', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
-      { id: 2, name: '历史试验数据.xlsx', cat: '历史试验数据', catLabel: '历史试验数据', size: '5.12 MB', version: 'V1.0', status: '处理中', fmt: 'XLSX', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
-      { id: 3, name: '试验标准规范.pdf', cat: '标准规范', catLabel: '标准规范', size: '8.23 MB', version: 'V2.0', status: '待提交', fmt: 'PDF', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
-      { id: 4, name: '技术研究文献.pdf', cat: '专业文献', catLabel: '专业文献', size: '3.85 MB', version: 'V1.0', status: '已完成', fmt: 'PDF', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
+      { id: 2, name: '技术研究文献.pdf', cat: '专业文献', catLabel: '专业文献', size: '3.85 MB', version: 'V1.0', status: '已完成', fmt: 'PDF', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
     ])
 
     const projects = ['定型试验项目', '性能鉴定试验项目', '可靠性试验项目']
@@ -288,12 +316,12 @@ export default {
       const all = tasks.value.length
       const done = tasks.value.filter((t) => t.status === '已完成').length
       const run = tasks.value.filter((t) => t.status === '处理中').length
-      const wait = tasks.value.filter((t) => t.status === '待提交').length
+      const wait = pendingFiles.value.length
       return [
         { key: 'all', label: '本次文件', value: all },
         { key: 'done', label: '已完成', value: done },
         { key: 'run', label: '处理中', value: run },
-        { key: 'wait', label: '待提交', value: wait },
+        { key: 'wait', label: '待确认', value: wait },
       ]
     })
 
@@ -380,27 +408,22 @@ export default {
         await readSlice(ok[0])
         uploadPct.value = 100
         ok.forEach((file) => {
-          seq += 1
+          pendingUid += 1
           const fmt = extOf(file.name)
-          tasks.value.unshift({
-            id: seq,
+          pendingFiles.value.push({
+            uid: pendingUid,
             name: file.name,
-            cat: meta.cat || activeType.value,
-            catLabel: catLabelOf(meta.cat || activeType.value),
-            size: formatSize(file.size),
-            version: meta.version || 'V1.0',
-            status: '待提交',
+            size: isEquipmentReqDoc(file.name) ? '0.35 MB' : formatSize(file.size),
             fmt,
-            org: meta.org,
-            project: meta.project,
-            date: meta.date,
-            remark: meta.remark,
+            fileUrl: guessFileUrl(file.name, file),
+            pages: isEquipmentReqDoc(file.name) ? '48' : '—',
+            file,
           })
         })
         if (!meta.name || meta.name === '某型定型技术资料') {
           meta.name = ok[0].name.replace(/\.[^.]+$/, '')
         }
-        toast(`已加入 ${ok.length} 个文件，待确认录入`, 'success')
+        toast(`已选择 ${ok.length} 个文件，请完善资源信息后确认录入`, 'success')
       } catch {
         toast('文件上传失败，请重试', 'error')
       } finally {
@@ -408,6 +431,42 @@ export default {
         uploadPct.value = 0
         uploadHint.value = ''
       }
+    }
+
+    function removePending(index) {
+      pendingFiles.value.splice(index, 1)
+    }
+    function clearPending() {
+      pendingFiles.value = []
+      toast('已清空所选文件', 'success')
+    }
+
+    function buildTasksFromPending() {
+      return pendingFiles.value.map((pf) => {
+        seq += 1
+        const displayName = pendingFiles.value.length === 1 && meta.name?.trim()
+          ? (/\.[a-zA-Z0-9]+$/.test(meta.name.trim())
+            ? meta.name.trim()
+            : `${meta.name.trim()}.${String(pf.fmt || 'pdf').toLowerCase()}`)
+          : pf.name
+        return {
+          id: seq,
+          name: displayName,
+          cat: meta.cat || activeType.value,
+          catLabel: catLabelOf(meta.cat || activeType.value),
+          size: pf.size,
+          version: meta.version || 'V1.0',
+          status: '处理中',
+          fmt: pf.fmt,
+          org: meta.org,
+          project: meta.project,
+          date: meta.date,
+          remark: meta.remark,
+          fileUrl: pf.fileUrl || guessFileUrl(displayName, pf.file),
+          pages: pf.pages || (isEquipmentReqDoc(displayName) ? '48' : '—'),
+          file: pf.file,
+        }
+      })
     }
 
     function onPick(e) {
@@ -431,71 +490,160 @@ export default {
       return true
     }
 
-    function taskFromForm() {
-      seq += 1
-      return {
-        id: seq,
-        name: /\.[a-zA-Z0-9]+$/.test(meta.name) ? meta.name : `${meta.name}.pdf`,
-        cat: meta.cat,
-        catLabel: catLabelOf(meta.cat),
-        size: '—',
-        version: meta.version || 'V1.0',
-        status: '待提交',
-        fmt: extOf(/\.[a-zA-Z0-9]+$/.test(meta.name) ? meta.name : 'file.pdf'),
-        org: meta.org,
-        project: meta.project,
-        date: meta.date,
-        remark: meta.remark,
-      }
-    }
-
     function pushResource(row, status) {
-      if (props.page?.dataset !== 'resources') return
+      if (props.page?.dataset !== 'resources') return null
       const rows = useRows('resources')
       const modal = /XLS|CSV/.test(row.fmt) ? '表格' : /PNG|JPE?G|TIF|BMP/.test(row.fmt) ? '图像' : '文本'
-      rows.unshift({
+      const time = nowText()
+      const record = {
         name: row.name,
         cat: row.cat,
         fmt: row.fmt,
         modal,
         size: row.size,
-        pages: '—',
+        pages: row.pages || '—',
         status,
         by: 'Mona',
-        time: nowText(),
-      })
+        time,
+        fileUrl: row.fileUrl || '',
+        version: row.version,
+        project: row.project,
+        org: row.org,
+        date: row.date,
+        remark: row.remark,
+      }
+      const existIdx = rows.findIndex((r) => r.name === record.name)
+      if (existIdx >= 0) {
+        Object.assign(rows[existIdx], record)
+        return rows[existIdx]
+      }
+      rows.unshift(record)
+      return record
+    }
+
+    function seedVectorResults(resourceName, time) {
+      const chunks = useRows('vecChunks')
+      const tasks = useRows('vecTasks')
+      if (!chunks.some((c) => c.res === resourceName)) {
+        const samples = isEquipmentReqDoc(resourceName)
+          ? [
+              { no: '#001', text: '本文件规定某型装备研制的总体目标、任务使命、系统组成与主要战术技术指标。', vec: '[0.18, -0.06, 0.41, 0.22]' },
+              { no: '#012', text: '系统 MTBF 不低于 300 h（置信度 80%），MTTR 不大于 1.5 h。', vec: '[0.27, 0.11, -0.09, 0.48]' },
+              { no: '#028', text: '定位精度（平面）≤ 5 cm（差分条件），本地闭环控制响应时延 ≤ 50 ms。', vec: '[0.09, 0.36, 0.14, -0.21]' },
+              { no: '#045', text: '试验与鉴定应覆盖性能、五性、环境、电磁兼容、软件与安全性等科目。', vec: '[-0.03, 0.29, 0.37, 0.08]' },
+            ]
+          : [
+              { no: '#001', text: `「${resourceName}」解析正文分块，用于语义检索与指标抽取。`, vec: '[0.11, 0.07, 0.29, -0.04]' },
+              { no: '#002', text: `「${resourceName}」关键条款与结构化字段向量化结果。`, vec: '[0.24, -0.13, 0.18, 0.36]' },
+            ]
+        samples.reverse().forEach((s) => {
+          chunks.unshift({
+            res: resourceName,
+            no: s.no,
+            text: s.text,
+            vec: s.vec,
+            dim: '1024',
+            time,
+          })
+        })
+      }
+      if (!tasks.some((t) => t.name === resourceName)) {
+        tasks.unshift({
+          name: resourceName,
+          progress: 100,
+          status: '已完成',
+          dim: '1024',
+          chunks: String(chunks.filter((c) => c.res === resourceName).length),
+          cost: '8.6s',
+          ok: '达标',
+          time,
+        })
+      }
+    }
+
+    function finishParse(row) {
+      const rows = useRows('resources')
+      const target = rows.find((r) => r.name === row.name)
+      if (!target) return
+      const time = nowText()
+      target.status = '已解析'
+      target.time = time
+      if (isEquipmentReqDoc(row.name)) {
+        target.pages = '48'
+        target.fileUrl = target.fileUrl || '/samples/某型装备研制总要求.pdf'
+        target.size = target.size === '—' ? '0.35 MB' : target.size
+        registerResourceDetail(target.name, buildEquipmentReqDetail({ ...target, time }))
+      } else {
+        if (/PDF/i.test(row.fmt) && (!target.pages || target.pages === '—')) {
+          target.pages = String(Math.max(12, Math.min(86, Math.round((parseFloat(String(row.size)) || 8) * 4))))
+        }
+        registerResourceDetail(target.name, {
+          name: target.name,
+          fmt: target.fmt,
+          size: target.size,
+          pages: target.pages === '—' ? '—' : Number(target.pages) || target.pages,
+          parsedAt: time,
+          tableCount: 6,
+          imageCount: /PNG|JPE?G|TIF|BMP/i.test(target.fmt) ? 12 : 4,
+          paraCount: 86,
+          indexStatus: '已建立',
+          indexName: `idx-${Date.now()}`,
+          indexAt: time,
+          fileUrl: target.fileUrl || '',
+          chapters: [
+            { id: 'c1', title: '1 概述', level: 1 },
+            {
+              id: 'c2',
+              title: '2 主体内容',
+              level: 1,
+              children: [
+                { id: 'c2-1', title: '2.1 正文', level: 2 },
+                { id: 'c2-2', title: '2.2 附表', level: 2 },
+              ],
+            },
+            { id: 'c3', title: '3 结论', level: 1 },
+          ],
+        })
+      }
+      seedVectorResults(target.name, time)
     }
 
     function stash() {
       if (!requiredOk()) return
-      const pending = tasks.value.filter((t) => t.status === '待提交')
-      if (!pending.length) tasks.value.unshift(taskFromForm())
-      toast('已暂存，可在录入任务中继续提交', 'success')
+      if (!pendingFiles.value.length) {
+        toast('请先选择文件后再暂存', 'warning')
+        return
+      }
+      toast('资源信息已暂存，确认录入后才会写入录入任务', 'success')
     }
 
     function confirmEntry() {
       if (!requiredOk()) return
-      let pending = tasks.value.filter((t) => t.status === '待提交')
-      if (!pending.length) {
-        const row = taskFromForm()
-        tasks.value.unshift(row)
-        pending = [row]
+      if (!pendingFiles.value.length) {
+        toast('请先选择文件，完善资源信息后再确认录入', 'warning')
+        return
       }
-      const ids = pending.map((t) => t.id)
-      pending.forEach((row) => {
-        row.status = '处理中'
-        row.version = row.version || meta.version
-        row.project = row.project || meta.project
-        row.org = row.org || meta.org
-        row.date = row.date || meta.date
+      const batch = buildTasksFromPending()
+      pendingFiles.value = []
+      const ids = batch.map((t) => t.id)
+      const names = batch.map((t) => t.name)
+      batch.forEach((row) => {
+        tasks.value.unshift(row)
         pushResource(row, '解析中')
       })
-      toast(`已确认录入 ${ids.length} 项，正在处理`, 'success')
+      toast(`已确认录入 ${ids.length} 项，正在解析`, 'success')
       setTimeout(() => {
         tasks.value.forEach((row) => {
-          if (ids.includes(row.id) && row.status === '处理中') row.status = '已完成'
+          if (ids.includes(row.id) && row.status === '处理中') {
+            row.status = '已完成'
+            finishParse(row)
+          }
         })
-        toast('录入处理完成', 'success')
+        names.forEach((name) => {
+          const task = tasks.value.find((t) => t.name === name)
+          if (task) finishParse(task)
+        })
+        toast('解析完成，已写入录入任务与数据资源管理', 'success')
       }, 1400)
     }
 
@@ -527,6 +675,9 @@ export default {
       meta,
       projects,
       catOptions,
+      pendingFiles,
+      removePending,
+      clearPending,
       tasks,
       stats,
       fileInput,
@@ -663,6 +814,64 @@ export default {
 .drop-title { font-size: 16px; color: #1668a8; font-weight: 700; }
 .drop-sub { margin-top: 6px; color: #8a99a8; font-size: 13px; }
 .pick-btn { margin-top: 18px; min-width: 120px; height: 38px; border-radius: 8px; }
+
+.pending-box {
+  width: 100%;
+  max-width: 420px;
+  padding: 8px 4px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.pending-title { font-size: 15px; font-weight: 700; color: #0d4e83; text-align: center; }
+.pending-hint { font-size: 12.5px; color: #8a99a8; text-align: center; margin-bottom: 4px; }
+.pending-list {
+  max-height: 140px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pending-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid #d5e0ea;
+  border-radius: 8px;
+}
+.pending-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: #3f5062;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pending-size { font-size: 12px; color: #8a99a8; flex: 0 0 auto; }
+.pending-rm {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: #f0f4f8;
+  color: #6d8092;
+  cursor: pointer;
+  line-height: 1;
+  font-size: 14px;
+  flex: 0 0 auto;
+}
+.pending-rm:hover { background: #fdeceb; color: #d4380d; }
+.pending-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.pending-actions :deep(.el-button + .el-button) { margin-left: 0; }
 
 .form-frame {
   border: 1.5px dashed #b7d4ee;

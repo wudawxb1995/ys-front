@@ -108,12 +108,14 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { datasetOf, useRows } from '@/composables/tables'
 import { useUi } from '@/composables/ui'
 import { badgeKind, nowText } from '@/utils/format'
 import SelectField from '@/components/SelectField.vue'
 
 const props = defineProps({ page: Object, title: String })
+const route = useRoute()
 const { toast, confirm, openForm, openDrawer } = useUi()
 const rows = useRows(props.page.dataset)
 const schema = datasetOf(props.page.dataset) || { columns: [], filters: [], rows: [] }
@@ -124,7 +126,39 @@ const checked = ref([])
 const pageNo = ref(1)
 const pageSize = 10
 
-watch(() => props.page.dataset, () => { pageNo.value = 1; checked.value = [] })
+/** 从路由 query 同步筛选（如资源详情「查看向量化」带入 res=资源名） */
+function applyRouteQuery(q = route.query) {
+  const filters = schema.filters || []
+  if (!filters.length) return
+  let hit = false
+  filters.forEach((f) => {
+    const raw = q?.[f.key]
+    const val = Array.isArray(raw) ? raw[0] : raw
+    if (val != null && String(val).trim() !== '') {
+      draft[f.key] = String(val)
+      query[f.key] = String(val)
+      hit = true
+    }
+  })
+  if (hit) {
+    pageNo.value = 1
+    checked.value = []
+  }
+}
+
+watch(() => props.page.dataset, () => {
+  pageNo.value = 1
+  checked.value = []
+  Object.keys(draft).forEach((k) => delete draft[k])
+  Object.keys(query).forEach((k) => delete query[k])
+  applyRouteQuery()
+})
+
+watch(
+  () => route.query,
+  (q) => applyRouteQuery(q),
+  { deep: true, immediate: true },
+)
 
 const filtered = computed(() => rows.filter((row) => {
   return (schema.filters || []).every((f) => {

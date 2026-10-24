@@ -1,3 +1,5 @@
+import { equipmentReqChapters, EQUIPMENT_REQ_SAMPLE_URL } from './equipmentReqDetail'
+
 const resources = [
   ['某型研制总要求（D-01）', '定型资料', 'PDF', '文本', '12.4 MB', '48', '已解析', '张明远', '2026-10-08 09:24'],
   ['雷沃谷神4LZ-8谷物联合收割机鉴定大纲', '定型资料', 'PDF', '文本', '18.2 MB', '86', '已解析', '李慧敏', '2026-10-09 10:11'],
@@ -14,7 +16,11 @@ const resources = [
 ]
 
 function resourceRow([name, cat, fmt, modal, size, pages, status, by, time]) {
-  return { name, cat, fmt, modal, size, pages, status, by, time }
+  const row = { name, cat, fmt, modal, size, pages, status, by, time }
+  if (/某型装备研制总要求|某型研制总要求/.test(name)) {
+    row.fileUrl = '/samples/某型装备研制总要求.pdf'
+  }
+  return row
 }
 
 export const datasets = {
@@ -150,10 +156,24 @@ export const datasets = {
       { key: 'time', label: '生成时间' },
     ],
     rows: [
-      { res: 'NY/T 2090-2025', no: '#005', text: '可靠性试验累计作业时间不少于规定值，MTBF 作为定型判定依据。', vec: '[0.12, -0.08, 0.44, 0.19]', dim: '1024', time: '2026-10-10 10:15' },
+      // 某型研制总要求（D-01）— 与资源详情「查看向量化」关联
+      { res: '某型研制总要求（D-01）', no: '#001', text: '本文件规定某型装备研制的总体目标、任务使命、系统组成与主要战术技术指标。', vec: '[0.18, -0.06, 0.41, 0.22]', dim: '1024', time: '2026-10-09 14:20' },
+      { res: '某型研制总要求（D-01）', no: '#012', text: '系统 MTBF 不低于 300 h（置信度 80%），MTTR 不大于 1.5 h。', vec: '[0.27, 0.11, -0.09, 0.48]', dim: '1024', time: '2026-10-09 14:20' },
+      { res: '某型研制总要求（D-01）', no: '#028', text: '定位精度（平面）≤ 5 cm（差分条件），本地闭环控制响应时延 ≤ 50 ms。', vec: '[0.09, 0.36, 0.14, -0.21]', dim: '1024', time: '2026-10-09 14:20' },
+      { res: '某型研制总要求（D-01）', no: '#045', text: '试验与鉴定应覆盖性能、五性、环境、电磁兼容、软件与安全性等科目。', vec: '[-0.03, 0.29, 0.37, 0.08]', dim: '1024', time: '2026-10-09 14:21' },
+      { res: '某型研制总要求（D-01）', no: '#067', text: '指标应建立“需求来源—分配—设计实现—验证证据”追溯链，便于跨文档审查。', vec: '[0.33, -0.12, 0.25, 0.16]', dim: '1024', time: '2026-10-09 14:21' },
+      { res: '某型研制总要求（D-01）', no: '#081', text: '附录给出指标验证方法对照，鉴定结论分为通过、有条件通过和不通过。', vec: '[0.14, 0.08, 0.52, -0.07]', dim: '1024', time: '2026-10-09 14:21' },
+      // 录入样例 PDF 同文别名，保证新导入资源也能命中
+      { res: '某型装备研制总要求.pdf', no: '#001', text: '本文件规定某型装备研制的总体目标、任务使命、系统组成与主要战术技术指标。', vec: '[0.18, -0.06, 0.41, 0.22]', dim: '1024', time: '2026-10-09 14:20' },
+      { res: '某型装备研制总要求.pdf', no: '#012', text: '系统 MTBF 不低于 300 h（置信度 80%），MTTR 不大于 1.5 h。', vec: '[0.27, 0.11, -0.09, 0.48]', dim: '1024', time: '2026-10-09 14:20' },
+      { res: '某型装备研制总要求.pdf', no: '#028', text: '定位精度（平面）≤ 5 cm（差分条件），本地闭环控制响应时延 ≤ 50 ms。', vec: '[0.09, 0.36, 0.14, -0.21]', dim: '1024', time: '2026-10-09 14:20' },
+      { res: '某型装备研制总要求.pdf', no: '#045', text: '试验与鉴定应覆盖性能、五性、环境、电磁兼容、软件与安全性等科目。', vec: '[-0.03, 0.29, 0.37, 0.08]', dim: '1024', time: '2026-10-09 14:21' },
+      { res: '雷沃谷神4LZ-8谷物联合收割机鉴定大纲', no: '#008', text: '总损失率、含杂率、破碎率作为收获性能核心指标。', vec: '[-0.05, 0.28, 0.33, 0.11]', dim: '1024', time: '2026-10-10 09:33' },
+      { res: '雷沃谷神4LZ-8谷物联合收割机鉴定大纲', no: '#019', text: '可靠性试验按累计作业时间与故障分类统计，给出 MTBF 点估计与区间估计。', vec: '[0.21, 0.04, 0.39, -0.15]', dim: '1024', time: '2026-10-10 09:33' },
+      { res: 'NY/T 2090-2025 农业机械试验鉴定通则', no: '#005', text: '可靠性试验累计作业时间不少于规定值，MTBF 作为定型判定依据。', vec: '[0.12, -0.08, 0.44, 0.19]', dim: '1024', time: '2026-10-10 10:15' },
+      { res: 'NY/T 2090-2025 农业机械试验鉴定通则', no: '#014', text: '试验条件应明确气象、地表、负载与测量不确定度要求。', vec: '[0.06, 0.31, -0.11, 0.42]', dim: '1024', time: '2026-10-10 10:15' },
       { res: '东方红-LF2204报告', no: '#017', text: '发动机标定功率 162 kW，动力输出轴输出功率 138.5 kW。', vec: '[0.31, 0.02, -0.17, 0.55]', dim: '1024', time: '2026-10-09 14:21' },
       { res: '东方红-LF2204报告', no: '#036', text: '混凝土路面最大牵引力 38.6 kN，对应滑转率 8.2%。', vec: '[0.22, 0.41, 0.06, -0.13]', dim: '1024', time: '2026-10-09 14:21' },
-      { res: '雷沃谷神4LZ-8大纲', no: '#008', text: '总损失率、含杂率、破碎率作为收获性能核心指标。', vec: '[-0.05, 0.28, 0.33, 0.11]', dim: '1024', time: '2026-10-10 09:33' },
     ],
     ops: ['查看向量'],
   },
@@ -987,12 +1007,13 @@ export function cloneRows(id) {
 
 // ── 镜头一：资源处理结果详情（key = 资源名称）────────────────────────
 export const resourceDetails = {
-  '某型研制总要求（D-01）': {
-    name: '某型研制总要求（D-01）',
-    fmt: 'PDF', size: '12.4 MB', pages: 48,
+  '某型装备研制总要求.pdf': {
+    name: '某型装备研制总要求.pdf',
+    fmt: 'PDF', size: '0.35 MB', pages: 48,
     parsedAt: '2026-10-08 09:26:47',
-    tableCount: 12, imageCount: 9, paraCount: 326,
-    indexStatus: '已建立', indexName: 'idx-d01-20261008', indexAt: '2026-10-08 09:27:03',
+    tableCount: 17, imageCount: 0, paraCount: 286,
+    indexStatus: '已建立', indexName: 'idx-zbzy-20261008', indexAt: '2026-10-08 09:27:03',
+    fileUrl: EQUIPMENT_REQ_SAMPLE_URL,
     entities: [
       { label: '农业机械型号', count: 8 },
       { label: '性能指标', count: 26 },
@@ -1001,25 +1022,24 @@ export const resourceDetails = {
       { label: '标准编号', count: 6 },
       { label: '试验机构', count: 3 },
     ],
-    chapters: [
-      { id: 'c1', title: '1 总则', level: 1, children: [
-        { id: 'c1-1', title: '1.1 任务来源', level: 2 },
-        { id: 'c1-2', title: '1.2 研制依据', level: 2 },
-      ]},
-      { id: 'c2', title: '2 战术技术指标', level: 1, children: [
-        { id: 'c2-1', title: '2.1 机动性能', level: 2 },
-        { id: 'c2-2', title: '2.2 火力性能', level: 2 },
-        { id: 'c2-3', title: '2.3 防护性能', level: 2 },
-      ]},
-      { id: 'c3', title: '3 可靠性与维修性', level: 1, children: [
-        { id: 'c3-1', title: '3.1 可靠性指标', level: 2 },
-        { id: 'c3-2', title: '3.2 维修性指标', level: 2 },
-      ]},
-      { id: 'c4', title: '4 环境适应性', level: 1 },
-      { id: 'c5', title: '5 电磁兼容性', level: 1 },
-      { id: 'c6', title: '6 信息能力', level: 1 },
-      { id: 'c7', title: '附录 A 指标汇总表', level: 1 },
+    chapters: equipmentReqChapters,
+  },
+  '某型研制总要求（D-01）': {
+    name: '某型研制总要求（D-01）',
+    fmt: 'PDF', size: '12.4 MB', pages: 48,
+    parsedAt: '2026-10-08 09:26:47',
+    tableCount: 17, imageCount: 0, paraCount: 286,
+    indexStatus: '已建立', indexName: 'idx-d01-20261008', indexAt: '2026-10-08 09:27:03',
+    fileUrl: EQUIPMENT_REQ_SAMPLE_URL,
+    entities: [
+      { label: '农业机械型号', count: 8 },
+      { label: '性能指标', count: 26 },
+      { label: '指标数值', count: 34 },
+      { label: '试验项目', count: 12 },
+      { label: '标准编号', count: 6 },
+      { label: '试验机构', count: 3 },
     ],
+    chapters: equipmentReqChapters,
   },
   '雷沃谷神4LZ-8谷物联合收割机鉴定大纲': {
     name: '雷沃谷神4LZ-8谷物联合收割机鉴定大纲',

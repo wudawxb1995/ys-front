@@ -5,8 +5,15 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRows } from '@/composables/tables'
 import { nowText } from '@/utils/format'
 import { resourceDetails } from '@/data/mock'
-import { updateMetricTree } from '@/composables/demo-store'
+import {
+  updateMetricTree,
+  getPersistedM03List,
+  persistM03List,
+  getPersistedM08List,
+  persistM08List,
+} from '@/composables/demo-store'
 import { m03TreeData } from '@/data/m03-tree'
+import { m02Domains, getM02RowsForDoc, getM02CountForDoc } from '@/data/m02-indicators'
 
 export function buildRichPartA({ toast, router, route, props, bag }) {
 function kpiIcon(label = '') {
@@ -112,20 +119,41 @@ function addToList() {
 
 function commitList() {
   if (!importList.value.length) { toast('导入清单为空'); return }
+  const names = []
   if (props.page.dataset) {
     const rows = useRows(props.page.dataset)
     importList.value.forEach((item) => {
+      const name = item.name
+      names.push(name)
+      const instant = item.mode === '即时解析'
       rows.unshift({
-        name: item.name, cat: item.cat, fmt: item.fmt, modal: item.modal,
-        size: item.size === '—' ? '—' : item.size + ' MB',
-        pages: item.pages, status: item.mode === '即时解析' ? '解析中' : '暂存',
-        by: 'Mona', time: nowText(),
+        name,
+        cat: item.cat,
+        fmt: item.fmt,
+        modal: item.modal,
+        size: item.size === '—' ? '—' : String(item.size).includes('MB') ? item.size : `${item.size} MB`,
+        pages: item.pages,
+        status: instant ? '解析中' : '暂存',
+        by: 'Mona',
+        time: nowText(),
+        fileUrl: /某型装备研制总要求|某型研制总要求/.test(name) ? '/samples/某型装备研制总要求.pdf' : '',
       })
     })
   }
   toast(`成功录入 ${importList.value.length} 项资源，已进入数据资源目录`)
   importList.value = []
   if (props.page?.dataset === 'resources') {
+    setTimeout(() => {
+      const rows = useRows('resources')
+      names.forEach((name) => {
+        const row = rows.find((r) => r.name === name && r.status === '解析中')
+        if (row) {
+          row.status = '已解析'
+          row.time = nowText()
+          if (/某型装备研制总要求|某型研制总要求/.test(name)) row.pages = row.pages || '48'
+        }
+      })
+    }, 1200)
     router.push({ name: 'app', params: { pid: route.params.pid, sid: route.params.sid, mid: 'res-list' } })
   }
 }
@@ -615,41 +643,258 @@ function m01OpenDetail(row) {
 
 // ── 镜头三（M03）标准化数据建模 ──────────────────────────────────────
 
-// 指标树列表
-const m03List = ref([
-  { id: 'v1', version: '指标树 V1.0', srcDoc: 'D-01《某型研制总要求》', count: 28, status: '已发布', publishedAt: '2026-10-08 09:24' },
-  { id: 'v2', version: '指标树 V0.9', srcDoc: 'D-01《某型研制总要求》', count: 24, status: '草稿',   publishedAt: null },
-])
+// 指标树列表：从 sessionStorage（demo-store）恢复，切平台 / 刷新不丢；关 tab 才清空
+const m03List = ref(getPersistedM03List())
+watch(
+  m03List,
+  (val) => persistM03List(val),
+  { deep: true },
+)
 
 const m03DetailOpen = ref(false)
 const m03CurrentRow = ref(null)
+function m03FlatNodes(nodes = []) {
+  const res = []
+  nodes.forEach((n) => {
+    res.push(n)
+    if (n.children) res.push(...m03FlatNodes(n.children))
+  })
+  return res
+}
+
+/** 按来源文档抽取结果 + 所选性能域，生成/裁剪指标树（与列表 count 联动） */
+function buildM03TreeForRow(row) {
+  if (row?.tree?.length) {
+    return structuredClone(row.tree)
+  }
+  const tree = structuredClone(m03TreeData)
+  const domainSet = Array.isArray(row?.domains) && row.domains.length
+    ? new Set(row.domains)
+    : null
+  const root = tree[0]
+  if (domainSet && root?.children) {
+    root.children = root.children.filter((d) => domainSet.has(d.name))
+  }
+
+  // 用 M02 抽取结果回填叶子指标值 / 页码，保证与「指标数据提取」同源
+  const srcKey = row?.srcDoc || ''
+  const m02Rows = [
+    ...getM02RowsForDoc(srcKey),
+    ...getM02RowsForDoc('某型研制总要求（D-01）'),
+    ...getM02RowsForDoc('某型装备研制总要求.pdf'),
+  ]
+  const byName = new Map()
+  m02Rows.forEach((r) => {
+    if (r?.name && !byName.has(r.name)) byName.set(r.name, r)
+  })
+
+  m03FlatNodes(tree).forEach((node) => {
+    if (node.level === 3) {
+      const hit = byName.get(node.name)
+      if (hit) {
+        const unit = hit.unit ? ` ${hit.unit}` : ''
+        node.value = `${hit.value}${unit}`.trim()
+        node.srcPage = hit.srcPage || node.srcPage || 12
+        node.srcText = hit.srcText
+        node.highlight = hit.highlight
+        node.srcDoc = hit.srcDoc || srcKey
+      }
+    }
+  })
+
+  root?.children?.forEach((d) => {
+    const leaves = m03FlatNodes([d]).filter((n) => n.level === 3)
+    d.badge = leaves.length
+    d.open = true
+  })
+  return tree
+}
+
+function m03ApplyTreeForRow(row) {
+  m03Tree.value = buildM03TreeForRow(row)
+  const leaves = m03FlatNodes(m03Tree.value).filter((n) => n.level === 3)
+  if (row) {
+    row.count = leaves.length
+    if (!Array.isArray(row.domains) || !row.domains.length) {
+      row.domains = m03FlatNodes(m03Tree.value)
+        .filter((n) => n.level === 1)
+        .map((n) => n.name)
+    }
+  }
+  m03SelId.value = leaves[0]?.id || m03Tree.value[0]?.id || 'root'
+}
+
+function m03SnapshotTreeToRow() {
+  const row = m03CurrentRow.value
+  if (!row) return
+  row.tree = structuredClone(m03Tree.value)
+  row.count = m03FlatNodes(m03Tree.value).filter((n) => n.level === 3).length
+}
+
 function m03OpenDetail(row) {
-  m03CurrentRow.value = row || m03List.value[0]
+  // 始终挂到列表中的同一引用，保证详情顶栏与列表字段联动
+  const src = row || m03List.value[0]
+  const hit = src?.id ? m03List.value.find((r) => r.id === src.id) : src
+  m03CurrentRow.value = hit || src
+  m03ApplyTreeForRow(m03CurrentRow.value)
   m03DetailOpen.value = true
 }
 function m03SaveToStore() {
-  const row = m03CurrentRow.value || m03List.value[0]
-  const version = (row?.version || 'V1.0').replace(/^指标树\s*/, '')
-  const count = row?.count ?? 28
-  updateMetricTree(version, count)
-  if (row && row.status !== '已发布') {
-    row.status = '已发布'
-    row.publishedAt = nowText()
+  const cur = m03CurrentRow.value || m03List.value[0]
+  if (!cur) {
+    toast('未找到当前指标树', 'error')
+    return
   }
-  toast(`已同步指标树 ${version}（${count} 项）到试验后阶段`)
+  const row = m03List.value.find((r) => r.id === cur.id) || cur
+  m03SnapshotTreeToRow()
+  const version = (row?.version || 'V1.0').replace(/^指标树\s*/, '')
+  const leafCount = m03FlatNodes(m03Tree.value).filter((n) => n.level === 3).length
+  const count = leafCount || row?.count || 28
+  row.count = count
+  row.status = '已发布'
+  row.publishedAt = nowText()
+  m03CurrentRow.value = row
+  updateMetricTree(version, count)
+  toast(`已同步指标树 ${version}（${count} 项），发布时间 ${row.publishedAt}`, 'success')
 }
 
-// 四级树：根节点 → 7 性能域 → 15 指标类 → 28 指标项
+// ── 新建指标树弹窗（蒙版 + 来源文档/性能域/指标数联动）────────────────
+const m03CreateVisible = ref(false)
+const m03CreateForm = reactive({
+  version: '',
+  srcKey: '',
+  srcDoc: '',
+  domains: [...m02Domains],
+  status: '草稿',
+  remark: '',
+})
+
+const m03SrcOptions = computed(() => {
+  const rows = useRows('resources') || []
+  const fromRes = rows
+    .filter((r) => r.status === '已解析')
+    .map((r) => ({
+      value: r.name,
+      label: r.name,
+      count: getM02CountForDoc(r.name),
+    }))
+  const extras = [
+    { value: 'D-01《某型研制总要求》', label: 'D-01《某型研制总要求》', count: 28 },
+  ]
+  const seen = new Set()
+  return [...extras, ...fromRes].filter((o) => {
+    if (seen.has(o.value)) return false
+    seen.add(o.value)
+    return true
+  })
+})
+
+const m03CreatePreviewCount = computed(() => {
+  const key = m03CreateForm.srcKey || m03CreateForm.srcDoc
+  if (!key) return 0
+  const rows = getM02RowsForDoc(key)
+  if (rows.length) {
+    const set = new Set(m03CreateForm.domains)
+    return rows.filter((r) => set.has(r.domain)).length
+  }
+  // D-01 展示名无扩展名时按全量 × 域占比估算
+  const total = getM02CountForDoc(key) || (isD01Label(key) ? 28 : 0)
+  if (!total) return 0
+  if (m03CreateForm.domains.length >= m02Domains.length) return total
+  return Math.max(1, Math.round((total * m03CreateForm.domains.length) / m02Domains.length))
+})
+
+function isD01Label(name = '') {
+  return /D-01|研制总要求/.test(String(name))
+}
+
+function nextM03VersionLabel() {
+  let maxMinor = 10 // V1.0 → 10
+  m03List.value.forEach((row) => {
+    const m = String(row.version || '').match(/V(\d+)\.(\d+)/i)
+    if (m) {
+      const n = Number(m[1]) * 10 + Number(m[2])
+      if (n > maxMinor) maxMinor = n
+    }
+  })
+  const next = maxMinor + 1
+  return `指标树 V${Math.floor(next / 10)}.${next % 10}`
+}
+
+function m03OpenCreate() {
+  m03CreateForm.version = nextM03VersionLabel()
+  m03CreateForm.status = '草稿'
+  m03CreateForm.remark = ''
+  m03CreateForm.domains = [...m02Domains]
+  const prefer = m03SrcOptions.value.find((o) => isD01Label(o.value) || getM02CountForDoc(o.value) > 0)
+    || m03SrcOptions.value[0]
+  m03CreateForm.srcKey = prefer?.value || ''
+  m03CreateForm.srcDoc = prefer?.label || ''
+  m03CreateVisible.value = true
+}
+
+function m03OnSrcChange(val) {
+  m03CreateForm.srcKey = val
+  const hit = m03SrcOptions.value.find((o) => o.value === val)
+  m03CreateForm.srcDoc = hit?.label || val
+  // 换文档时默认全选性能域，指标数随之联动
+  m03CreateForm.domains = [...m02Domains]
+}
+
+function m03ToggleDomain(d) {
+  const i = m03CreateForm.domains.indexOf(d)
+  if (i >= 0) {
+    if (m03CreateForm.domains.length <= 1) {
+      toast('至少保留一个性能域', 'warning')
+      return
+    }
+    m03CreateForm.domains.splice(i, 1)
+  } else {
+    m03CreateForm.domains.push(d)
+  }
+}
+
+function m03SubmitCreate() {
+  if (!m03CreateForm.version?.trim()) {
+    toast('请填写版本号', 'error')
+    return
+  }
+  if (!m03CreateForm.srcKey && !m03CreateForm.srcDoc) {
+    toast('请选择关联来源文档', 'error')
+    return
+  }
+  if (!m03CreateForm.domains.length) {
+    toast('请至少选择一个性能域', 'error')
+    return
+  }
+  const count = m03CreatePreviewCount.value
+  if (!count) {
+    toast('当前来源文档暂无可用指标，请更换文档或检查抽取结果', 'error')
+    return
+  }
+  const row = {
+    id: `v-${Date.now()}`,
+    version: m03CreateForm.version.trim().startsWith('指标树')
+      ? m03CreateForm.version.trim()
+      : `指标树 ${m03CreateForm.version.trim()}`,
+    srcDoc: m03CreateForm.srcDoc || m03CreateForm.srcKey,
+    count,
+    status: m03CreateForm.status || '草稿',
+    publishedAt: m03CreateForm.status === '已发布' ? nowText() : null,
+    domains: [...m03CreateForm.domains],
+    remark: m03CreateForm.remark || '',
+  }
+  m03List.value.unshift(row)
+  m03CreateVisible.value = false
+  toast(`已新建 ${row.version}（${count} 项），关联 ${row.srcDoc}`, 'success')
+}
+
+// 四级树：打开详情时按「来源文档 × 性能域」重建；编辑后快照写回列表行
 const m03Tree = ref(structuredClone(m03TreeData))
 
 const m03SelId = ref('i-jd-1')
 
-function flatM03Nodes(nodes) {
-  const res = []
-  nodes.forEach((n) => { res.push(n); if (n.children) res.push(...flatM03Nodes(n.children)) })
-  return res
-}
-const m03AllNodes = computed(() => flatM03Nodes(m03Tree.value))
+const m03AllNodes = computed(() => m03FlatNodes(m03Tree.value))
 const m03SelNode = computed(() => m03AllNodes.value.find((n) => n.id === m03SelId.value) || null)
 
 function m03Select(node) { m03SelId.value = node.id }
@@ -657,69 +902,186 @@ function m03ExpandAll() {
   m03AllNodes.value.forEach((n) => { if (n.children) n.open = true })
 }
 
+const m03SrcDocLabel = computed(() => m03CurrentRow.value?.srcDoc || 'D-01《某型研制总要求》')
 
+function m03ExtOf(name = '') {
+  const i = String(name).lastIndexOf('.')
+  return i >= 0 ? String(name).slice(i + 1).toUpperCase() : ''
+}
+const m03SrcIconKind = computed(() => {
+  const ext = m03ExtOf(m03SrcDocLabel.value)
+  if (/PDF/.test(ext) || /研制总要求|D-01/.test(m03SrcDocLabel.value)) return 'pdf'
+  if (/DOC/.test(ext)) return 'word'
+  if (/XLS|CSV/.test(ext)) return 'excel'
+  return 'file'
+})
+const m03SrcIconText = computed(() => {
+  const kind = m03SrcIconKind.value
+  if (kind === 'pdf') return 'PDF'
+  if (kind === 'word') return 'DOCX'
+  if (kind === 'excel') return 'XLS'
+  return 'DOC'
+})
 
-// ── 镜头四（M08）试验方案生成结果 ────────────────────────────────────
+// ── 编辑属性弹窗 ─────────────────────────────────────────────────────
+const m03EditVisible = ref(false)
+const m03EditForm = reactive({
+  name: '',
+  value: '',
+  criteriaType: '定量',
+  examMethod: '实测',
+  srcSection: '',
+  srcPage: 12,
+})
+const m03CriteriaOptions = ['定量', '定性', '阈值', '阈值+定量']
+const m03ExamOptions = ['实测', '试验', '检验', '测试', '统计', '仿真', '查验']
 
-// 第一级：方案列表
-const m08List = ref([
-  { id: 'm1', name: '某型性能鉴定试验大纲 V4', ver: 'V4', treeVer: '指标树 V1.0', status: '已定稿', updatedAt: '2026-10-08 10:42' },
-  { id: 'm2', name: '某型性能鉴定试验大纲 V3', ver: 'V3', treeVer: '指标树 V0.9', status: '已归档', updatedAt: '2026-10-06 15:20' },
-  { id: 'm3', name: '某型性能鉴定试验大纲 V1', ver: 'V1', treeVer: '指标树 V0.9', status: '草稿',   updatedAt: '2026-10-04 09:11' },
-])
-const m08DetailOpen = ref(false)
-function m08OpenDetail() { m08DetailOpen.value = true }
-function goResourceMatch() {
-  router.push({ name: 'app', params: { pid: 'design', sid: 'match', mid: 'rec' } })
+function m03OpenEdit() {
+  const n = m03SelNode.value
+  if (!n || n.level !== 3) {
+    toast('请先选择叶子指标项再编辑', 'warning')
+    return
+  }
+  const trace = findM03Trace(n.name)
+  m03EditForm.name = n.name || ''
+  m03EditForm.value = n.value || ''
+  m03EditForm.criteriaType = n.criteriaType || '定量'
+  m03EditForm.examMethod = n.examMethod || '实测'
+  m03EditForm.srcSection = n.srcSection || ''
+  m03EditForm.srcPage = n.srcPage || trace?.srcPage || 12
+  m03EditVisible.value = true
 }
 
-// 四步向导（全部完成）
-const m08Steps = [
+function m03SaveEdit() {
+  const n = m03SelNode.value
+  if (!n) return
+  if (!m03EditForm.name?.trim()) {
+    toast('指标名称不能为空', 'error')
+    return
+  }
+  if (!m03EditForm.value?.trim()) {
+    toast('指标值不能为空', 'error')
+    return
+  }
+  n.name = m03EditForm.name.trim()
+  n.value = m03EditForm.value.trim()
+  n.criteriaType = m03EditForm.criteriaType
+  n.examMethod = m03EditForm.examMethod
+  n.srcSection = m03EditForm.srcSection?.trim() || n.srcSection
+  n.srcPage = Number(m03EditForm.srcPage) || n.srcPage || 12
+  m03SnapshotTreeToRow()
+  m03EditVisible.value = false
+  toast('指标属性已更新', 'success')
+}
+
+// ── 原文追溯弹窗 ─────────────────────────────────────────────────────
+const m03TraceVisible = ref(false)
+const m03Trace = ref(null)
+
+function findM03Trace(indicatorName = '') {
+  const srcKey = m03CurrentRow.value?.srcDoc || ''
+  const rows = [
+    ...getM02RowsForDoc(srcKey),
+    ...getM02RowsForDoc('某型研制总要求（D-01）'),
+    ...getM02RowsForDoc('某型装备研制总要求.pdf'),
+  ]
+  const hit = rows.find((r) => r.name === indicatorName)
+  if (hit) return hit
+  const node = m03SelNode.value
+  if (!node) return null
+  return {
+    name: node.name,
+    value: String(node.value || '').replace(/\s*[a-zA-Z/%°]+.*$/, '').trim() || node.value,
+    unit: '',
+    srcDoc: m03SrcDocLabel.value,
+    srcPage: node.srcPage || 12,
+    highlight: node.name,
+    srcText: `${node.srcSection || '相关条款'}\n${node.name}：${node.value}\n（根据指标树节点与来源章节生成的追溯摘要，可结合原文 PDF 核对。）`,
+  }
+}
+
+function m03TraceHtml(trace) {
+  if (!trace?.srcText) return ''
+  const phrase = trace.highlight || ''
+  const escaped = String(trace.srcText)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br/>')
+  if (!phrase) return escaped
+  const safe = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return escaped.replace(new RegExp(safe, 'g'), `<mark class="m03-hl">${phrase}</mark>`)
+}
+
+function m03OpenTrace() {
+  const n = m03SelNode.value
+  if (!n || n.level !== 3) {
+    toast('请先选择叶子指标项再追溯原文', 'warning')
+    return
+  }
+  const trace = findM03Trace(n.name)
+  if (!trace) {
+    toast('未找到对应原文片段', 'warning')
+    return
+  }
+  m03Trace.value = {
+    ...trace,
+    srcDoc: trace.srcDoc || m03SrcDocLabel.value,
+    html: m03TraceHtml(trace),
+  }
+  m03TraceVisible.value = true
+}
+
+function m03OpenSourceQuick() {
+  m03OpenTrace()
+}
+
+// ── 镜头四（M08）试验方案生成结果 ────────────────────────────────────
+// 二级页按列表「状态」切换内容：已定稿=镜头四完整结果；已归档/草稿为不同进度快照。
+// 「多轮校核优化」对话来自方案生成过程中沉淀的历史记录（非本页现场即时问答）；
+// 草稿态可输入补充一轮演示；已定稿/已归档只读展示历史。
+
+const m08StepsBase = [
   { name: '选定考核指标' },
   { name: '配置试验因子' },
   { name: '选择模板与案例' },
   { name: '生成预览' },
 ]
 
-// 22个因子卡片（含取值水平）
-const m08Factors = reactive([
-  { name: '温度',       levels: '−41℃贮存 / −41℃工作 / 常温 / +55℃', cat: '环境' },
-  { name: '路面',       levels: '硬路面 / 砂石 / 泥泞',                cat: '环境' },
-  { name: '最大公路速度', levels: '≥ 65 km/h',                         cat: '机动' },
-  { name: '最大越野速度', levels: '≥ 35 km/h',                         cat: '机动' },
-  { name: '最大行程',   levels: '≥ 500 km',                            cat: '机动' },
-  { name: '爬坡度',     levels: '≥ 30°',                               cat: '机动' },
-  { name: '涉水深度',   levels: '≥ 1.2 m',                             cat: '机动' },
-  { name: '主炮口径',   levels: '125 mm',                              cat: '火力' },
-  { name: '穿甲弹初速', levels: '≥ 1700 m/s',                          cat: '火力' },
-  { name: '射速',       levels: '6–8 发/min',                          cat: '火力' },
-  { name: '最大射程',   levels: '≥ 4000 m',                            cat: '火力' },
-  { name: '首发命中概率', levels: '≥ 0.85',                            cat: '火力' },
-  { name: 'MTBF',       levels: '≥ 320 h',                            cat: '可靠性' },
-  { name: 'MTTR',       levels: '≤ 2 h',                              cat: '可靠性' },
-  { name: '使用可用度', levels: '≥ 0.92',                              cat: '可靠性' },
-  { name: '防护等级',   levels: 'RHA 600 mm / 核生化',                 cat: '防护' },
-  { name: '防尘防水',   levels: 'IP67 / IP6X',                        cat: '环境' },
-  { name: '传导发射',   levels: '≤ RE102 B类',                        cat: '电磁' },
-  { name: '辐射敏感度', levels: '≥ RS103 C类',                        cat: '电磁' },
-  { name: '态势感知刷新率', levels: '≥ 2 Hz',                         cat: '信息' },
-  { name: '通信距离',   levels: '≥ 30 km',                            cat: '信息' },
-  { name: '目标识别距离', levels: '≥ 3000 m',                         cat: '信息' },
-])
-const m08SelFactor = ref(0)
-
-// 大纲章节树
-const m08ActiveChapter = ref(3) // 默认显示"试验项目与方法"章
-const m08Chapters = [
-  { no: '第一章', title: '试验目的', content: '本试验旨在对某型进行全面性能鉴定，验证各项技术指标是否满足研制总要求（D-01）规定的性能指标，为定型提供依据。<br><br>试验依据：《某型研制总要求》（D-01）、军标 GJB 4239-2001。' },
-  { no: '第二章', title: '试验条件', content: '2.1 环境条件<br>试验在标准试验场地进行，温度范围 −41℃ 至 +55℃，分贮存工况与工作工况两类。路面条件覆盖硬路面、砂石路面、泥泞路面三类。<br><br>2.2 试验<br>受试编号：SB-2026-001，配置标准弹药基数，燃油满载。' },
-  { no: '第三章', title: '试验项目与方法', content: '3.1 机动性能试验<br>3.1.1 最大公路速度：在硬路面直线段测量，取三次均值，判据 <b style="color:#0d4e83">≥ 65 km/h <svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:13px;height:13px;display:inline;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></b>（引自指标树 D-01·4.1.1）<br><br>3.1.2 最大越野速度：砂石路面测量，判据 <b style="color:#0d4e83">≥ 35 km/h <svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:13px;height:13px;display:inline;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></b>（引自指标树 D-01·4.1.2）<br><br>3.2 电磁兼容考核（第1轮对话新增）<br>按 GJB 1389B 执行传导发射与辐射敏感度测试，判据 ≤ RE102 B类 / ≥ RS103 C类。' },
-  { no: '第四章', title: '测量要求', content: '4.1 速度测量：使用标定 GPS 测速仪，精度 ±0.2 km/h。<br>4.2 火力测量：弹道测量仪精度 ±0.5 m/s，计时精度 ±0.01 s。<br>4.3 可靠性记录：故障严格按 GJB 451A 分类，A 类故障单独统计。' },
-  { no: '第五章', title: '数据处理与判据', content: '5.1 判据引用自指标树 V1.0<br><br><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr style="background:#eaf3fa"><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">指标名称</th><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">判据</th><th style="padding:6px 10px;border:1px solid #dce8f2">来源</th></tr></thead><tbody><tr><td style="padding:6px 10px;border:1px solid #dce8f2">最大公路速度</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 65 km/h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center"><svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:14px;height:14px;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">首发命中概率</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 0.85</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center"><svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:14px;height:14px;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">MTBF</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 320 h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center"><svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:14px;height:14px;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></td></tr></tbody></table>' },
+const m08FactorsFull = [
+  { name: '温度', levels: '−41℃贮存 / −41℃工作 / 常温 / +55℃', cat: '环境' },
+  { name: '路面', levels: '硬路面 / 砂石 / 泥泞', cat: '环境' },
+  { name: '最大公路速度', levels: '≥ 65 km/h', cat: '机动' },
+  { name: '最大越野速度', levels: '≥ 35 km/h', cat: '机动' },
+  { name: '最大行程', levels: '≥ 500 km', cat: '机动' },
+  { name: '爬坡度', levels: '≥ 30°', cat: '机动' },
+  { name: '涉水深度', levels: '≥ 1.2 m', cat: '机动' },
+  { name: '主炮口径', levels: '125 mm', cat: '火力' },
+  { name: '穿甲弹初速', levels: '≥ 1700 m/s', cat: '火力' },
+  { name: '射速', levels: '6–8 发/min', cat: '火力' },
+  { name: '最大射程', levels: '≥ 4000 m', cat: '火力' },
+  { name: '首发命中概率', levels: '≥ 0.85', cat: '火力' },
+  { name: 'MTBF', levels: '≥ 320 h', cat: '可靠性' },
+  { name: 'MTTR', levels: '≤ 2 h', cat: '可靠性' },
+  { name: '使用可用度', levels: '≥ 0.92', cat: '可靠性' },
+  { name: '防护等级', levels: 'RHA 600 mm / 核生化', cat: '防护' },
+  { name: '防尘防水', levels: 'IP67 / IP6X', cat: '环境' },
+  { name: '传导发射', levels: '≤ RE102 B类', cat: '电磁' },
+  { name: '辐射敏感度', levels: '≥ RS103 C类', cat: '电磁' },
+  { name: '态势感知刷新率', levels: '≥ 2 Hz', cat: '信息' },
+  { name: '通信距离', levels: '≥ 30 km', cat: '信息' },
+  { name: '目标识别距离', levels: '≥ 3000 m', cat: '信息' },
 ]
 
-// 3轮对话记录
-const m08Rounds = [
+const m08LinkIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:13px;height:13px;display:inline;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
+
+const m08ChaptersFull = [
+  { no: '第一章', title: '试验目的', content: '本试验旨在对某型进行全面性能鉴定，验证各项技术指标是否满足研制总要求（D-01）规定的性能指标，为定型提供依据。<br><br>试验依据：《某型研制总要求》（D-01）、军标 GJB 4239-2001。' },
+  { no: '第二章', title: '试验条件', content: '2.1 环境条件<br>试验在标准试验场地进行，温度范围 −41℃ 至 +55℃，分贮存工况与工作工况两类。路面条件覆盖硬路面、砂石路面、泥泞路面三类。<br><br>2.2 试验<br>受试编号：SB-2026-001，配置标准弹药基数，燃油满载。' },
+  { no: '第三章', title: '试验项目与方法', content: `3.1 机动性能试验<br>3.1.1 最大公路速度：在硬路面直线段测量，取三次均值，判据 <b style="color:#0d4e83">≥ 65 km/h ${m08LinkIcon}</b>（引自指标树 D-01·4.1.1）<br><br>3.1.2 最大越野速度：砂石路面测量，判据 <b style="color:#0d4e83">≥ 35 km/h ${m08LinkIcon}</b>（引自指标树 D-01·4.1.2）<br><br>3.2 电磁兼容考核（第1轮对话新增）<br>按 GJB 1389B 执行传导发射与辐射敏感度测试，判据 ≤ RE102 B类 / ≥ RS103 C类。` },
+  { no: '第四章', title: '测量要求', content: '4.1 速度测量：使用标定 GPS 测速仪，精度 ±0.2 km/h。<br>4.2 火力测量：弹道测量仪精度 ±0.5 m/s，计时精度 ±0.01 s。<br>4.3 可靠性记录：故障严格按 GJB 451A 分类，A 类故障单独统计。' },
+  { no: '第五章', title: '数据处理与判据', content: `5.1 判据引用自指标树 V1.0<br><br><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr style="background:#eaf3fa"><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">指标名称</th><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">判据</th><th style="padding:6px 10px;border:1px solid #dce8f2">来源</th></tr></thead><tbody><tr><td style="padding:6px 10px;border:1px solid #dce8f2">最大公路速度</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 65 km/h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">首发命中概率</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 0.85</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">MTBF</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 320 h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr></tbody></table>` },
+]
+
+const m08RoundsFull = [
   {
     time: '10-05 14:22',
     user: '补充关键词"电磁兼容考核"',
@@ -740,13 +1102,795 @@ const m08Rounds = [
   },
 ]
 
-// 版本条
-const m08Versions = [
-  { ver: 'V1', label: '初稿',     time: '10-04 09:11', final: false },
+const m08VersionsFull = [
+  { ver: 'V1', label: '初稿', time: '10-04 09:11', final: false },
   { ver: 'V2', label: '一轮优化', time: '10-05 14:35', final: false },
   { ver: 'V3', label: '二轮优化', time: '10-06 09:55', final: false },
-  { ver: 'V4', label: '定稿',     time: '10-08 10:42', final: true  },
+  { ver: 'V4', label: '定稿', time: '10-08 10:42', final: true },
 ]
+
+/** 按方案状态组装二级页快照（步骤进度 / 因子 / 对话轮次 / 版本条不同） */
+function buildM08Snapshot(row) {
+  const status = row?.status || '草稿'
+  if (status === '已定稿') {
+    return {
+      doneSteps: 4,
+      factors: m08FactorsFull,
+      factorOk: true,
+      chapters: m08ChaptersFull,
+      activeChapter: 2,
+      rounds: [...m08RoundsFull],
+      versions: m08VersionsFull,
+      previewBadge: 'V4 定稿',
+      chatReadonly: true,
+      chatHint: '定稿方案仅展示历史校核记录（生成过程中沉淀，非本页即时问答）',
+      showMatch: true,
+      readonlyFactors: true,
+    }
+  }
+  if (status === '已归档') {
+    return {
+      doneSteps: 4,
+      factors: m08FactorsFull.slice(0, 18),
+      factorOk: false,
+      chapters: m08ChaptersFull.map((c, i) => (i === 2
+        ? { ...c, content: '3.1 机动性能试验<br>3.1.1 最大公路速度……（归档快照，电磁兼容节已纳入）' }
+        : c)),
+      activeChapter: 0,
+      rounds: m08RoundsFull.slice(0, 2),
+      versions: m08VersionsFull.slice(0, 3).map((v, i, arr) => ({ ...v, final: i === arr.length - 1 })),
+      previewBadge: 'V3 已归档',
+      chatReadonly: true,
+      chatHint: '归档方案只读，历史对话不可追加',
+      showMatch: false,
+      readonlyFactors: true,
+    }
+  }
+  // 草稿：可对话优化；轮次/版本条与 row 上沉淀数据联动
+  const draftRounds = Array.isArray(row?.rounds) ? row.rounds.map((r) => ({ ...r })) : []
+  const draftVersions = Array.isArray(row?.versions) && row.versions.length
+    ? row.versions.map((v, i, arr) => ({ ...v, final: i === arr.length - 1 }))
+    : [{ ver: 'V1', label: '初稿', time: '10-04 09:11', final: true }]
+  const lastVer = draftVersions[draftVersions.length - 1]
+  return {
+    doneSteps: row?.doneSteps != null ? row.doneSteps : 2,
+    factors: Array.isArray(row?.factors) && row.factors.length
+      ? row.factors.map((f) => ({ ...f }))
+      : m08FactorsFull.slice(0, 12).map((f) => (
+        f.name === '温度' ? { ...f, levels: '−41℃ / 常温 / +55℃' } : f
+      )),
+    factorOk: false,
+    chapters: m08ChaptersFull.slice(0, 3).map((c, i) => (i === 2
+      ? { ...c, content: '3.1 机动性能试验（草稿，待补充电磁兼容与判据核对）<br>3.1.1 最大公路速度：判据待与指标树核对。' }
+      : c)),
+    activeChapter: 0,
+    rounds: draftRounds,
+    versions: draftVersions,
+    previewBadge: lastVer ? `${lastVer.ver} ${lastVer.label}` : 'V1 草稿',
+    chatReadonly: false,
+    chatHint: '在此输入自然语言优化要求，将追加一轮校核并联动底部版本条',
+    showMatch: false,
+    readonlyFactors: false,
+  }
+}
+
+// 方案列表：sessionStorage 恢复，切平台/刷新不丢
+const m08List = ref(getPersistedM08List())
+watch(m08List, (val) => persistM08List(val), { deep: true })
+
+const m08DetailOpen = ref(false)
+const m08CurrentRow = ref(null)
+const m08Snap = ref(buildM08Snapshot(m08List.value[0]))
+const m08SelFactor = ref(0)
+const m08ActiveChapter = ref(0)
+const m08ChatInput = ref('')
+const m08Steps = m08StepsBase
+const m08FocusStep = ref(-1)
+const m08FocusVer = ref('')
+const m08StepDialog = ref(false)
+const m08StepDialogIdx = ref(0)
+const m08NewFactorSeq = ref(1)
+
+// ── 新建方案弹窗 ─────────────────────────────────────────────────────
+const m08CreateVisible = ref(false)
+const m08CreateForm = reactive({
+  name: '',
+  ver: 'V1',
+  treeVer: '',
+  template: '性能鉴定试验大纲模板',
+  status: '草稿',
+  remark: '',
+  openAfter: true,
+})
+
+const m08TemplateOptions = [
+  '性能鉴定试验大纲模板',
+  '可靠性鉴定试验大纲模板',
+  '环境适应性试验大纲模板',
+]
+
+const m08CaseOptions = [
+  '寒区电磁兼容历史案例',
+  '高原环境适应性试验案例',
+  '某型定型性能鉴定案例（2024）',
+  '湿热环境长时考核案例',
+]
+
+const m08TplForm = reactive({
+  template: m08TemplateOptions[0],
+  caseName: m08CaseOptions[0],
+})
+
+/** 步骤1：考核指标（指标树 + 性能域） */
+const m08IndForm = reactive({
+  treeVer: '指标树 V1.0',
+  domains: [...m02Domains],
+})
+
+/** 步骤2：因子配置（策略 + 纳入类别） */
+const m08FactorStepForm = reactive({
+  strategy: '标准',
+  cats: ['环境', '机动', '火力', '防护', '可靠性', '电磁', '信息'],
+})
+
+const m08FactorStrategies = [
+  { value: '精简', label: '精简（约 12 个）', count: 12 },
+  { value: '标准', label: '标准（约 18 个）', count: 18 },
+  { value: '完整', label: '完整（≥ 20 个）', count: 22 },
+]
+
+const M08_DOMAIN_TO_CAT = {
+  机动: '机动',
+  火力: '火力',
+  防护: '防护',
+  可靠性: '可靠性',
+  环境适应性: '环境',
+  电磁兼容: '电磁',
+  信息能力: '信息',
+}
+
+const m08FactorCatOptions = ['环境', '机动', '火力', '防护', '可靠性', '电磁', '信息']
+
+const m08TreeOptions = computed(() => {
+  const fromM03 = (m03List.value || [])
+    .filter((r) => r.status === '已发布' || r.status === '草稿')
+    .map((r) => ({
+      value: r.version,
+      label: r.version,
+      count: r.count,
+      status: r.status,
+    }))
+  const fallback = [
+    { value: '指标树 V1.0', label: '指标树 V1.0', count: 28, status: '已发布' },
+    { value: '指标树 V0.9', label: '指标树 V0.9', count: 24, status: '草稿' },
+  ]
+  const seen = new Set()
+  return [...fromM03, ...fallback].filter((o) => {
+    if (seen.has(o.value)) return false
+    seen.add(o.value)
+    return true
+  })
+})
+
+function m08OpenCreate() {
+  const prefer = m08TreeOptions.value.find((o) => o.status === '已发布') || m08TreeOptions.value[0]
+  m08CreateForm.name = '某型装备性能鉴定试验大纲'
+  m08CreateForm.ver = 'V1'
+  m08CreateForm.treeVer = prefer?.value || '指标树 V1.0'
+  m08CreateForm.template = m08TemplateOptions[0]
+  m08CreateForm.status = '草稿'
+  m08CreateForm.remark = ''
+  m08CreateForm.openAfter = true
+  m08CreateVisible.value = true
+}
+
+function m08SubmitCreate() {
+  if (!m08CreateForm.name?.trim()) {
+    toast('请填写方案名称', 'error')
+    return
+  }
+  if (!m08CreateForm.treeVer) {
+    toast('请选择关联指标树版本', 'error')
+    return
+  }
+  const ver = (m08CreateForm.ver || 'V1').toUpperCase().replace(/^V?/i, 'V')
+  const baseName = m08CreateForm.name.trim().replace(/\s*V\d+(\.\d+)?\s*$/i, '')
+  const name = `${baseName} ${ver}`
+  const row = {
+    id: `m-${Date.now()}`,
+    name,
+    ver,
+    treeVer: m08CreateForm.treeVer,
+    status: m08CreateForm.status || '草稿',
+    updatedAt: nowText(),
+    template: m08CreateForm.template,
+    caseName: m08CaseOptions[0],
+    domains: [...m02Domains],
+    factorStrategy: '标准',
+    factorCats: [...m08FactorCatOptions],
+    remark: m08CreateForm.remark || '',
+  }
+  m08List.value.unshift(row)
+  m08CreateVisible.value = false
+  toast(`已新建方案「${row.name}」，关联 ${row.treeVer}`, 'success')
+  if (m08CreateForm.openAfter) {
+    m08OpenDetail(row)
+  }
+}
+
+const m08StepDetails = [
+  {
+    title: '选定考核指标',
+    body: '从关联指标树勾选本方案需考核的性能域，作为后续因子配置与判据回填的依据。',
+    demo: '',
+  },
+  {
+    title: '配置试验因子',
+    body: '按考核域与配置策略生成/同步试验因子卡片（也可在页面因子区逐条新增编辑）。',
+    demo: '',
+  },
+  {
+    title: '选择模板与案例',
+    body: '从标准方案模板库与历史案例中选取大纲骨架与相似案例段落，作为智能生成的结构与措辞参考。',
+    demo: '', // 动态展示当前选用，见 m08TplSummary
+  },
+  {
+    title: '生成预览',
+    body: '基于指标、因子、模板/案例一键生成大纲全文，进入下方「大纲预览」与「多轮校核优化」。',
+    demo: '本页下部左右并排区域即为本步产出；定稿方案四步均已完成。',
+  },
+]
+
+const m08Factors = computed(() => m08Snap.value.factors)
+const m08Chapters = computed(() => m08Snap.value.chapters)
+const m08Rounds = computed(() => m08Snap.value.rounds)
+const m08Versions = computed(() => m08Snap.value.versions)
+const m08FactorCount = computed(() => m08Factors.value.length)
+const m08ChatCanSend = computed(() => !m08Snap.value.chatReadonly)
+
+function m08OpenDetail(row) {
+  const hit = row?.id ? m08List.value.find((r) => r.id === row.id) : m08List.value[0]
+  m08CurrentRow.value = hit || row || m08List.value[0]
+  m08Snap.value = buildM08Snapshot(m08CurrentRow.value)
+  m08SelFactor.value = 0
+  m08ActiveChapter.value = m08Snap.value.activeChapter
+  m08ChatInput.value = ''
+  m08FocusStep.value = Math.max(0, m08Snap.value.doneSteps - 1)
+  m08NewFactorSeq.value = 1
+  // 草稿：若已有对话但版本条未跟上，打开时补齐联动
+  if (
+    m08CurrentRow.value?.status === '草稿'
+    && (m08Snap.value.rounds?.length || 0) + 1 !== (m08Snap.value.versions?.length || 0)
+  ) {
+    m08SyncVersionsFromRounds()
+  }
+  m08FocusVer.value = m08Snap.value.versions[m08Snap.value.versions.length - 1]?.ver || ''
+  m08DetailOpen.value = true
+}
+
+function m08ScrollTo(sel) {
+  requestAnimationFrame(() => {
+    const el = document.querySelector(sel)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+}
+
+const m08IsDraft = computed(() => m08CurrentRow.value?.status === '草稿')
+const m08IsFinal = computed(() => m08CurrentRow.value?.status === '已定稿')
+
+const m08TplSummary = computed(() => {
+  const tpl = m08CurrentRow.value?.template || m08TplForm.template || m08TemplateOptions[0]
+  const cs = m08CurrentRow.value?.caseName || m08TplForm.caseName || m08CaseOptions[0]
+  return `当前选用：${tpl} + ${cs}`
+})
+
+const m08IndSummary = computed(() => {
+  const tree = m08IndForm.treeVer || m08CurrentRow.value?.treeVer || '—'
+  const n = m08IndForm.domains?.length || 0
+  return `当前：${tree} · 已选 ${n} 个性能域`
+})
+
+const m08FactorStepSummary = computed(() => {
+  const st = m08FactorStrategies.find((s) => s.value === m08FactorStepForm.strategy)
+  const n = m08Snap.value?.factors?.length || 0
+  return `策略「${m08FactorStepForm.strategy}」目标约 ${st?.count || 18} 个 · 面板已配置 ${n} 个`
+})
+
+function m08ToggleIndDomain(d) {
+  if (!m08IsDraft.value) return
+  const i = m08IndForm.domains.indexOf(d)
+  if (i >= 0) {
+    if (m08IndForm.domains.length <= 1) {
+      toast('至少保留一个性能域', 'warning')
+      return
+    }
+    m08IndForm.domains.splice(i, 1)
+  } else {
+    m08IndForm.domains.push(d)
+  }
+}
+
+function m08ToggleFactorCat(c) {
+  if (!m08IsDraft.value) return
+  const i = m08FactorStepForm.cats.indexOf(c)
+  if (i >= 0) {
+    if (m08FactorStepForm.cats.length <= 1) {
+      toast('至少保留一个因子类别', 'warning')
+      return
+    }
+    m08FactorStepForm.cats.splice(i, 1)
+  } else {
+    m08FactorStepForm.cats.push(c)
+  }
+}
+
+function m08LoadStepForms(i) {
+  const row = m08CurrentRow.value
+  if (i === 0) {
+    m08IndForm.treeVer = row?.treeVer || m08TreeOptions.value[0]?.value || '指标树 V1.0'
+    m08IndForm.domains = Array.isArray(row?.domains) && row.domains.length
+      ? [...row.domains]
+      : [...m02Domains]
+  } else if (i === 1) {
+    const fromDomains = (Array.isArray(row?.domains) ? row.domains : m02Domains)
+      .map((d) => M08_DOMAIN_TO_CAT[d])
+      .filter(Boolean)
+    m08FactorStepForm.strategy = row?.factorStrategy || '标准'
+    m08FactorStepForm.cats = Array.isArray(row?.factorCats) && row.factorCats.length
+      ? [...row.factorCats]
+      : (fromDomains.length ? [...new Set(fromDomains)] : [...m08FactorCatOptions])
+  } else if (i === 2) {
+    m08TplForm.template = row?.template || m08TemplateOptions[0]
+    m08TplForm.caseName = row?.caseName || m08CaseOptions[0]
+  }
+}
+
+/** 点击四步向导：仅弹说明/配置，不做页内滚动；草稿可继续未完成步骤 */
+function m08ClickStep(i) {
+  const done = m08Snap.value.doneSteps
+  if (!m08IsDraft.value && i > done) {
+    toast(`「${m08Steps[i].name}」尚未到达（当前完成 ${done}/4 步）`, 'warning')
+    return
+  }
+  m08FocusStep.value = i
+  m08StepDialogIdx.value = i
+  m08LoadStepForms(i)
+  m08StepDialog.value = true
+}
+
+function m08SaveIndStep() {
+  if (!m08IndForm.treeVer) {
+    toast('请选择关联指标树', 'warning')
+    return false
+  }
+  if (!m08IndForm.domains.length) {
+    toast('请至少选择一个考核性能域', 'warning')
+    return false
+  }
+  const row = m08CurrentRow.value
+  if (row) {
+    row.treeVer = m08IndForm.treeVer
+    row.domains = [...m08IndForm.domains]
+    row.updatedAt = nowText()
+    // 联动步骤2默认类别
+    row.factorCats = [...new Set(m08IndForm.domains.map((d) => M08_DOMAIN_TO_CAT[d]).filter(Boolean))]
+  }
+  return true
+}
+
+function m08SaveFactorStep() {
+  if (!m08FactorStepForm.cats.length) {
+    toast('请至少选择一个因子类别', 'warning')
+    return false
+  }
+  const st = m08FactorStrategies.find((s) => s.value === m08FactorStepForm.strategy) || m08FactorStrategies[1]
+  const customs = (m08Snap.value.factors || []).filter((f) => f.cat === '自定义')
+  const pool = m08FactorsFull.filter((f) => m08FactorStepForm.cats.includes(f.cat))
+  const need = Math.max(1, st.count - customs.length)
+  const picked = pool.slice(0, need)
+  m08Snap.value.factors = [...picked, ...customs]
+  m08Snap.value.factorOk = m08Snap.value.factors.length >= 20
+  m08SelFactor.value = 0
+
+  const row = m08CurrentRow.value
+  if (row) {
+    row.factorStrategy = m08FactorStepForm.strategy
+    row.factorCats = [...m08FactorStepForm.cats]
+    row.factors = m08Snap.value.factors.map((f) => ({ ...f }))
+    row.updatedAt = nowText()
+  }
+  return true
+}
+
+/** 保存步骤 3 的模板与案例选择 */
+function m08SaveTplCase() {
+  if (!m08TplForm.template) {
+    toast('请选择大纲模板', 'warning')
+    return false
+  }
+  if (!m08TplForm.caseName) {
+    toast('请选择历史案例', 'warning')
+    return false
+  }
+  const row = m08CurrentRow.value
+  if (row) {
+    row.template = m08TplForm.template
+    row.caseName = m08TplForm.caseName
+    row.updatedAt = nowText()
+  }
+  return true
+}
+
+function m08SaveCurrentStepConfig() {
+  const idx = m08StepDialogIdx.value
+  if (idx === 0) return m08SaveIndStep()
+  if (idx === 1) return m08SaveFactorStep()
+  if (idx === 2) return m08SaveTplCase()
+  return true
+}
+
+/** 草稿：完成当前步骤并点亮进度（不跳转页面） */
+function m08ContinueStep() {
+  if (!m08IsDraft.value) {
+    m08StepDialog.value = false
+    return
+  }
+  const idx = m08StepDialogIdx.value
+  if (idx <= 2 && !m08SaveCurrentStepConfig()) return
+  const need = idx + 1
+  if (m08Snap.value.doneSteps < need) {
+    m08Snap.value.doneSteps = Math.min(4, need)
+  }
+  if (m08Snap.value.doneSteps >= 2) {
+    m08Snap.value.readonlyFactors = false
+  }
+  if (m08Snap.value.doneSteps >= 4) {
+    m08Snap.value.previewBadge = `${m08CurrentRow.value?.ver || 'V1'} 预览`
+    m08Snap.value.chatHint = '四步已完成，可继续通过对话优化大纲（草稿）'
+  }
+  if (m08CurrentRow.value) m08CurrentRow.value.doneSteps = m08Snap.value.doneSteps
+  m08StepDialog.value = false
+  toast(`已完成「${m08Steps[idx].name}」`, 'success')
+}
+
+/** 步骤 1~3 弹窗：草稿保存配置并关闭 */
+function m08ConfirmStepConfig() {
+  if (m08IsDraft.value) {
+    if (!m08SaveCurrentStepConfig()) return
+    const tips = ['已更新考核指标选用', '已同步试验因子配置', '已更新模板与案例选用']
+    toast(tips[m08StepDialogIdx.value] || '已保存', 'success')
+  }
+  m08StepDialog.value = false
+}
+
+/** @deprecated 兼容旧导出名 */
+function m08ConfirmTplStep() {
+  m08ConfirmStepConfig()
+}
+
+const m08FactorCats = ['环境', '机动', '火力', '防护', '可靠性', '电磁', '信息', '自定义']
+const m08FactorDialog = ref(false)
+const m08FactorEditIdx = ref(-1)
+const m08FactorForm = reactive({
+  name: '',
+  levels: '',
+  cat: '自定义',
+})
+
+function m08OpenFactorDialog(editIdx = -1) {
+  if (m08Snap.value.readonlyFactors && editIdx < 0) {
+    toast('定稿/归档方案不可新增因子', 'warning')
+    return
+  }
+  m08FactorEditIdx.value = editIdx
+  if (editIdx >= 0) {
+    const f = m08Snap.value.factors[editIdx]
+    if (!f) return
+    if (m08Snap.value.readonlyFactors) {
+      toast('当前状态仅可查看因子', 'warning')
+      return
+    }
+    m08FactorForm.name = f.name || ''
+    m08FactorForm.levels = f.levels || ''
+    m08FactorForm.cat = f.cat || '自定义'
+  } else {
+    const n = m08NewFactorSeq.value
+    m08FactorForm.name = `自定义因子 ${n}`
+    m08FactorForm.levels = ''
+    m08FactorForm.cat = '自定义'
+  }
+  m08FactorDialog.value = true
+}
+
+function m08AddFactor() {
+  m08OpenFactorDialog(-1)
+}
+
+function m08PersistFactorsToRow() {
+  const row = m08CurrentRow.value
+  if (!row) return
+  row.factors = (m08Snap.value.factors || []).map((f) => ({ ...f }))
+  row.updatedAt = nowText()
+}
+
+function m08RemoveFactor(idx) {
+  if (m08Snap.value.readonlyFactors) {
+    toast('定稿/归档方案不可删除因子', 'warning')
+    return
+  }
+  const list = m08Snap.value.factors || []
+  const hit = list[idx]
+  if (!hit) return
+  if (list.length <= 1) {
+    toast('至少保留 1 个试验因子', 'warning')
+    return
+  }
+  const name = hit.name
+  list.splice(idx, 1)
+  m08Snap.value.factorOk = list.length >= 20
+  if (m08SelFactor.value >= list.length) m08SelFactor.value = Math.max(0, list.length - 1)
+  if (m08FactorEditIdx.value === idx) {
+    m08FactorDialog.value = false
+    m08FactorEditIdx.value = -1
+  } else if (m08FactorEditIdx.value > idx) {
+    m08FactorEditIdx.value -= 1
+  }
+  m08PersistFactorsToRow()
+  toast(`已删除「${name}」`, 'success')
+}
+
+function m08SubmitFactor() {
+  if (!m08FactorForm.name?.trim()) {
+    toast('请填写因子名称', 'warning')
+    return
+  }
+  if (!m08FactorForm.levels?.trim()) {
+    toast('请填写取值水平，如 −41℃ / 常温 / +55℃', 'warning')
+    return
+  }
+  const item = {
+    name: m08FactorForm.name.trim(),
+    levels: m08FactorForm.levels.trim(),
+    cat: m08FactorForm.cat || '自定义',
+  }
+  const idx = m08FactorEditIdx.value
+  if (idx >= 0 && m08Snap.value.factors[idx]) {
+    Object.assign(m08Snap.value.factors[idx], item)
+    m08SelFactor.value = idx
+    toast(`已更新「${item.name}」`, 'success')
+  } else {
+    m08NewFactorSeq.value += 1
+    m08Snap.value.factors.push(item)
+    m08SelFactor.value = m08Snap.value.factors.length - 1
+    toast(`已新增「${item.name}」`, 'success')
+  }
+  m08Snap.value.factorOk = m08Snap.value.factors.length >= 20
+  m08PersistFactorsToRow()
+  m08FactorDialog.value = false
+}
+
+/**
+ * 版本条节点 ↔ 右侧「多轮校核优化」对应关系：
+ * V1 初稿 = 首次生成结果；V2/V3 = 第1/2 轮对话后；V4 定稿 = 第3 轮对话后定稿。
+ * 点击可回溯高亮对应轮次与预览徽章。
+ */
+function m08ClickVersion(ver, vi) {
+  m08FocusVer.value = ver.ver
+  const rounds = m08Snap.value.rounds
+  // V1 无对话；V2→第1轮；V3→第2轮；V4→第3轮
+  const roundIdx = vi - 1
+  if (roundIdx >= 0 && roundIdx < rounds.length) {
+    m08ScrollTo('#m08-chat-panel')
+    requestAnimationFrame(() => {
+      const bubble = document.querySelector(`#m08-round-${roundIdx}`)
+      if (bubble) bubble.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    })
+    toast(`${ver.ver}「${ver.label}」对应右侧第${['一', '二', '三'][roundIdx] || roundIdx + 1}轮校核`, 'success')
+  } else if (vi === 0) {
+    m08ScrollTo('#m08-outline-panel')
+    toast('V1 初稿：生成预览后的原始大纲，尚无校核对话', 'success')
+  } else {
+    toast(`当前快照未包含 ${ver.ver} 对应校核轮次`, 'warning')
+  }
+  // 演示：切换预览徽章
+  m08Snap.value.previewBadge = `${ver.ver} ${ver.label}`
+}
+
+function m08ExportWord() {
+  const name = m08CurrentRow.value?.name || '试验大纲'
+  const chapters = m08Snap.value.chapters || []
+  const body = chapters.map((ch) => {
+    const html = String(ch.content || '').replace(/<svg[\s\S]*?<\/svg>/gi, '')
+    return `<h2>${ch.no} ${ch.title}</h2><div>${html}</div>`
+  }).join('\n')
+  const html = `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${name}</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->
+<style>
+body{font-family:SimSun,宋体,serif;font-size:12pt;line-height:1.8;color:#222}
+h1{font-size:18pt;text-align:center;color:#0d4e83}
+h2{font-size:14pt;color:#0d4e83;margin-top:1.2em;border-bottom:1px solid #ccc;padding-bottom:4px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #999;padding:6px 10px}
+</style></head><body>
+<h1>${name}</h1>
+<p>状态：${m08CurrentRow.value?.status || ''}　版本：${m08Snap.value.previewBadge || ''}　关联：${m08CurrentRow.value?.treeVer || ''}</p>
+<hr/>
+${body}
+</body></html>`
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${name}.doc`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  toast('已导出 Word 文档', 'success')
+}
+
+/** 对话轮次 → 版本条：V1 初稿；第 n 轮 → V(n+1)「n轮优化」 */
+function m08SyncVersionsFromRounds() {
+  const roundLabels = ['一轮优化', '二轮优化', '三轮优化', '四轮优化', '五轮优化', '六轮优化']
+  const rounds = m08Snap.value.rounds || []
+  const v1Time = m08Snap.value.versions?.[0]?.time || '10-04 09:11'
+  const versions = [
+    { ver: 'V1', label: '初稿', time: v1Time, final: rounds.length === 0 },
+  ]
+  rounds.forEach((r, i) => {
+    versions.push({
+      ver: `V${i + 2}`,
+      label: roundLabels[i] || `${i + 1}轮优化`,
+      time: r.time,
+      final: false,
+    })
+  })
+  versions.forEach((v, i) => { v.final = i === versions.length - 1 })
+  m08Snap.value.versions = versions
+
+  const last = versions[versions.length - 1]
+  m08Snap.value.previewBadge = `${last.ver} ${last.label}`
+  m08FocusVer.value = last.ver
+
+  const row = m08CurrentRow.value
+  if (row) {
+    row.ver = last.ver
+    row.updatedAt = nowText()
+    const base = String(row.name || '试验大纲').replace(/\s*V\d+(\.\d+)?\s*$/i, '').trim()
+    row.name = `${base} ${last.ver}`
+    row.rounds = rounds.map((r) => ({ ...r }))
+    row.versions = versions.map((v) => ({ ...v }))
+    row.doneSteps = m08Snap.value.doneSteps
+    row.factors = (m08Snap.value.factors || []).map((f) => ({ ...f }))
+  }
+}
+
+/** 草稿 → 已定稿：锁定对话/因子，版本末节点标为定稿，可走资源匹配 */
+function m08Finalize() {
+  const row = m08CurrentRow.value
+  if (!row) return
+  if (row.status === '已定稿') {
+    toast('当前方案已是定稿状态', 'warning')
+    return
+  }
+  if (row.status === '已归档') {
+    toast('归档方案不可再定稿', 'warning')
+    return
+  }
+
+  const now = new Date()
+  const time = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const vers = m08Snap.value.versions || []
+  vers.forEach((v) => { v.final = false })
+  if (vers.length) {
+    const last = vers[vers.length - 1]
+    last.label = '定稿'
+    last.time = time
+    last.final = true
+    m08FocusVer.value = last.ver
+    row.ver = last.ver
+    const base = String(row.name || '试验大纲').replace(/\s*V\d+(\.\d+)?\s*$/i, '').trim()
+    row.name = `${base} ${last.ver}`
+    m08Snap.value.previewBadge = `${last.ver} 定稿`
+  } else {
+    m08Snap.value.versions = [{ ver: 'V1', label: '定稿', time, final: true }]
+    m08Snap.value.previewBadge = 'V1 定稿'
+    row.ver = 'V1'
+  }
+
+  row.status = '已定稿'
+  row.updatedAt = nowText()
+  row.rounds = (m08Snap.value.rounds || []).map((r) => ({ ...r }))
+  row.versions = (m08Snap.value.versions || []).map((v) => ({ ...v }))
+  row.factors = (m08Snap.value.factors || []).map((f) => ({ ...f }))
+  row.doneSteps = 4
+
+  m08Snap.value.doneSteps = 4
+  m08Snap.value.chatReadonly = true
+  m08Snap.value.readonlyFactors = true
+  m08Snap.value.showMatch = true
+  m08Snap.value.factorOk = (m08Snap.value.factors?.length || 0) >= 20
+  m08Snap.value.chatHint = '定稿方案仅展示历史校核记录（生成过程中沉淀，非本页即时问答）'
+
+  toast(`「${row.name}」已定稿，可进行资源匹配`, 'success')
+}
+
+/** 已定稿 → 草稿：恢复可编辑与对话迭代，末节点改回「优化」标签 */
+function m08RevertDraft() {
+  const row = m08CurrentRow.value
+  if (!row) return
+  if (row.status !== '已定稿') {
+    toast('仅已定稿方案可回退为草稿', 'warning')
+    return
+  }
+
+  row.status = '草稿'
+  row.updatedAt = nowText()
+
+  const vers = m08Snap.value.versions || []
+  const roundLabels = ['一轮优化', '二轮优化', '三轮优化', '四轮优化', '五轮优化', '六轮优化']
+  vers.forEach((v, i) => {
+    v.final = i === vers.length - 1
+    if (i === 0) {
+      v.label = '初稿'
+    } else if (v.label === '定稿') {
+      v.label = roundLabels[i - 1] || `${i}轮优化`
+    }
+  })
+  const last = vers[vers.length - 1]
+  if (last) {
+    m08Snap.value.previewBadge = `${last.ver} ${last.label}`
+    m08FocusVer.value = last.ver
+  } else {
+    m08Snap.value.previewBadge = 'V1 草稿'
+  }
+
+  m08Snap.value.chatReadonly = false
+  m08Snap.value.readonlyFactors = false
+  m08Snap.value.showMatch = false
+  m08Snap.value.chatHint = '已回退为草稿，可继续对话优化并联动版本条；定稿前可再次点「定稿」'
+
+  row.rounds = (m08Snap.value.rounds || []).map((r) => ({ ...r }))
+  row.versions = vers.map((v) => ({ ...v }))
+  row.factors = (m08Snap.value.factors || []).map((f) => ({ ...f }))
+  row.doneSteps = m08Snap.value.doneSteps
+
+  toast(`「${row.name}」已回退为草稿，可继续迭代`, 'success')
+}
+
+function m08SendChat() {
+  if (!m08ChatCanSend.value) {
+    toast(m08Snap.value.chatHint || '当前状态不可追加对话', 'warning')
+    return
+  }
+  const text = m08ChatInput.value.trim()
+  if (!text) {
+    toast('请输入优化要求', 'warning')
+    return
+  }
+  const now = new Date()
+  const time = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const roundNo = (m08Snap.value.rounds?.length || 0) + 1
+  m08Snap.value.rounds.push({
+    time,
+    user: text,
+    bot: '已根据您的自然语言要求更新大纲草稿对应章节，并同步调整相关试验因子取值说明（演示回复）。',
+    diff: `本轮按「${text.slice(0, 24)}${text.length > 24 ? '…' : ''}」完成草稿修订，版本条已联动至 V${roundNo + 1}`,
+  })
+  m08SyncVersionsFromRounds()
+  m08ChatInput.value = ''
+  toast(`第${roundNo}轮校核完成，版本推进至 V${roundNo + 1}`, 'success')
+}
+
+function goResourceMatch() {
+  if (!m08Snap.value.showMatch) {
+    toast('请先打开已定稿方案再进行资源匹配', 'warning')
+    return
+  }
+  router.push({ name: 'app', params: { pid: 'design', sid: 'match', mid: 'rec' } })
+}
 
 
 
@@ -894,16 +2038,86 @@ const m11SelIdx = ref(0)
     m03CurrentRow,
     m03OpenDetail,
     m03SaveToStore,
+    m03SrcDocLabel,
+    m03SrcIconKind,
+    m03SrcIconText,
+    m03EditVisible,
+    m03EditForm,
+    m03CriteriaOptions,
+    m03ExamOptions,
+    m03OpenEdit,
+    m03SaveEdit,
+    m03TraceVisible,
+    m03Trace,
+    m03OpenTrace,
+    m03OpenSourceQuick,
+    m03CreateVisible,
+    m03CreateForm,
+    m03SrcOptions,
+    m03CreatePreviewCount,
+    m03DomainOptions: m02Domains,
+    m03OpenCreate,
+    m03OnSrcChange,
+    m03ToggleDomain,
+    m03SubmitCreate,
     m03Tree,
     m03SelId,
-    flatM03Nodes,
+    flatM03Nodes: m03FlatNodes,
     m03AllNodes,
     m03SelNode,
     m03Select,
     m03ExpandAll,
     m08List,
     m08DetailOpen,
+    m08CurrentRow,
+    m08Snap,
     m08OpenDetail,
+    m08CreateVisible,
+    m08CreateForm,
+    m08TreeOptions,
+    m08TemplateOptions,
+    m08CaseOptions,
+    m08TplForm,
+    m08TplSummary,
+    m08IndForm,
+    m08IndSummary,
+    m08DomainOptions: m02Domains,
+    m08FactorStepForm,
+    m08FactorStepSummary,
+    m08FactorStrategies,
+    m08FactorCatOptions,
+    m08ToggleIndDomain,
+    m08ToggleFactorCat,
+    m08ConfirmTplStep,
+    m08ConfirmStepConfig,
+    m08SaveTplCase,
+    m08OpenCreate,
+    m08SubmitCreate,
+    m08SendChat,
+    m08AddFactor,
+    m08OpenFactorDialog,
+    m08SubmitFactor,
+    m08RemoveFactor,
+    m08FactorDialog,
+    m08FactorForm,
+    m08FactorEditIdx,
+    m08FactorCats,
+    m08IsDraft,
+    m08IsFinal,
+    m08ContinueStep,
+    m08Finalize,
+    m08RevertDraft,
+    m08ClickStep,
+    m08ClickVersion,
+    m08ExportWord,
+    m08ChatInput,
+    m08ChatCanSend,
+    m08FactorCount,
+    m08FocusStep,
+    m08FocusVer,
+    m08StepDialog,
+    m08StepDialogIdx,
+    m08StepDetails,
     goResourceMatch,
     m08Steps,
     m08Factors,
