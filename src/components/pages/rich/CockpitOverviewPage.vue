@@ -24,7 +24,7 @@
             <div class="m32-platform-sub">试验鉴定领域智能体工作流</div>
             <div class="m32-platform-link">模板库 →</div>
           </div>
-          <div class="m32-platform-card" @click="router.push({ name: 'resource-library' })">
+          <div class="m32-platform-card" @click="m32Stage='resource'">
             <div class="m32-platform-icon"><Icon name="book" /></div>
             <div class="m32-platform-name">领域资源库</div>
             <div class="m32-platform-sub">试验鉴定数据资源库</div>
@@ -32,9 +32,9 @@
           </div>
         </div>
         <div style="text-align:center;margin-top:22px">
-          <button class="btn btn-outline" style="height:36px;padding:0 18px;border-color:#d7ac58;color:#a36e0c" @click="goDeviationSummary">
+          <el-button class="dev-link-btn" @click="goDeviationSummary">
             查看正偏离能力汇总（{{ deviationTotal }} 项）→
-          </button>
+          </el-button>
         </div>
       </template>
 
@@ -50,15 +50,15 @@
             <div :ref="el=>{ lossChartEl=el }" style="width:100%;height:200px"></div>
           </div>
           <div class="panel" style="padding:14px">
-            <div class="m32-chart-title">评估指标变化</div>
+            <div class="m32-chart-title">评估指标变化（准确率／召回率）</div>
             <div :ref="el=>{ evalChartEl=el }" style="width:100%;height:200px"></div>
           </div>
           <div class="panel" style="padding:14px">
-            <div class="m32-chart-title">GPU 利用率</div>
+            <div class="m32-chart-title">GPU 利用率（实时）</div>
             <div :ref="el=>{ gpuChartEl=el }" style="width:100%;height:200px"></div>
           </div>
           <div class="panel" style="padding:14px">
-            <div class="m32-chart-title">显存占用</div>
+            <div class="m32-chart-title">显存占用曲线</div>
             <div :ref="el=>{ memChartEl=el; el&&initM32TrainCharts() }" style="width:100%;height:200px"></div>
           </div>
         </div>
@@ -67,17 +67,64 @@
       <!-- ── stage: agent 智能体编排平台 ── -->
       <template v-else-if="m32Stage==='agent'">
         <div style="font-size:16px;font-weight:700;color:var(--navy-2);margin-bottom:16px">智能体模板库</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
-          <div v-for="agt in m32Agents" :key="agt.id" class="panel" style="padding:20px">
-            <div style="font-size:15px;font-weight:700;color:var(--navy-2);margin-bottom:8px">{{ agt.name }}</div>
-            <div style="font-size:12px;color:#7a8b9a;margin-bottom:4px">场景：{{ agt.scene }}</div>
-            <div style="font-size:12px;color:#7a8b9a;margin-bottom:16px">累计运行：<b style="color:var(--blue)">{{ agt.runs }}</b> 次</div>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-outline" style="font-size:12px;padding:5px 14px" @click="toast('配置功能即将开放')">配置</button>
-              <button class="btn btn-primary" style="font-size:12px;padding:5px 14px" @click="toast('运行功能即将开放')">运行</button>
+        <div class="agent-grid">
+          <div v-for="agt in m32Agents" :key="agt.id" class="panel agent-card">
+            <div class="agent-name">{{ agt.name }}</div>
+            <div class="agent-meta">场景：{{ agt.scene }}</div>
+            <div class="agent-meta">模型：{{ agt.model || 'Qwen2.5-32B' }}</div>
+            <div class="agent-meta runs">累计运行：<b>{{ agt.runs }}</b> 次</div>
+            <div class="agent-actions">
+              <el-button @click="m32OpenConfig(agt)">配置</el-button>
+              <el-button
+                type="primary"
+                :loading="m32RunningId === agt.id"
+                :disabled="!!m32RunningId && m32RunningId !== agt.id"
+                @click="m32RunAgent(agt)"
+              >{{ m32RunningId === agt.id ? '运行中' : '运行' }}</el-button>
             </div>
           </div>
         </div>
+
+        <el-dialog
+          v-model="m32CfgVisible"
+          :title="m32CfgForm.name"
+          width="560px"
+          destroy-on-close
+          align-center
+        >
+          <el-form label-width="6.5em" require-asterisk-position="right" class="agt-form">
+            <el-form-item label="适用场景">
+              <el-input :model-value="m32CfgForm.scene" disabled />
+            </el-form-item>
+            <el-form-item label="绑定模型" required>
+              <el-select v-model="m32CfgForm.model" style="width:100%">
+                <el-option label="Qwen2.5-32B" value="Qwen2.5-32B" />
+                <el-option label="Qwen2.5-14B" value="Qwen2.5-14B" />
+                <el-option label="DeepSeek-V3" value="DeepSeek-V3" />
+                <el-option label="GLM-4" value="GLM-4" />
+                <el-option label="Doubao-pro" value="Doubao-pro" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="温度" required>
+              <el-input-number v-model="m32CfgForm.temperature" :min="0" :max="1" :step="0.05" :precision="2" controls-position="right" style="width:100%" />
+            </el-form-item>
+            <el-form-item label="Top P" required>
+              <el-input-number v-model="m32CfgForm.topP" :min="0" :max="1" :step="0.05" :precision="2" controls-position="right" style="width:100%" />
+            </el-form-item>
+            <el-form-item label="系统提示" required>
+              <el-input v-model="m32CfgForm.prompt" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }" placeholder="请输入系统提示词" />
+            </el-form-item>
+            <el-form-item label="工具能力">
+              <el-input v-model="m32CfgForm.tools" type="textarea" :autosize="{ minRows: 2, maxRows: 4 }" placeholder="工具/插件说明" />
+            </el-form-item>
+          </el-form>
+          <template #footer>
+            <div class="dlg-actions">
+              <el-button @click="m32CfgVisible = false">取消</el-button>
+              <el-button type="primary" :loading="m32CfgSaving" @click="m32SaveConfig">保存配置</el-button>
+            </div>
+          </template>
+        </el-dialog>
       </template>
 
       <!-- ── stage: resource 领域资源库 ── -->
@@ -99,7 +146,6 @@
 </template>
 
 <script>
-import { useRouter } from 'vue-router'
 import { useRichPage } from '@/composables/rich/useRichPage'
 import Icon from '@/components/Icon.vue'
 
@@ -107,7 +153,70 @@ export default {
   components: { Icon },
   props: { page: Object, title: String },
   setup(props) {
-    return { ...useRichPage(props), router: useRouter() }
+    return useRichPage(props)
   },
 }
 </script>
+
+<style scoped>
+.dev-link-btn {
+  height: 36px;
+  border-color: #efd291 !important;
+  color: #a36e0c !important;
+  background: #fff !important;
+}
+.dev-link-btn:hover {
+  background: #fffaf0 !important;
+  border-color: #d0ab68 !important;
+  color: #8a6000 !important;
+}
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.agent-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 188px;
+  background: #fff;
+}
+.agent-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy-2);
+  margin-bottom: 8px;
+}
+.agent-meta {
+  font-size: 12px;
+  color: #7a8b9a;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+.agent-meta.runs { margin-bottom: 16px; }
+.agent-meta.runs b { color: var(--blue); }
+.agent-actions {
+  margin-top: auto;
+  display: flex;
+  gap: 8px;
+}
+.agent-actions :deep(.el-button + .el-button) { margin-left: 0; }
+.agent-actions :deep(.el-button--primary),
+.agent-actions :deep(.el-button--primary > span) { color: #fff !important; }
+.dlg-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.dlg-actions :deep(.el-button + .el-button) { margin-left: 0; }
+.dlg-actions :deep(.el-button--primary),
+.dlg-actions :deep(.el-button--primary > span) { color: #fff !important; }
+.agt-form :deep(.el-form-item__label) {
+  justify-content: flex-start;
+  text-align: left;
+  white-space: nowrap;
+  line-height: 32px;
+  height: auto;
+}
+</style>

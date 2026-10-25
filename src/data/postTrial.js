@@ -12,9 +12,9 @@ export const postTrialState = reactive({
 })
 
 export const postTrialMaterials = [
-  { id: 'rule', name: '指标树判据', meta: '指标树 V1.0 · 28 项', source: '试验指标树', status: '已关联', tone: 'blue' },
-  { id: 'data', name: '试验数据汇总表', meta: '30 发原始数据 + 1 组复测数据', source: '试验数据智能分析系统', status: '已汇集', tone: 'blue' },
-  { id: 'event', name: '第19发异常解读报告', meta: '温补失效根因 · 温补校准后复测', source: '探针平台', status: '已引用', tone: 'gold' },
+  { id: 'rule', name: '指标树判据', meta: '指标树 V1.0 · 28 项', source: '试验指标树（Part1）', status: '已关联', tone: 'blue' },
+  { id: 'data', name: '精度试验数据汇总', meta: 'D-07 · 30 发回传 + 1 组复测', source: '精度试验数据回传接入 T01', status: '已汇集', tone: 'blue' },
+  { id: 'event', name: '第19发超差事件解读报告', meta: '温补失效根因 · 温补校准后复测', source: '探针设计与智能定位平台', status: '已引用', tone: 'blue' },
 ]
 
 export const postTrialOutline = [
@@ -22,9 +22,9 @@ export const postTrialOutline = [
   { no: '2', name: '试验依据', source: '指标树 V1.0', children: ['引用标准', '判定规则', '版本说明'] },
   { no: '3', name: '试验条件', source: '数据汇总表', children: ['环境条件', '设备与保障', '人员分工'] },
   { no: '4', name: '试验实施', source: '试验记录', children: ['样本与工况', '实施过程', '数据质量'] },
-  { no: '5', name: '试验结果', source: '数据汇总表', children: ['原始结果', '统计结果', '图表汇总'] },
-  { no: '6', name: '符合性判定', source: '指标树 + 汇总表', children: ['28项指标判定', '复测结论', '判据引用'] },
-  { no: '7', name: '异常事件与处置', source: '第19发异常解读报告', children: ['异常现象', '根因定位', '校准与复测'] },
+  { no: '5', name: '试验结果', source: '精度试验数据回传 T01', children: ['原始结果', '统计结果', '图表汇总'] },
+  { no: '6', name: '符合性判定', source: '指标树 + D-07 汇总', children: ['28项指标判定', '复测结论', '判据引用'] },
+  { no: '7', name: '异常事件与处置', source: '第19发超差事件解读报告', children: ['超差现象', '根因定位', '校准与复测'] },
   { no: '8', name: '结论与建议', source: '自动装配', children: ['鉴定结论', '遗留事项', '后续建议'] },
 ]
 
@@ -66,11 +66,14 @@ export const postTrialMetrics = metricNames.map((item, index) => ({
   value: item[2],
   conclusion: index === 18 ? '复测后符合' : '符合',
   source: '指标树 V1.0',
-  event: index === 18 ? '关联第19发事件' : '',
+  event: index === 18 ? '关联第19发超差事件 EVT-001' : '',
+  // 立靶高低偏差：实测值由 Part2 shots30 / 复测闭环写入，页面侧可覆盖
+  linkedShot: index === 18 ? 19 : null,
 }))
 
 export const reviewTasks = [
-  { id: 'review-v1', name: '试验报告V1审查', target: '某型性能鉴定试验报告 V1', rules: '鉴定报告综合审查规则集 V2.4', issues: 7, status: '已完成', time: '2026-10-22 15:46' },
+  // name/target 由 PostTrial 按 demo-store.draftReport 动态覆盖，保证与生成报告名联动
+  { id: 'review-v1', name: '某型性能鉴定试验报告V1审查', target: '某型性能鉴定试验报告 V1', rules: '鉴定报告综合审查规则集 V2.4', issues: 7, status: '已完成', time: '2026-10-22 15:46' },
   { id: 'review-outline', name: '试验提纲一致性复核', target: '性能试验提纲 V4', rules: '提纲完整性规则集 V1.8', issues: 2, status: '已完成', time: '2026-10-21 17:20' },
   { id: 'review-record', name: '原始记录规范性检查', target: '第1～30发原始记录', rules: '记录表规范规则集 V1.3', issues: 4, status: '待复核', time: '2026-10-22 14:08' },
 ]
@@ -87,6 +90,6 @@ export const reviewIssues = reactive([
 
 export const archiveRows = reactive([
   { id: 'RPT-2026-1022-001', name: '试验报告V2（定稿）', type: '性能鉴定试验报告', secret: '内部', version: 'V2', time: '2026-10-22 16:38', status: '已入库', owner: '试验鉴定一室', source: '试验报告V1审查任务' },
-  { id: 'OUT-2026-1018-006', name: '性能试验提纲V4', type: '试验提纲', secret: '内部', version: 'V4', time: '2026-10-18 09:30', status: '已入库', owner: '试验鉴定一室', source: '试验设计阶段' },
-  { id: 'ANA-2026-1022-019', name: '第19发异常解读报告', type: '异常分析报告', secret: '内部', version: 'V1.1', time: '2026-10-22 11:12', status: '已入库', owner: '数据分析组', source: '探针平台' },
+  { id: 'OUT-2026-1018-006', name: '性能试验提纲V4', type: '试验提纲', secret: '内部', version: 'V4', time: '2026-10-18 09:30', status: '已入库', owner: '试验鉴定一室', source: '试验设计阶段 · 大纲定稿' },
+  { id: 'RPT-001', name: '第19发超差事件解读报告', type: '异常分析报告', secret: '内部', version: 'V1.1', time: '2026-10-22 11:12', status: '已入库', owner: '数据分析组', source: '探针设计与智能定位平台' },
 ])

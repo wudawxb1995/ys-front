@@ -73,14 +73,13 @@
       <main class="main">
         <div class="crumb">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20H4z"/></svg>
-          <template v-if="groupName !== menu.name">
-            <span>{{ groupName }}</span>
+          <template v-if="crumbParent">
+            <span>{{ crumbParent }}</span>
             <span class="sep">/</span>
           </template>
           <span class="current">{{ menu.name }}</span>
         </div>
-        <nav v-if="platform.id === 'doc' && chainIndex >= 0" class="demo-chain" aria-label="录屏链路">
-          <span>录屏链路</span>
+        <nav v-if="platform.id === 'doc' && chainIndex >= 0" class="demo-chain" aria-label="报告流程">
           <button
             v-for="(step, index) in docChain"
             :key="step.mid"
@@ -117,14 +116,24 @@ const located = computed(() => {
 const platform = computed(() => located.value.platform)
 const system = computed(() => located.value.system)
 const menu = computed(() => located.value.menu)
-const groupName = computed(() => located.value.groupName || menu.value?.name || '')
+/** 叶子挂在分组下时始终展示分组名（允许同名：技术研判报告生成/技术研判报告生成） */
+const crumbParent = computed(() => {
+  const group = located.value.groupName || ''
+  const current = menu.value?.name || ''
+  if (!group) return ''
+  const underGroup = system.value?.menus?.some(
+    (m) => m.children?.some((c) => c.id === menu.value?.id),
+  )
+  if (underGroup) return group
+  return group !== current ? group : ''
+})
 const docChain = [
-  { label: '报告生成', sid: 'write', mid: 'draft' },
+  { label: '报告生成', sid: 'write', mid: 'generate-requirement' },
   { label: '智能审查', sid: 'review', mid: 'run' },
   { label: '定稿归集', sid: 'collect', mid: 'document-type-archive' },
 ]
 const demoEntry = {
-  'knowledge-generate': 'draft',
+  'knowledge-generate': 'generate-requirement',
   'strategy-review': 'run',
   'doc-collect': 'document-type-archive',
 }
@@ -134,7 +143,7 @@ const chainIndex = computed(() => {
   const index = docChain.findIndex((step) => step.sid === sid && step.mid === mid)
   if (index >= 0) return index
   if (sid === 'review' && mid === 'issues') return 1
-  if (sid === 'write' && (mid === 'outline' || mid === 'trace')) return 0
+  if (sid === 'write' && (mid === 'outline' || mid === 'trace' || mid === 'draft' || mid === 'generate-requirement')) return 0
   return -1
 })
 

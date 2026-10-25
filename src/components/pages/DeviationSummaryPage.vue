@@ -79,12 +79,19 @@ function mark(item) {
 </script>
 
 <style scoped>
-.dev-page { min-width: 960px; color: #2f465b; }
+.dev-page {
+  min-width: 960px;
+  color: #2f465b;
+  background: #fff;
+  border: 1px solid var(--line, #e0eaf3);
+  border-radius: 12px;
+  padding: 20px 22px 24px;
+  box-shadow: 0 6px 18px rgba(15, 55, 95, .04);
+}
 .dev-hero {
-  background: #fff; border: 1px solid #e0eaf3; border-radius: 9px;
+  background: #f7fbfe; border: 1px solid #e0eaf3; border-radius: 9px;
   padding: 18px 22px; margin-bottom: 14px;
   display: flex; align-items: center; justify-content: space-between; gap: 24px;
-  box-shadow: 0 5px 16px rgba(18, 61, 96, .04);
 }
 .eyebrow {
   display: inline-flex; color: #a36e0c; background: #fff5dc; border: 1px solid #efd291;

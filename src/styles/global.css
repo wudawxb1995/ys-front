@@ -65,13 +65,13 @@ button { cursor: pointer; }
 .app-shell.doc-platform .page-head,
 .app-shell.doc-platform .post-head { display: none; }
 .app-shell.doc-platform .main { padding: 0 26px 20px; background: #f1f7fc; }
-.app-shell.doc-platform .crumb { padding: 14px 2px 12px; font-size: 13px; }
+.app-shell.doc-platform .crumb { padding: 14px 2px 24px; font-size: 13px; }
 .demo-chain {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 12px;
-  padding: 8px 10px;
+  margin: 0 0 28px;
+  padding: 16px 12px;
   background: #fff;
   border: 1px solid #e0eaf3;
   border-radius: 8px;
@@ -975,12 +975,18 @@ select:focus-visible {
   gap: 12px; padding: 14px 16px;
 }
 .m29-cell {
-  background: #fff; border: 1px solid var(--line); border-radius: 8px;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px;
   padding: 14px 16px;
+  box-shadow: 0 1px 0 rgba(15, 55, 95, .03);
 }
 .m29-cell-title {
+  display: flex; align-items: center; gap: 8px;
   font-size: 13px; font-weight: 700; color: var(--navy-2);
   margin-bottom: 8px;
+}
+.m29-cell-title i {
+  width: 4px; height: 14px; border-radius: 2px;
+  background: var(--blue); flex: 0 0 auto;
 }
 .m29-cell-body {
   font-size: 13px; line-height: 1.85; color: #3f5062;
@@ -1004,15 +1010,24 @@ select:focus-visible {
 
 /* ── M31 章节导航 ── */
 .m31-nav-item {
+  display: flex; align-items: flex-start; gap: 8px;
   padding: 10px 14px; font-size: 13.5px; color: #3f5062;
   cursor: pointer; border-left: 3px solid transparent;
   transition: background .13s, color .13s;
+  line-height: 1.45;
 }
 .m31-nav-item:hover { background: #f5f9fd; }
 .m31-nav-item.on {
   background: #e9f5fe; color: var(--blue); font-weight: 600;
   border-left-color: var(--gold);
 }
+.m31-nav-no {
+  flex: 0 0 22px; width: 22px; height: 22px; margin-top: 1px;
+  border-radius: 6px; display: grid; place-items: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+  background: #5b8fbe;
+}
+.m31-nav-item.on .m31-nav-no { background: var(--blue); }
 
 /* ── M31 研判模板卡片 ── */
 .m31-tpl-card {
@@ -1090,12 +1105,23 @@ select:focus-visible {
   display: flex; align-items: center;
 }
 
+/* ── M32 管理端总览（白底内容卡，与应用端页面对齐） ── */
+.rich-type-m32 {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 22px 24px 28px;
+  box-shadow: 0 6px 18px rgba(15, 55, 95, .04);
+  min-width: 0;
+}
+
 /* ── M32 管理端底座平台卡片 ── */
 .m32-platform-card {
   background: #fff; border: 1px solid var(--line); border-radius: 14px;
   padding: 28px 24px; text-align: center; cursor: pointer;
   transition: transform .18s, box-shadow .18s, border-color .18s;
   display: flex; flex-direction: column; align-items: center; gap: 8px;
+  box-shadow: 0 4px 14px rgba(15, 55, 95, .04);
 }
 .m32-platform-card:hover {
   transform: translateY(-4px);

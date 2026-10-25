@@ -180,9 +180,22 @@ alwaysApply: false
 
 ### P. 试验后文书（PostTrial / post-trial）
 - 文档平台顶栏：某型装备试验文档设计系统、领域文档核文勘误与逻辑审查系统、某型装备领域文档归集系统、试验评审报告智能生成系统
-- 镜头一：知识驱动文档生成 = 白底卡片 + 虚线框；四步用 `el-steps`（完成态鉴定蓝）；三张素材卡 16px 间距、12px 圆角；提纲虚线框 +「生成初稿」即时进入报告预览（28 项判定、复测后符合、溯源徽标、V1 版本条）
-- 镜头二：多策略融合智能审查任务列表（试验报告V1审查 意见 7 / 已完成）→ 审查结果三类分组可定位高亮 → 文档归集列表首行「试验报告V2（定稿）」已入库
+- **Part2→Part3 贯通**（`demo-store`）：经「文档生成需求配置」勾选 `composeSelection` 后进入内容生成；可选池对齐 `trialDataDock` / `confirmedRootCause` / `reportArchived`；勿在内容生成页硬贴「跨系统贯通」条；事件号 EVT-001
+- **生成→审查名称联动**：`markDraftReportGenerated` 写入 `draftReport`（全名 `某型性能鉴定试验报告 V1（初稿）`，审查对象 `某型性能鉴定试验报告 V1`）；审查任务首行 name/target 必须跟 `draftReport`，禁止写死「试验报告V1审查」而与生成页不一致
+- 镜头一：需求配置勾选三类素材 → 内容生成展示已选 →「生成初稿」进预览（28 项判定、复测后符合、溯源徽标、V1 版本条）
+- 镜头二：多策略融合智能审查任务列表（首行审查对象=刚生成的报告名，意见 7）→ 审查结果三类分组可定位高亮 → 文档归集列表首行「试验报告V2（定稿）」已入库
+- **视觉对齐 Part1/2**：外层 `.post-trial-shell` 白底实线壳（同探针详情）；内段 `.sec-frame` 虚线框（同 `m14-dash`）；禁止大面积黄/金装饰（推荐标签用 primary 蓝，来源 pill / 建议框用蓝灰）
+- **表样式统一**：判定/溯源/审查/归集表共用 `.metric-ep`；状态用 `.badge.on|warn|hold`；操作列 `.ops button` 蓝字文字链；禁止行底黄高亮、禁止操作胶囊 `source-tag`
 - EP：`el-button` / `el-input` / `el-select` / `el-table`；虚线框标题在框内；并排按钮 `gap: 8px`
+
+### Q. 创新点抽取 / 技术体系图谱（InnovationExtract m29 · TechSystemGraph m30）
+- 菜单叶子名必须是「技术创新点抽取」（禁止「识别」）；统计条文案「抽取技术创新点」58 个
+- 整页白底壳（同 m31）；列表区用 `.crud-body`，筛选与表格之间**无分隔线**
+- 结果表与 CrudPage 同构：普通 `<table>` + `.table-inner` + 外侧 `.pager`；操作列 `.ops a` 蓝字「展开/收起」；**默认全部收起**；四要素标题左蓝竖条 + `ref-tag`
+- 来源文献指认句：归档后固定「3篇（含本次试验报告V2）」，跟 `demo-store.trialReportV2Archived`
+- 图谱页：左右 `sec-frame` 定高占满视口；左侧三级树含领域根 + 6 二级；右侧用 **AntV G6**（`@antv/g6`）渲染，勿再退回 ECharts graph
+- G6：标签在圆外（`labelPlacement` + 白底）+ `auto-adapt-label` 避让；选中二级展开三级；仅「定位定向」挂麦金案例矩形节点；拖拽/缩放/复位；辉光 `halo` + `shadowBlur`
+- 默认视图：`focusElement(hub)` + `zoomTo(0.9)` + `translateBy(-18%w, +2%h)` 图谱偏左右侧留白，**勿 fitView 全图**；案例框外推右移防压盖；圆外标签偏左右（避免 bottom 被裁切），`labelOffset` 约 14px
 
 ## 3. 接线
 

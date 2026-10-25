@@ -57,7 +57,7 @@ export function insightSystems() {
           ],
         )),
         g('ext-g', '技术创新点智能抽取', 'spark', [
-          leaf('points', '技术创新点识别', {
+          leaf('points', '技术创新点抽取', {
             type: 'm29',
             desc: '从326篇科技文献（含归档试验报告V2）中抽取58个技术创新点，每个创新点含四要素及原文页码溯源。',
           }),
@@ -217,7 +217,7 @@ export function insightSystems() {
             ['rec-smart', '报告模板智能推荐'],
           ],
         )),
-        g('rpt-g', '技术研判报告自动生成', 'report', reuse(
+        g('rpt-g', '技术研判报告生成', 'report', reuse(
           { type: 'm31', desc: '三栏布局（模板+对象+报告列表），报告预览页含ECharts图表与麦金色高亮建议块。' },
           [
             ['rpt-data', '研判核心数据获取'],

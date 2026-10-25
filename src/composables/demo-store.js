@@ -4,10 +4,15 @@
  *
  * 串联点一览：
  *  Part1 → Part3 : 指标树版本（metricTreeVersion）、条目数（metricTreeCount）
- *  Part2 → Part3 : 根因采纳（confirmedRootCause）、解读报告归档（reportArchived）
+ *  Part1 → Part3 : 定稿大纲上下文（matchContext → 提纲 V4）
+ *  Part2 → Part3 : 精度数据回传（trialDataDock / T01 · D-07 · 30发）
+ *  Part2 → Part3 : 根因采纳（confirmedRootCause / 第19发超差事件）
+ *  Part2 → Part3 : 解读报告归档（reportArchived）
  *  Part2 → Part3 : 在用探针数（activeProbeCount）
  *  Part3 → Part4 : 试验报告V2归档（trialReportV2Archived）
  *  Part3 → Part4 : 归档时间（trialReportArchivedAt）
+ *  Part4 m30 → m31 : 图谱浏览方向（graphBrowseDirection）驱动研判对象与模板推荐
+ *  Part4 m31       : 已生成研判报告列表（judgeGeneratedReports）
  */
 
 import { reactive, watch } from 'vue'
@@ -68,6 +73,26 @@ const DEFAULTS = {
   // Part2 — 探针平台
   activeProbeCount: 12,  // 12个探针全部启用
 
+  // Part2 — 精度试验数据回传（对接任务 T01 / D-07），Part3 素材卡与判定表引用
+  trialDataDock: {
+    taskId: 'T01',
+    taskName: '精度试验数据回传接入',
+    batch: 'D-07',
+    shotCount: 30,
+    status: '成功',
+    dockedAt: '2024-10-18 14:30',
+    srcType: '弹道测量+遥测文件',
+    // 第19发首测超差 + 温补校准后复测（与 shots30 / 解读报告一致）
+    shot19: {
+      shotNo: 19,
+      firstDh: 0.42,
+      retestDh: 0.18,
+      criterion: 0.30,
+      unit: 'mil',
+      conclusion: '复测后符合',
+    },
+  },
+
   // Part2 — 根因分析（m19）：用户点击"采纳根因"后写入
   confirmedRootCause: {
     name: '定位定向系统温补失效',
@@ -83,10 +108,35 @@ const DEFAULTS = {
     id: 'RPT-001',
     title: '第19发超差事件解读报告',
     version: 'V1.1',
-    source: '探针平台',
+    source: '探针设计与智能定位平台',
     archivedAt: '2026-10-22 11:12',
     rootCause: '定位定向系统温补失效',
     retest: '复测值 0.18 mil，符合 ≤0.30 mil',
+    eventId: 'EVT-001',
+    eventName: '第19发超差事件',
+  },
+
+  // Part3 — 文档生成需求配置：默认勾选推荐素材（未确认前内容生成页不可装配）
+  composeSelection: {
+    ruleId: 'tree-v1',
+    dataId: 'dock-t01',
+    eventId: 'rpt-001',
+    /** 用户自拟的报告题名（不含版本后缀） */
+    reportTitle: '某型性能鉴定试验报告',
+    confirmed: false,
+  },
+
+  // Part3 — 生成初稿后的报告身份（审查任务「审查对象」与之联动）
+  draftReport: {
+    title: '某型性能鉴定试验报告',
+    version: 'V1',
+    stage: '初稿',
+    /** 完整显示名，如 某型性能鉴定试验报告 V1（初稿） */
+    fullName: '某型性能鉴定试验报告 V1（初稿）',
+    /** 审查对象短名，如 某型性能鉴定试验报告 V1 */
+    reviewTarget: '某型性能鉴定试验报告 V1',
+    generated: false,
+    generatedAt: '',
   },
 
   // Part3 — 试验报告定稿归集后写入（finalizeArchive 调用时）
@@ -96,6 +146,23 @@ const DEFAULTS = {
   // Part4 — 研判平台使用（从 Part3 归档结论派生）
   judgeInputReportTitle: '某型性能鉴定试验报告 V2',
   judgeInputArchivedAt: '2026-10-22 16:38',
+
+  /** 图谱浏览当前技术方向（m30 写入，m31 研判对象自动带入） */
+  graphBrowseDirection: '定位定向技术',
+  /** 图谱当前聚焦的三级子节点（可选） */
+  graphBrowseSub: '',
+  /** 已生成的研判报告（m31 生成写入；预置一条供分镜） */
+  judgeGeneratedReports: [
+    {
+      id: 'RPT-J001',
+      title: '定位定向技术发展方向研判报告',
+      direction: '定位定向技术',
+      time: '2024-10-18',
+      status: '已生成',
+      statusClass: 'on',
+      tplId: 'TPL-01',
+    },
+  ],
 
   // 演示指认缓存（sessionStorage）
   lastM02Task: '',
@@ -236,25 +303,120 @@ export function confirmRootCause(candidate, event) {
  * @param {object} report  报告行对象
  */
 export function archiveInterpretReport(report) {
+  const cause = store.confirmedRootCause || {}
+  const shot = store.trialDataDock?.shot19
+  const retest = shot
+    ? `复测值 ${shot.retestDh} ${shot.unit}，符合 ≤${shot.criterion} ${shot.unit}`
+    : '复测值 0.18 mil，符合 ≤0.30 mil'
   store.reportArchived = {
     id: report.id,
-    title: report.title,
+    title: report.title || '第19发超差事件解读报告',
     version: 'V1.1',
-    source: '探针平台',
+    source: '探针设计与智能定位平台',
     archivedAt: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'),
-    rootCause: store.confirmedRootCause?.name || '定位定向系统温补失效',
-    retest: '复测值 0.18 mil，符合 ≤0.30 mil',
+    rootCause: cause.name || '定位定向系统温补失效',
+    retest,
+    eventId: cause.eventId || 'EVT-001',
+    eventName: cause.eventName || report.event || '第19发超差事件',
   }
+}
+
+/**
+ * Part2 数据对接成功后刷新 Part3 可引用的回传摘要（演示默认已写入）
+ */
+export function syncTrialDataDock(task) {
+  if (!task) return
+  store.trialDataDock = {
+    ...store.trialDataDock,
+    taskId: task.id || store.trialDataDock.taskId,
+    taskName: task.name || store.trialDataDock.taskName,
+    shotCount: Number(String(task.count || '').replace(/\D/g, '')) || store.trialDataDock.shotCount,
+    status: task.status || store.trialDataDock.status,
+    dockedAt: task.time || store.trialDataDock.dockedAt,
+    srcType: task.srcType || store.trialDataDock.srcType,
+  }
+}
+
+const DEFAULT_REPORT_TITLE = '某型性能鉴定试验报告'
+
+function normalizeReportTitle(title) {
+  const t = String(title || '').trim().replace(/\s+/g, '')
+  return t || DEFAULT_REPORT_TITLE
+}
+
+/**
+ * Part3：文档生成需求配置 — 确认选用的素材与报告命名后进入内容生成
+ * @param {{ ruleId: string, dataId: string, eventId: string, reportTitle?: string }} sel
+ */
+export function confirmComposeSelection(sel) {
+  const reportTitle = normalizeReportTitle(sel?.reportTitle || store.composeSelection?.reportTitle)
+  store.composeSelection = {
+    ruleId: sel?.ruleId || '',
+    dataId: sel?.dataId || '',
+    eventId: sel?.eventId || '',
+    reportTitle,
+    confirmed: Boolean(sel?.ruleId && sel?.dataId && sel?.eventId),
+  }
+  // 预写入题名（尚未生成版本），审查页在生成前也能看到拟定名称
+  store.draftReport = {
+    ...store.draftReport,
+    title: reportTitle,
+    version: 'V1',
+    stage: '初稿',
+    fullName: `${reportTitle} V1（初稿）`,
+    reviewTarget: `${reportTitle} V1`,
+    generated: false,
+    generatedAt: '',
+  }
+}
+
+/**
+ * Part3：生成初稿 — 按需求配置中的题名落版本，供审查任务「审查对象」联动
+ */
+export function markDraftReportGenerated() {
+  const at = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
+  const title = normalizeReportTitle(store.composeSelection?.reportTitle || store.draftReport?.title)
+  store.draftReport = {
+    title,
+    version: 'V1',
+    stage: '初稿',
+    fullName: `${title} V1（初稿）`,
+    reviewTarget: `${title} V1`,
+    generated: true,
+    generatedAt: at,
+  }
+  // 新生成 V1 后，定稿归档标记回到未定稿（演示闭环）
+  store.trialReportV2Archived = false
+  store.trialReportArchivedAt = ''
+}
+
+/**
+ * Part4 m30：图谱浏览方向同步（供 m31 自动带入研判对象）
+ */
+export function setGraphBrowse(direction, sub = '') {
+  store.graphBrowseDirection = direction || '定位定向技术'
+  store.graphBrowseSub = sub || ''
 }
 
 /**
  * Part3：定稿归集（finalizeArchive 时调用）
  */
 export function finalizeTrialReport() {
+  const at = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
+  const title = normalizeReportTitle(store.draftReport?.title || store.composeSelection?.reportTitle)
   store.trialReportV2Archived = true
-  store.trialReportArchivedAt = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
-  store.judgeInputReportTitle = '某型性能鉴定试验报告 V2'
-  store.judgeInputArchivedAt = store.trialReportArchivedAt
+  store.trialReportArchivedAt = at
+  store.draftReport = {
+    title,
+    version: 'V2',
+    stage: '定稿',
+    fullName: `${title} V2（定稿）`,
+    reviewTarget: `${title} V2`,
+    generated: true,
+    generatedAt: store.draftReport?.generatedAt || at,
+  }
+  store.judgeInputReportTitle = `${title} V2`
+  store.judgeInputArchivedAt = at
 }
 
 /**
@@ -278,6 +440,15 @@ export function resetDemoStore() {
     m08List: M08_LIST_SEED.map((r) => ({ ...r })),
     deviationViewedIds: [],
     matchContext: { ...DEFAULTS.matchContext },
+    trialDataDock: {
+      ...DEFAULTS.trialDataDock,
+      shot19: { ...DEFAULTS.trialDataDock.shot19 },
+    },
+    confirmedRootCause: { ...DEFAULTS.confirmedRootCause },
+    reportArchived: { ...DEFAULTS.reportArchived },
+    composeSelection: { ...DEFAULTS.composeSelection },
+    draftReport: { ...DEFAULTS.draftReport },
+    judgeGeneratedReports: DEFAULTS.judgeGeneratedReports.map((r) => ({ ...r })),
   })
   sessionStorage.removeItem(STORAGE_KEY)
 }

@@ -8,15 +8,33 @@
         <!-- 顶部标题行 + 操作按钮 -->
         <div class="preview-head">
           <div class="preview-crumb">
-            <span class="back-link" @click="m31Detail=null;m31ResetCharts()">← 返回</span>
+            <span class="back-link" @click="m31Editing=false;m31Detail=null;m31ResetCharts()">← 返回</span>
             <span class="sep">|</span>
             <span class="preview-title">{{ m31Detail.title }}</span>
           </div>
           <div class="preview-actions">
-            <el-button @click="toast('在线编辑功能即将开放')">在线编辑</el-button>
-            <el-button type="primary" @click="toast('正在导出…')">导出</el-button>
+            <template v-if="m31Editing">
+              <el-button @click="m31CancelEdit">取消</el-button>
+              <el-button type="primary" @click="m31FinishEdit">完成编辑</el-button>
+            </template>
+            <template v-else>
+              <el-button @click="m31StartEdit">在线编辑</el-button>
+              <el-dropdown trigger="click" @command="m31Export">
+                <el-button type="primary">
+                  导出
+                  <span class="export-caret">▾</span>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="word">导出 Word</el-dropdown-item>
+                    <el-dropdown-item command="pdf">导出 PDF</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </template>
           </div>
         </div>
+        <div v-if="m31Editing" class="edit-banner">当前为在线编辑模式，可直接修改各节正文，完成后点击「完成编辑」保存。</div>
 
         <!-- 双栏：左侧章节导航 + 右侧正文 -->
         <div style="display:grid;grid-template-columns:170px 1fr;gap:14px;align-items:start">
@@ -27,7 +45,7 @@
             <div v-for="sec in m31Sections" :key="sec.no"
               class="m31-nav-item" :class="{on: activeReportSection===sec.no}"
               @click="m31GoSection(sec.no)">
-              <span style="font-size:11px;color:inherit;margin-right:6px;opacity:.6">0{{ sec.no }}</span>{{ sec.title }}
+              <span class="m31-nav-no">{{ sec.no }}</span>{{ sec.title }}
             </div>
             <!-- 状态信息 -->
             <div style="margin:14px 14px 4px;padding-top:12px;border-top:1px solid var(--line)">
@@ -51,8 +69,23 @@
                 <h3 class="report-section-title" style="margin-bottom:0">技术现状综述</h3>
               </div>
               <template v-if="activeReportSection===1">
-                <p class="report-body" style="margin-top:14px">定位定向技术是现代精确制导武器系统和试验鉴定领域的核心支撑技术之一。近年来，随着对精度要求的持续提高，定位定向技术在温度补偿、初始对准、误差建模等方面取得了一系列进展。本报告基于收录的326篇科技文献（含{{ demoStore.judgeInputReportTitle || '试验报告V2' }}，{{ demoStore.judgeInputArchivedAt ? demoStore.judgeInputArchivedAt.slice(0,10)+'归档' : '已归档' }}），系统分析定位定向技术方向创新点的现状与趋势。</p>
-                <p class="report-body">当前该方向共收录创新点12个，覆盖温补技术、定向精度校准、初始对准三个三级方向。其中温补技术方向在近2年产出了5个创新点，是当前研究最活跃的子方向，与本次试验第19发超差事件的根因直接相关。</p>
+                <el-input
+                  v-if="m31Editing"
+                  v-model="m31Draft.s1p1"
+                  type="textarea"
+                  :autosize="{ minRows: 3, maxRows: 10 }"
+                  class="edit-area"
+                  style="margin-top:14px"
+                />
+                <p v-else class="report-body" style="margin-top:14px">{{ m31Draft.s1p1 }}</p>
+                <el-input
+                  v-if="m31Editing"
+                  v-model="m31Draft.s1p2"
+                  type="textarea"
+                  :autosize="{ minRows: 2, maxRows: 8 }"
+                  class="edit-area"
+                />
+                <p v-else class="report-body">{{ m31Draft.s1p2 }}</p>
                 <div style="margin-top:14px;background:#f5f9fd;border-radius:8px;padding:12px 14px">
                   <div style="font-size:12px;font-weight:600;color:#7a8b9a;margin-bottom:8px">主要参考文献（6篇）</div>
                   <div style="font-size:12.5px;color:#4a5a6a;line-height:2">
@@ -75,7 +108,15 @@
                 <h3 class="report-section-title" style="margin-bottom:0">创新点分布分析</h3>
               </div>
               <template v-if="activeReportSection===2">
-                <p class="report-body" style="margin-top:14px">58个技术创新点按6个技术方向分布如下图所示，其中<b style="color:var(--blue)">定位定向技术</b>方向创新点数量最多（12个），与本次试验异常事件直接相关。</p>
+                <el-input
+                  v-if="m31Editing"
+                  v-model="m31Draft.s2p1"
+                  type="textarea"
+                  :autosize="{ minRows: 2, maxRows: 6 }"
+                  class="edit-area"
+                  style="margin-top:14px"
+                />
+                <p v-else class="report-body" style="margin-top:14px">{{ m31Draft.s2p1 }}</p>
                 <!-- 两栏：左柱状图 + 右技术体系子图 -->
                 <div style="display:grid;grid-template-columns:1fr 220px;gap:16px;margin:14px 0">
                   <div>
@@ -149,9 +190,24 @@
                 <h3 class="report-section-title" style="margin-bottom:0">技术发展趋势研判</h3>
               </div>
               <template v-if="activeReportSection===3">
-                <p class="report-body" style="margin-top:14px">近5年技术创新点数量呈持续上升趋势，年均增长约2.5个，表明该领域研究热度持续攀升。</p>
+                <el-input
+                  v-if="m31Editing"
+                  v-model="m31Draft.s3p1"
+                  type="textarea"
+                  :autosize="{ minRows: 2, maxRows: 6 }"
+                  class="edit-area"
+                  style="margin-top:14px"
+                />
+                <p v-else class="report-body" style="margin-top:14px">{{ m31Draft.s3p1 }}</p>
                 <div ref="trendLineEl" style="width:100%;height:220px;margin:12px 0 16px"></div>
-                <p class="report-body">从发展脉络看，<b>2020—2022年</b>以基础算法创新为主（误差建模、温补系数优化）；<b>2023—2024年</b>工程化应用创新比例显著提升，温补技术与自校准算法融合成为热点方向。预计2025年该方向将持续保持6—8个新增创新点的增速。</p>
+                <el-input
+                  v-if="m31Editing"
+                  v-model="m31Draft.s3p2"
+                  type="textarea"
+                  :autosize="{ minRows: 2, maxRows: 8 }"
+                  class="edit-area"
+                />
+                <p v-else class="report-body">{{ m31Draft.s3p2 }}</p>
               </template>
               <p v-else class="report-body" style="margin-top:10px;color:#8a99a8;font-size:13px">近5年创新点数量持续上升，年均增长约2.5个……</p>
             </div>
@@ -167,21 +223,48 @@
                 <div class="m31-highlight-block" style="margin-top:16px">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
                     <span style="background:var(--gold);color:#fff;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600">首要建议</span>
-                    <div class="m31-highlight-title" style="margin-bottom:0">温补技术工程化改进</div>
+                    <el-input
+                      v-if="m31Editing"
+                      v-model="m31Draft.tip1Title"
+                      class="edit-inline"
+                    />
+                    <div v-else class="m31-highlight-title" style="margin-bottom:0">{{ m31Draft.tip1Title }}</div>
                   </div>
-                  <p style="font-size:13.5px;line-height:1.85;color:#4a5a6a">推进低成本温补方案与自校准算法融合，形成可工程化复制的温补系数分级修正流程，重点解决高温差场景下的鲁棒性问题。</p>
+                  <el-input
+                    v-if="m31Editing"
+                    v-model="m31Draft.tip1Body"
+                    type="textarea"
+                    :autosize="{ minRows: 2, maxRows: 6 }"
+                    class="edit-area"
+                  />
+                  <p v-else style="font-size:13.5px;line-height:1.85;color:#4a5a6a">{{ m31Draft.tip1Body }}</p>
                   <div class="m31-source-note" style="margin-top:10px;display:flex;align-items:center;gap:6px">
                     <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    实证支撑：第19发超差事件（D-07）· 定位定向系统温补失效根因分析
+                    <el-input v-if="m31Editing" v-model="m31Draft.tip1Note" class="edit-inline" />
+                    <template v-else>{{ m31Draft.tip1Note }}</template>
                   </div>
                 </div>
                 <!-- 建议2 -->
                 <div style="margin-top:14px;padding:14px 16px;background:#f8fbfe;border-radius:8px;border-left:3px solid var(--blue)">
-                  <p class="report-body" style="margin-bottom:0"><b style="color:var(--navy-2)">② 初始对准快速收敛能力提升</b><br/>结合多位置观测与卡尔曼滤波融合方法，将对准时间压缩至4分钟以内，提高快速反应能力。</p>
+                  <el-input
+                    v-if="m31Editing"
+                    v-model="m31Draft.tip2"
+                    type="textarea"
+                    :autosize="{ minRows: 2, maxRows: 5 }"
+                    class="edit-area"
+                  />
+                  <p v-else class="report-body" style="margin-bottom:0"><b style="color:var(--navy-2)">②</b> {{ m31Draft.tip2 }}</p>
                 </div>
                 <!-- 建议3 -->
                 <div style="margin-top:10px;padding:14px 16px;background:#f8fbfe;border-radius:8px;border-left:3px solid var(--blue)">
-                  <p class="report-body" style="margin-bottom:0"><b style="color:var(--navy-2)">③ 定向精度评估标准完善</b><br/>建立涵盖温度、振动、电磁干扰多因素的综合评估体系，为后续型号定型试验提供判据依据。</p>
+                  <el-input
+                    v-if="m31Editing"
+                    v-model="m31Draft.tip3"
+                    type="textarea"
+                    :autosize="{ minRows: 2, maxRows: 5 }"
+                    class="edit-area"
+                  />
+                  <p v-else class="report-body" style="margin-bottom:0"><b style="color:var(--navy-2)">③</b> {{ m31Draft.tip3 }}</p>
                 </div>
                 <!-- 页底查重入口 -->
                 <div class="m31-bottom-bar" style="cursor:pointer" @click="goProjectDup">
@@ -201,7 +284,18 @@
       <template v-else>
         <div class="entry-title">
           <h2>{{ title || '技术研判报告生成' }}</h2>
-          <p>按当前图谱浏览方向推荐研判模板，自动带入研判对象，生成并预览研判报告。</p>
+          <p>选择研判模板与技术方向对象，生成并预览研判报告；默认对象为定位定向技术。</p>
+        </div>
+
+        <div class="gen-bar">
+          <div class="gen-summary">
+            <span>模板 <b>{{ m31SelectedTplName || '未选择' }}</b></span>
+            <span class="dot">·</span>
+            <span>对象 <b>{{ m31Object.direction }}</b></span>
+            <span v-if="m31Object.archiveTitle" class="dot">·</span>
+            <span v-if="m31Object.archiveTitle" class="muted">依据 {{ m31Object.archiveTitle }}</span>
+          </div>
+          <el-button type="primary" @click="m31GenerateReport">生成研判报告</el-button>
         </div>
 
         <div class="work-grid">
@@ -217,35 +311,41 @@
               <span class="tpl-no">T{{ idx + 1 }}</span>
               <div class="tpl-meta">
                 <b>{{ tpl.name }}</b>
-                <span v-if="tpl.recommended" class="rec-badge">智能推荐</span>
-                <span v-else class="tpl-hint">点击选择</span>
+                <span class="rec-slot">
+                  <span v-if="tpl.recommended" class="rec-badge">智能推荐</span>
+                </span>
               </div>
             </div>
           </section>
 
           <section class="sec-frame obj-pane">
-            <h3><i></i>研判对象 <em class="auto">自动带入</em></h3>
+            <h3><i></i>研判对象</h3>
+            <div class="obj-pick">
+              <span class="k">技术方向</span>
+              <SelectField
+                v-model="m31Direction"
+                :options="m31DirectionOpts"
+                placeholder="请选择技术方向"
+              />
+            </div>
             <div class="obj-stats">
-              <div class="stat">
-                <div class="k">技术方向</div>
-                <div class="v">定位定向技术</div>
-                <div class="s">来自图谱浏览</div>
-              </div>
-              <div class="stat">
+              <div class="stat full">
                 <div class="k">创新点统计</div>
-                <div class="n">7 <small>个</small></div>
-                <div class="s">置信度均值 0.88</div>
+                <div class="n">{{ m31Object.innovCount }} <small>个</small></div>
+                <div class="s">置信度均值 {{ m31Object.confMean }}</div>
               </div>
             </div>
-            <div class="tree-cap">三级体系子树</div>
             <div class="tree">
-              <div class="tree-root">定位定向技术</div>
-              <div class="tree-child gold">
-                <i></i>温补技术
-                <em>本次试验沉淀</em>
+              <div class="tree-root">{{ m31Object.direction }}</div>
+              <div
+                v-for="child in m31Object.children"
+                :key="child.name"
+                class="tree-child"
+                :class="{ gold: child.highlight }"
+              >
+                <i></i>{{ child.name }}
+                <em v-if="child.badge">{{ child.badge }}</em>
               </div>
-              <div class="tree-child"><i></i>定向精度校准</div>
-              <div class="tree-child"><i></i>初始对准</div>
             </div>
           </section>
 
@@ -277,7 +377,7 @@
                 </div>
                 <button type="button" class="btn-link" @click.stop="m31OpenReport(rpt)">查看</button>
               </div>
-              <div v-if="!m31FilteredReports.length" class="rpt-empty">暂无报告</div>
+              <div v-if="!m31FilteredReports.length" class="rpt-empty">暂无报告，请先选择模板并生成</div>
             </div>
           </section>
         </div>
@@ -287,9 +387,11 @@
 </template>
 
 <script>
+import SelectField from '@/components/SelectField.vue'
 import { useRichPage } from '@/composables/rich/useRichPage'
 
 export default {
+  components: { SelectField },
   props: { page: Object, title: String },
   setup(props) {
     return useRichPage(props)
@@ -309,6 +411,32 @@ export default {
 .entry-title h2 { font-size: 20px; color: #0d4e83; font-weight: 700; }
 .entry-title p { margin-top: 4px; color: #6d8092; font-size: 13.5px; line-height: 1.6; }
 
+.gen-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #f5f9fd;
+  border: 1px solid #d7e6f3;
+  border-radius: 10px;
+}
+.gen-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  color: #5a6d7e;
+}
+.gen-summary b { color: #0d4e83; font-weight: 600; }
+.gen-summary .dot { color: #c5d9ea; }
+.gen-summary .muted { color: #8a99a8; }
+.gen-bar :deep(.el-button--primary),
+.gen-bar :deep(.el-button--primary > span) { color: #fff !important; }
+
 .work-grid {
   display: grid;
   grid-template-columns: 252px 288px minmax(0, 1fr);
@@ -322,9 +450,31 @@ export default {
   padding: 14px 16px 16px;
   background: #fff;
   min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
+.tpl-pane,
+.obj-pane,
+.list-pane {
+  height: 100%;
+}
+.obj-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.obj-pick .k {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: #8a99a8;
+  white-space: nowrap;
+}
+.obj-pick :deep(.sf-select) { flex: 1; min-width: 0; }
+.obj-stats .stat.full { grid-column: 1 / -1; }
 .sec-frame h3 {
   font-size: 15px;
   color: var(--navy-2);
@@ -353,7 +503,9 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px;
+  height: 64px;
+  box-sizing: border-box;
+  padding: 10px 12px;
   border: 1px solid #e4ecf4;
   border-radius: 10px;
   cursor: pointer;
@@ -371,14 +523,26 @@ export default {
   background: #eef5fb; color: #1668a8;
 }
 .tpl-item.on .tpl-no { background: #d0ab68; color: #fff; }
-.tpl-meta { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.tpl-meta {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
 .tpl-meta b {
   font-size: 13.5px;
   color: #1f3d5a;
   font-weight: 600;
   white-space: nowrap;
+  line-height: 1.2;
 }
-.tpl-hint { font-size: 12px; color: #b0bfc8; }
+.rec-slot {
+  display: block;
+  height: 20px;
+  line-height: 20px;
+}
 .rec-badge {
   display: inline-flex;
   align-items: center;
@@ -410,7 +574,6 @@ export default {
 .stat .n { font-size: 24px; font-weight: 800; color: #1668a8; line-height: 1.1; }
 .stat .n small { font-size: 13px; font-weight: 400; color: #7a8b9a; }
 .stat .s { font-size: 12px; color: #8a99a8; margin-top: 4px; white-space: nowrap; }
-.tree-cap { font-size: 12px; color: #8a99a8; font-weight: 600; margin-bottom: 8px; }
 .tree-root { color: #1668a8; font-weight: 600; font-size: 13.5px; margin-bottom: 6px; }
 .tree-child {
   display: flex;
@@ -437,7 +600,14 @@ export default {
 }
 
 .list-pane :deep(.el-input) { margin-bottom: 10px; flex: 0 0 auto; }
-.rpt-list { display: flex; flex-direction: column; gap: 8px; }
+.rpt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
 .rpt-item {
   display: flex;
   align-items: center;
@@ -491,8 +661,30 @@ export default {
 .back-link:hover { text-decoration: none; color: #0d4e83; }
 .sep { color: #d0dce8; }
 .preview-title { font-size: 15px; font-weight: 700; color: var(--navy-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.preview-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+.preview-actions { display: flex; gap: 8px; flex: 0 0 auto; align-items: center; }
 .preview-actions :deep(.el-button + .el-button) { margin-left: 0; }
 .preview-actions :deep(.el-button--primary),
 .preview-actions :deep(.el-button--primary > span) { color: #fff !important; }
+.export-caret { margin-left: 4px; font-size: 11px; opacity: .85; }
+.edit-banner {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fff8e0;
+  border: 1px solid #efd291;
+  color: #8a6000;
+  font-size: 12.5px;
+}
+.edit-area { margin-top: 10px; }
+.edit-area :deep(.el-textarea__inner) {
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: #4a5a6a;
+}
+.edit-inline { flex: 1; min-width: 0; }
+.edit-inline :deep(.el-input__inner) {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy-2);
+}
 </style>

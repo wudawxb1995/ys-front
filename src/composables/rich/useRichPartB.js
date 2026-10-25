@@ -2,11 +2,11 @@
  * Rich 页演示镜头（m14 / m15 / m19 / m22 / m29–m32）
  */
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
-import { useDemoStore, confirmRootCause, archiveInterpretReport, updateActiveProbeCount } from '@/composables/demo-store'
+import { useDemoStore, confirmRootCause, archiveInterpretReport, updateActiveProbeCount, syncTrialDataDock, setGraphBrowse } from '@/composables/demo-store'
 import { deviationTotal } from '@/data/deviations'
 import {
   judgeInnovations, techTree as judgeTree,
-  judgeTemplates, judgeReports, judgeReportSections,
+  judgeTemplates, judgeReportSections,
   innovBarData, trendLineData,
   trainTask, lossChartData, evalChartData, gpuChartData, memChartData,
   agentTemplates, resourceKpis as judgeResourceKpis, resGrowthData,
@@ -351,6 +351,10 @@ const m19FilterStatus = ref('')
 // ── demo-store 接入 ──────────────────────────────────────────────────────
 const demoStore = useDemoStore()
 
+// Part2 对接任务 T01 → Part3 素材「精度试验数据回传」基线
+const dockT01 = dockTasks.find((t) => t.id === 'T01') || dockTasks[0]
+if (dockT01) syncTrialDataDock(dockT01)
+
 // m19：采纳根因 + 触发解读报告生成 → 写入 demo-store
 function goRootCause() {
   router.push({ name: 'app', params: { pid: 'probe', sid: 'probe-interpret', mid: 'cause-list' } })
@@ -606,46 +610,116 @@ const m22Sections = [
 ]
 
 // ── M29 创新点抽取结果 ──────────────────────────────────────────────────
-const m29ExpandedId      = ref('INN-001')
+const m29ExpandedId      = ref(null)
 const m29FilterDirection = ref('')
 const m29FilterSource    = ref('')
+const m29AppliedDirection = ref('')
+const m29AppliedSource    = ref('')
 const m29DirectionOpts   = ['全部方向', '定位定向技术', '弹道修正技术', '惯导技术', '遥测技术', '气象修正', '信号处理']
 
-// 首条来源动态反映 Part3 归档的试验报告标题（来自 demo-store）
+// 首条来源挂接 Part3 归档态：录屏指认「含本次试验报告V2」
 const m29Innovations = computed(() => judgeInnovations.map(inn => {
   if (inn.id !== 'INN-001') return inn
-  const archivedTitle = demoStore.judgeInputReportTitle
-  const archivedAt    = demoStore.judgeInputArchivedAt
+  const archived = demoStore.trialReportV2Archived || !!demoStore.judgeInputArchivedAt
   return {
     ...inn,
-    source: archivedAt
-      ? `3篇（含${archivedTitle}，${archivedAt.slice(0, 10)}归档）`
-      : inn.source,
+    source: archived ? '3篇（含本次试验报告V2）' : inn.source,
   }
 }))
 
 const m29Filtered = computed(() => m29Innovations.value.filter(inn => {
-  if (m29FilterDirection.value && m29FilterDirection.value !== '全部方向' && inn.direction !== m29FilterDirection.value) return false
-  if (m29FilterSource.value && !inn.source.includes(m29FilterSource.value)) return false
+  if (m29AppliedDirection.value && m29AppliedDirection.value !== '全部方向' && inn.direction !== m29AppliedDirection.value) return false
+  if (m29AppliedSource.value && !inn.source.includes(m29AppliedSource.value)) return false
   return true
 }))
 
+function m29ApplyFilter() {
+  m29AppliedDirection.value = m29FilterDirection.value
+  m29AppliedSource.value = m29FilterSource.value
+  m29ExpandedId.value = null
+}
+
+function m29ResetFilter() {
+  m29FilterDirection.value = ''
+  m29FilterSource.value = ''
+  m29AppliedDirection.value = ''
+  m29AppliedSource.value = ''
+  m29ExpandedId.value = null
+}
+
 // ── M30 技术体系知识图谱 ────────────────────────────────────────────────
 const m30Tree        = judgeTree
-const m30ExpandedDir = ref('定位定向技术')
+const m30ExpandedDir = ref(demoStore.graphBrowseDirection || '定位定向技术')
+const m30FocusSub    = ref(demoStore.graphBrowseSub || null)
+
+watch(m30ExpandedDir, (name) => {
+  if (name) setGraphBrowse(name, m30FocusSub.value || '')
+})
+watch(m30FocusSub, (sub) => {
+  setGraphBrowse(m30ExpandedDir.value || demoStore.graphBrowseDirection, sub || '')
+})
 
 // ── M31 技术研判报告 ────────────────────────────────────────────────────
 const m31Detail           = ref(null)
 const m31SelectedTpl      = ref('TPL-01')
 const activeReportSection = ref(1)
 const m31FilterDirection  = ref('')
-const m31Templates        = judgeTemplates
-const m31Reports          = judgeReports
 const m31Sections         = judgeReportSections
-const m31FilteredReports  = computed(() => {
+
+/** 研判对象可选；默认定位定向技术（图谱方向仅作推荐参考） */
+const m31DirectionOpts = computed(() =>
+  (judgeTree.children || []).map((d) => d.name),
+)
+const m31Direction = ref('定位定向技术')
+
+const m31Object = computed(() => {
+  const direction = m31Direction.value || '定位定向技术'
+  const dirNode = judgeTree.children.find((d) => d.name === direction) || judgeTree.children[0]
+  const inns = judgeInnovations.filter((i) => i.direction === direction)
+  // 定位定向：分镜口径 7 个；其它方向按抽取结果 / 子树规模
+  const innovCount = direction === '定位定向技术'
+    ? 7
+    : Math.max(inns.length, dirNode?.children?.length || 0)
+  const confMean = inns.length
+    ? (inns.reduce((s, i) => s + (i.confidence || 0), 0) / inns.length).toFixed(2)
+    : '0.80'
+  const fromGraph = direction === (demoStore.graphBrowseDirection || '')
+  return {
+    direction,
+    source: fromGraph ? '与图谱浏览一致' : '手动选择',
+    innovCount,
+    confMean,
+    children: (dirNode?.children || []).map((c) => ({
+      name: c.name,
+      highlight: !!c.highlight,
+      badge: c.caseBadge || (c.highlight ? '本次试验沉淀' : ''),
+    })),
+    archiveTitle: demoStore.judgeInputReportTitle || '',
+    archiveAt: demoStore.judgeInputArchivedAt || '',
+  }
+})
+
+/** 模板可选；当前对象为定位定向时推荐「技术发展方向研判」 */
+const m31Templates = computed(() =>
+  judgeTemplates.map((t) => ({
+    ...t,
+    recommended: t.id === 'TPL-01' && m31Direction.value === '定位定向技术',
+  })),
+)
+
+const m31SelectedTplName = computed(() =>
+  m31Templates.value.find((t) => t.id === m31SelectedTpl.value)?.name || '',
+)
+
+const m31Reports = computed(() =>
+  Array.isArray(demoStore.judgeGeneratedReports) ? demoStore.judgeGeneratedReports : [],
+)
+
+const m31FilteredReports = computed(() => {
   const q = (m31FilterDirection.value || '').trim()
-  if (!q) return m31Reports
-  return m31Reports.filter((r) => r.title.includes(q) || r.direction.includes(q))
+  const list = m31Reports.value
+  if (!q) return list
+  return list.filter((r) => r.title.includes(q) || r.direction.includes(q))
 })
 
 const innovBarEl    = ref(null)
@@ -721,11 +795,239 @@ function m31SelectTemplate(tpl) {
   m31SelectedTpl.value = tpl.id
 }
 
+function m31ReportTitle(tplId, direction) {
+  const map = {
+    'TPL-01': `${direction}发展方向研判报告`,
+    'TPL-02': `${direction}创新点态势分析报告`,
+    'TPL-03': `${direction}技术成熟度评估报告`,
+  }
+  return map[tplId] || `${direction}研判报告`
+}
+
+function m31FormatStamp(d = new Date()) {
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
+}
+
+/** 按所选模板 + 研判对象生成报告；名称后附时间戳 */
+function m31GenerateReport() {
+  const tplId = m31SelectedTpl.value
+  const tpl = judgeTemplates.find((t) => t.id === tplId)
+  if (!tpl) {
+    toast('请先选择研判模板', 'error')
+    return
+  }
+  const direction = m31Direction.value
+  if (!direction) {
+    toast('请先选择研判对象', 'error')
+    return
+  }
+  const now = new Date()
+  const stamp = m31FormatStamp(now)
+  const time = stamp.slice(0, 10)
+  const title = `${m31ReportTitle(tplId, direction)} ${stamp}`
+  const list = Array.isArray(demoStore.judgeGeneratedReports)
+    ? [...demoStore.judgeGeneratedReports]
+    : []
+  const rpt = {
+    id: `RPT-J${Date.now()}`,
+    title,
+    direction,
+    time,
+    status: '已生成',
+    statusClass: 'on',
+    tplId,
+  }
+  demoStore.judgeGeneratedReports = [rpt, ...list]
+  toast('研判报告已生成')
+  m31OpenReport(rpt)
+}
+
+/** 各报告正文草稿（在线编辑可改，导出读此内容） */
+const m31Editing = ref(false)
+const m31DraftById = reactive({})
+let m31EditSnapshot = null
+
+function m31DefaultDraft(rpt) {
+  const dir = rpt?.direction || '定位定向技术'
+  const archive = demoStore.judgeInputReportTitle || '试验报告V2'
+  const archiveAt = demoStore.judgeInputArchivedAt
+    ? `${demoStore.judgeInputArchivedAt.slice(0, 10)}归档`
+    : '已归档'
+  return {
+    s1p1: `${dir}是现代精确制导武器系统和试验鉴定领域的核心支撑技术之一。近年来，随着对精度要求的持续提高，该技术在温度补偿、初始对准、误差建模等方面取得了一系列进展。本报告基于收录的326篇科技文献（含${archive}，${archiveAt}），系统分析${dir}方向创新点的现状与趋势。`,
+    s1p2: `当前该方向共收录创新点12个，覆盖温补技术、定向精密校准、初始对准三个三级方向。其中温补技术方向在近2年产出了5个创新点，是当前研究最活跃的子方向，与本次试验第19发超差事件的根因直接相关。`,
+    s2p1: `58个技术创新点按6个技术方向分布如下图所示，其中${dir}方向创新点数量最多（12个），与本次试验异常事件直接相关。`,
+    s3p1: '近5年技术创新点数量呈持续上升趋势，年均增长约2.5个，表明该领域研究热度持续攀升。',
+    s3p2: '从发展脉络看，2020—2022年以基础算法创新为主（误差建模、温补系数优化）；2023—2024年工程化应用创新比例显著提升，温补技术与自校准算法融合成为热点方向。预计2025年该方向将持续保持6—8个新增创新点的增速。',
+    tip1Title: '温补技术工程化改进',
+    tip1Body: '推进低成本温补方案与自校准算法融合，形成可工程化复制的温补系数分级修正流程，重点解决高温差场景下的鲁棒性问题。',
+    tip1Note: '实证支撑：第19发超差事件（D-07）· 定位定向系统温补失效根因分析',
+    tip2: '初始对准快速收敛能力提升：结合多位置观测与卡尔曼滤波融合方法，将对准时间压缩至4分钟以内，提高快速反应能力。',
+    tip3: '定向精度评估标准完善：建立涵盖温度、振动、电磁干扰多因素的综合评估体系，为后续型号定型试验提供判据依据。',
+  }
+}
+
+function m31EnsureDraft(rpt) {
+  if (!rpt?.id) return m31DefaultDraft(rpt)
+  if (!m31DraftById[rpt.id]) {
+    m31DraftById[rpt.id] = m31DefaultDraft(rpt)
+  }
+  return m31DraftById[rpt.id]
+}
+
+const m31Draft = computed(() => {
+  const rpt = m31Detail.value
+  if (!rpt) return m31DefaultDraft(null)
+  return m31EnsureDraft(rpt)
+})
+
 function m31OpenReport(rpt) {
   if (!rpt) return
+  m31Editing.value = false
   m31Detail.value = rpt
+  m31EnsureDraft(rpt)
   activeReportSection.value = 1
   nextTick(() => initM31Charts())
+}
+
+function m31StartEdit() {
+  if (!m31Detail.value) return
+  const draft = m31EnsureDraft(m31Detail.value)
+  m31EditSnapshot = JSON.parse(JSON.stringify(draft))
+  m31Editing.value = true
+  activeReportSection.value = 1
+  toast('已进入在线编辑，修改正文后请点击「完成编辑」')
+}
+
+function m31FinishEdit() {
+  if (!m31Detail.value) return
+  m31Editing.value = false
+  m31EditSnapshot = null
+  const id = m31Detail.value.id
+  const list = Array.isArray(demoStore.judgeGeneratedReports)
+    ? demoStore.judgeGeneratedReports.map((r) =>
+      r.id === id ? { ...r, status: '已编辑', statusClass: 'on' } : r,
+    )
+    : []
+  demoStore.judgeGeneratedReports = list
+  const hit = list.find((r) => r.id === id)
+  if (hit) m31Detail.value = hit
+  toast('研判报告已保存', 'success')
+}
+
+function m31CancelEdit() {
+  const id = m31Detail.value?.id
+  if (id && m31EditSnapshot) {
+    m31DraftById[id] = { ...m31EditSnapshot }
+  }
+  m31EditSnapshot = null
+  m31Editing.value = false
+  toast('已取消编辑')
+}
+
+function m31BuildExportHtml(rpt, draft) {
+  const title = rpt.title || '技术研判报告'
+  const dir = rpt.direction || '—'
+  const time = rpt.time || '—'
+  const d = draft || m31DefaultDraft(rpt)
+  const barRows = (innovBarData.xData || []).map((name, i) => {
+    const n = innovBarData.yData[i]
+    const pct = ((n / 58) * 100).toFixed(1)
+    return `<tr><td>${name}</td><td>${n}</td><td>${pct}%</td></tr>`
+  }).join('')
+  return `<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${title}</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->
+<style>
+body{font-family:SimSun,宋体,serif;font-size:12pt;line-height:1.8;color:#222}
+h1{font-size:18pt;text-align:center;color:#0d4e83}
+h2{font-size:14pt;color:#0d4e83;margin-top:1.2em;border-bottom:1px solid #ccc;padding-bottom:4px}
+table{border-collapse:collapse;width:100%;margin:8px 0 14px}
+th,td{border:1px solid #999;padding:6px 10px;text-align:left;vertical-align:top}
+th{background:#f3f8fd}
+.meta{color:#555;margin:8px 0 16px}
+.warn{background:#fff8e6;border-left:4px solid #d0ab68;padding:10px 12px;margin:8px 0}
+</style></head><body>
+<h1>${title}</h1>
+<p class="meta">研判方向：${dir}　生成时间：${time}　状态：${rpt.status || '已生成'}</p>
+<hr/>
+<h2>1 技术现状综述</h2>
+<p>${d.s1p1}</p>
+<p>${d.s1p2}</p>
+<p><b>主要参考文献：</b>温补系数自校准方法研究（2023）；定向系统误差补偿综述（2022）；试验报告V2·第19发超差分析（2024）等。</p>
+<h2>2 创新点分布分析</h2>
+<p>${d.s2p1}</p>
+<table><thead><tr><th>技术方向</th><th>创新点数量</th><th>占比</th></tr></thead><tbody>${barRows}</tbody></table>
+<h2>3 技术发展趋势研判</h2>
+<p>${d.s3p1}</p>
+<p>${d.s3p2}</p>
+<h2>4 建议方向与对策</h2>
+<div class="warn"><b>首要建议 · ${d.tip1Title}</b><br/>${d.tip1Body}<br/><small>${d.tip1Note}</small></div>
+<p><b>②</b> ${d.tip2}</p>
+<p><b>③</b> ${d.tip3}</p>
+</body></html>`
+}
+
+function m31SafeFileName(name) {
+  return String(name || '技术研判报告').replace(/[\\/:*?"<>|]/g, '_').slice(0, 80)
+}
+
+function m31ExportWord() {
+  const rpt = m31Detail.value
+  if (!rpt) {
+    toast('请先打开一份研判报告', 'warning')
+    return
+  }
+  if (m31Editing.value) {
+    toast('请先完成编辑再导出', 'warning')
+    return
+  }
+  const draft = m31EnsureDraft(rpt)
+  const html = m31BuildExportHtml(rpt, draft)
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${m31SafeFileName(rpt.title)}.doc`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  toast('已导出 Word 文档', 'success')
+}
+
+function m31ExportPdf() {
+  const rpt = m31Detail.value
+  if (!rpt) {
+    toast('请先打开一份研判报告', 'warning')
+    return
+  }
+  if (m31Editing.value) {
+    toast('请先完成编辑再导出', 'warning')
+    return
+  }
+  const draft = m31EnsureDraft(rpt)
+  const html = m31BuildExportHtml(rpt, draft)
+  const w = window.open('', '_blank')
+  if (!w) {
+    toast('浏览器拦截了弹窗，请允许后重试', 'error')
+    return
+  }
+  w.document.open()
+  w.document.write(html)
+  w.document.close()
+  w.focus()
+  setTimeout(() => {
+    w.print()
+    toast('已打开打印预览，可另存为 PDF', 'success')
+  }, 300)
+}
+
+function m31Export(cmd) {
+  if (cmd === 'pdf') m31ExportPdf()
+  else m31ExportWord()
 }
 
 function m31ResetCharts() {
@@ -753,7 +1055,7 @@ const m32Stage       = ref('home')
 function goDeviationSummary() {
   router.push({ name: 'app', params: { pid: 'cockpit', sid: 'cockpit-main', mid: 'deviations' } })
 }
-const m32Agents      = agentTemplates
+const m32Agents = ref(agentTemplates.map((a) => ({ ...a })))
 const m32ResourceKpis = computed(() =>
   judgeResourceKpis.map((kpi) =>
     kpi.label === '探针模型'
@@ -761,6 +1063,67 @@ const m32ResourceKpis = computed(() =>
       : kpi,
   ),
 )
+
+/** 智能体模板：配置弹窗 */
+const m32CfgVisible = ref(false)
+const m32CfgSaving = ref(false)
+const m32CfgForm = reactive({
+  id: '',
+  name: '',
+  scene: '',
+  model: '',
+  temperature: 0.2,
+  topP: 0.9,
+  prompt: '',
+  tools: '',
+})
+const m32RunningId = ref('')
+
+function m32OpenConfig(agt) {
+  if (!agt) return
+  Object.assign(m32CfgForm, {
+    id: agt.id,
+    name: agt.name,
+    scene: agt.scene,
+    model: agt.model || 'Qwen2.5-32B',
+    temperature: agt.temperature ?? 0.2,
+    topP: agt.topP ?? 0.9,
+    prompt: agt.prompt || '',
+    tools: agt.tools || '',
+  })
+  m32CfgVisible.value = true
+}
+
+function m32SaveConfig() {
+  const hit = m32Agents.value.find((a) => a.id === m32CfgForm.id)
+  if (!hit) {
+    toast('未找到智能体模板', 'error')
+    return
+  }
+  m32CfgSaving.value = true
+  setTimeout(() => {
+    hit.model = m32CfgForm.model
+    hit.temperature = Number(m32CfgForm.temperature) || 0.2
+    hit.topP = Number(m32CfgForm.topP) || 0.9
+    hit.prompt = (m32CfgForm.prompt || '').trim()
+    hit.tools = (m32CfgForm.tools || '').trim()
+    m32CfgSaving.value = false
+    m32CfgVisible.value = false
+    toast(`${hit.name} 配置已保存`, 'success')
+  }, 280)
+}
+
+function m32RunAgent(agt) {
+  if (!agt || m32RunningId.value) return
+  m32RunningId.value = agt.id
+  toast(`${agt.name} 正在运行…`)
+  setTimeout(() => {
+    const hit = m32Agents.value.find((a) => a.id === agt.id)
+    if (hit) hit.runs = (hit.runs || 0) + 1
+    m32RunningId.value = ''
+    toast(`${agt.name} 运行完成（累计 ${hit?.runs || agt.runs} 次）`, 'success')
+  }, 900)
+}
 
 const lossChartEl   = ref(null)
 const evalChartEl   = ref(null)
@@ -949,10 +1312,17 @@ onBeforeUnmount(() => {
     m29DirectionOpts,
     m29Innovations,
     m29Filtered,
+    m29ApplyFilter,
+    m29ResetFilter,
     m30Tree,
     m30ExpandedDir,
+    m30FocusSub,
     m31Detail,
     m31SelectedTpl,
+    m31SelectedTplName,
+    m31Direction,
+    m31DirectionOpts,
+    m31Object,
     activeReportSection,
     m31FilterDirection,
     m31Templates,
@@ -965,7 +1335,16 @@ onBeforeUnmount(() => {
     trendLineChart,
     initM31Charts,
     m31SelectTemplate,
+    m31GenerateReport,
     m31OpenReport,
+    m31Editing,
+    m31Draft,
+    m31StartEdit,
+    m31FinishEdit,
+    m31CancelEdit,
+    m31Export,
+    m31ExportWord,
+    m31ExportPdf,
     m31ResetCharts,
     m31GoSection,
     m32Stage,
@@ -978,6 +1357,13 @@ onBeforeUnmount(() => {
     nextTick,
     m32Agents,
     m32ResourceKpis,
+    m32CfgVisible,
+    m32CfgSaving,
+    m32CfgForm,
+    m32RunningId,
+    m32OpenConfig,
+    m32SaveConfig,
+    m32RunAgent,
     lossChartEl,
     evalChartEl,
     gpuChartEl,
