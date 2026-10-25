@@ -34,10 +34,7 @@
     </div>
 
     <div v-if="detail.fileUrl && /PDF/i.test(detail.fmt || '')" class="dash-frame preview-frame">
-      <h3>
-        <i></i>原文预览
-        <span class="chapter-count">可滚动查看全文</span>
-      </h3>
+      <h3><i></i>原文预览</h3>
       <div class="pdf-shell">
         <iframe
           class="pdf-frame"

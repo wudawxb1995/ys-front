@@ -2,7 +2,7 @@
   <div class="rich-type-m15">
 
 
-      <!-- 融合监测视图 -->
+      <!-- 融合监测视图（按任务类型区分） -->
       <template v-if="m15Detail">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
           <span @click="m15Detail=null;scanCol=-1;alertVisible=false" style="cursor:pointer;color:#1668a8;font-size:13px;display:flex;align-items:center;gap:4px">
@@ -11,30 +11,28 @@
           </span>
           <span style="color:#c4cdd6;font-size:13px">/</span>
           <span style="font-size:13px;color:#5a6978">{{ m15Detail.name }}</span>
+          <span class="badge" style="margin-left:4px" :class="m15ViewKind==='ballistic'?'warn':m15ViewKind==='weather'?'on':'hold'"><i></i>{{ m15ViewKind==='ballistic'?'弹道融合':m15ViewKind==='weather'?'气象接入':'标定接入' }}</span>
           <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-            <span style="font-size:12px;color:#8a99a8">30发 · 2024-10-18 · 异常1发</span>
+            <span style="font-size:12px;color:#8a99a8">{{ m15DetailMeta.summary }}</span>
             <button class="btn btn-primary" :disabled="scanCol>=0" @click="startScan()"
               :style="scanCol>=0?'opacity:.5;cursor:not-allowed':''">
-              {{ scanCol<0?'启动智能检测':scanCol<6?'检测中…':'检测完成' }}
+              {{ scanCol<0 ? m15DetailMeta.scanLabel : (scanCol < (m15ViewKind==='ballistic'?6:4) ? m15DetailMeta.scanRun : m15DetailMeta.scanDone) }}
             </button>
           </div>
         </div>
 
-        <!-- 告警横幅 -->
         <div v-if="alertVisible" style="background:#fff8e0;border-left:4px solid #d0ab68;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px">
           <svg viewBox="0 0 24 24" fill="none" stroke="#d48806" stroke-width="2" style="width:20px;height:20px;flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           <div>
-            <div style="font-weight:600;color:#7a5a10;margin-bottom:4px">告警 · 第 19 发 · 立靶高低偏差超限</div>
-            <div style="font-size:13px;color:#7a5a10">探针：弹着点散布探针 P01　检测值：<b>+0.42 mil</b>（判据：≤0.30 mil）</div>
-            <div style="font-size:13px;color:#9a7a30;margin-top:3px">触发时间：11:22:07　建议：标记为异常，进入根因分析流程</div>
-            <button class="btn btn-primary" style="margin-top:8px;height:28px;padding:0 12px;font-size:12.5px" @click="goRootCause">进入根因分析</button>
+            <div style="font-weight:600;color:#7a5a10;margin-bottom:4px">{{ m15DetailMeta.alertTitle }}</div>
+            <div style="font-size:13px;color:#7a5a10">{{ m15DetailMeta.alertBody }}</div>
+            <div style="font-size:13px;color:#9a7a30;margin-top:3px">{{ m15DetailMeta.alertSub }}</div>
+            <button v-if="m15DetailMeta.showRootCause" class="btn btn-primary" style="margin-top:8px;height:28px;padding:0 12px;font-size:12.5px" @click="goRootCause">进入根因分析</button>
           </div>
         </div>
 
-        <!-- 四分区 grid 2×2 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:12px;align-items:stretch">
-
-          <!-- 左上：发次样本列表 -->
+        <!-- T01 精度弹道 -->
+        <div v-if="m15ViewKind==='ballistic'" style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:12px;align-items:stretch">
           <div class="panel" style="overflow:auto;height:360px;display:flex;flex-direction:column">
             <h3 style="margin-bottom:8px;flex-shrink:0"><i></i>发次样本列表</h3>
             <div class="table-wrap" style="flex:1;overflow:auto">
@@ -66,14 +64,10 @@
               </table>
             </div>
           </div>
-
-          <!-- 右上：初速时序曲线 -->
           <div class="panel" style="height:360px;display:flex;flex-direction:column">
             <h3 style="margin-bottom:8px;flex-shrink:0"><i></i>初速时序曲线</h3>
             <div ref="v0ChartEl" style="width:100%;flex:1"></div>
           </div>
-
-          <!-- 左下：探针状态矩阵 -->
           <div class="panel">
             <h3 style="margin-bottom:10px"><i></i>探针扫描矩阵</h3>
             <div style="font-size:12px;color:#8a99a8;margin-bottom:8px">12探针 × 6批次（每批5发）</div>
@@ -102,61 +96,130 @@
               </table>
             </div>
           </div>
-
-          <!-- 右下：弹着点散布图 -->
           <div class="panel">
             <h3 style="margin-bottom:8px"><i></i>弹着点散布图</h3>
             <svg width="100%" viewBox="0 0 380 280" style="display:block">
-              <!-- 坐标轴 -->
               <line x1="190" y1="20" x2="190" y2="260" stroke="#dce8f2" stroke-width="1"/>
               <line x1="30" y1="140" x2="360" y2="140" stroke="#dce8f2" stroke-width="1"/>
-              <!-- ±0.30mil 判据虚线框 -->
               <rect x="110" y="60" width="160" height="160" fill="none" stroke="#d4380d" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.7"/>
               <text x="193" y="57" font-size="10" fill="#d4380d">+0.30</text>
               <text x="193" y="230" font-size="10" fill="#d4380d">-0.30</text>
-              <text x="270" y="143" font-size="10" fill="#d4380d">+0.30</text>
-              <text x="28" y="143" font-size="10" fill="#d4380d">-0.30</text>
-              <!-- 正常29发散点（坐标已固化，原点190,140，1mil≈53px） -->
               <circle cx="193" cy="136" r="4" fill="#1668a8" opacity="0.65"/>
               <circle cx="184" cy="143" r="4" fill="#1668a8" opacity="0.65"/>
               <circle cx="197" cy="134" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="186" cy="137" r="4" fill="#1668a8" opacity="0.65"/>
               <circle cx="200" cy="135" r="4" fill="#1668a8" opacity="0.65"/>
               <circle cx="182" cy="140" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="202" cy="132" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="185" cy="146" r="4" fill="#1668a8" opacity="0.65"/>
               <circle cx="196" cy="136" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="183" cy="135" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="199" cy="133" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="187" cy="148" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="194" cy="137" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="179" cy="141" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="203" cy="130" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="185" cy="149" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="198" cy="134" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="181" cy="135" r="4" fill="#1668a8" opacity="0.65"/>
-              <!-- 第20~30发 -->
-              <circle cx="195" cy="137" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="184" cy="134" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="200" cy="141" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="186" cy="137" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="198" cy="133" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="182" cy="145" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="196" cy="136" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="201" cy="132" r="4" fill="#1668a8" opacity="0.65"/>
               <circle cx="188" cy="147" r="4" fill="#1668a8" opacity="0.65"/>
-              <circle cx="184" cy="138" r="4" fill="#1668a8" opacity="0.65"/>
               <circle cx="195" cy="138" r="4" fill="#1668a8" opacity="0.65"/>
-              <!-- 第19发异常点：190+0.42*53≈212, 140-0.18*53≈130 -->
               <circle cx="212" cy="130" r="8" fill="none" stroke="#d4380d" stroke-width="2"/>
               <line x1="207" y1="125" x2="217" y2="135" stroke="#d4380d" stroke-width="2"/>
               <line x1="217" y1="125" x2="207" y2="135" stroke="#d4380d" stroke-width="2"/>
               <text x="220" y="122" font-size="10" fill="#d4380d" font-weight="600">+0.42, +0.18</text>
               <text x="220" y="133" font-size="9" fill="#d4380d">第19发</text>
-              <!-- 轴标签 -->
               <text x="190" y="275" text-anchor="middle" font-size="10" fill="#8a99a8">方向偏差(mil)</text>
               <text x="14" y="140" text-anchor="middle" font-size="10" fill="#8a99a8" transform="rotate(-90,14,140)">高低偏差(mil)</text>
             </svg>
+          </div>
+        </div>
+
+        <!-- T02 气象 -->
+        <div v-else-if="m15ViewKind==='weather'" class="m15-split">
+          <div class="panel m15-list-panel">
+            <h3 class="m15-panel-h"><i></i>气象样本列表</h3>
+            <div class="table-wrap m15-table-scroll">
+              <table style="font-size:12.5px">
+                <thead>
+                  <tr>
+                    <th style="width:44px">组次</th>
+                    <th style="width:72px">时间</th>
+                    <th>气温(℃)</th>
+                    <th>湿度(%)</th>
+                    <th>风速(m/s)</th>
+                    <th>气压(hPa)</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in weather30" :key="r.id">
+                    <td class="col-idx">{{ String(r.id).padStart(2,'0') }}</td>
+                    <td>{{ r.ts }}</td>
+                    <td>{{ r.temp }}</td>
+                    <td>{{ r.humidity }}</td>
+                    <td>{{ r.wind }}</td>
+                    <td>{{ r.pressure }}</td>
+                    <td><span class="badge on"><i></i>合格</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="m15-side">
+            <div class="panel m15-chart-panel">
+              <h3 class="m15-panel-h"><i></i>气温 / 风速时序</h3>
+              <div ref="v0ChartEl" class="m15-chart-el"></div>
+            </div>
+            <div class="panel m15-meta-panel">
+              <h3 class="m15-panel-h"><i></i>气象窗口判据</h3>
+              <div class="m15-kv-grid">
+                <div class="m15-kv"><span>气温范围</span><b>15 ~ 25 ℃</b></div>
+                <div class="m15-kv"><span>实测均值</span><b>19.1 ℃</b></div>
+                <div class="m15-kv"><span>风速上限</span><b>≤ 5 m/s</b></div>
+                <div class="m15-kv"><span>实测最大</span><b>3.4 m/s</b></div>
+                <div class="m15-kv"><span>湿度窗口</span><b>30% ~ 70%</b></div>
+                <div class="m15-kv"><span>数据源</span><b>气象站接口</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- T03 标定台 -->
+        <div v-else class="m15-split">
+          <div class="panel m15-list-panel">
+            <h3 class="m15-panel-h"><i></i>标定检测项目</h3>
+            <div class="table-wrap m15-table-scroll">
+              <table style="font-size:12.5px">
+                <thead>
+                  <tr>
+                    <th style="width:40px">序号</th>
+                    <th>检测项</th>
+                    <th>实测值</th>
+                    <th>判据</th>
+                    <th>结论</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in calib12" :key="r.id"
+                    :style="r.watch?'background:rgba(208,171,104,.08);border-left:3px solid #d0ab68':''">
+                    <td class="col-idx">{{ String(r.id).padStart(2,'0') }}</td>
+                    <td>{{ r.name }}</td>
+                    <td :style="r.watch?'color:#d48806;font-weight:700':''">{{ r.value }}{{ r.unit && r.unit!=='—' && r.unit!=='项' ? ' '+r.unit : '' }}</td>
+                    <td style="color:#8a99a8">{{ r.criterion }}</td>
+                    <td>
+                      <span v-if="r.watch" class="badge warn"><i></i>关注</span>
+                      <span v-else class="badge on"><i></i>合格</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="m15-side">
+            <div class="panel m15-chart-panel">
+              <h3 class="m15-panel-h"><i></i>标定达标度</h3>
+              <div ref="v0ChartEl" class="m15-chart-el"></div>
+            </div>
+            <div class="panel m15-meta-panel">
+              <h3 class="m15-panel-h"><i></i>标定台摘要</h3>
+              <div class="m15-kv-grid">
+                <div class="m15-kv"><span>设备</span><b>惯导标定台 A2</b></div>
+                <div class="m15-kv"><span>检测项</span><b>12 项</b></div>
+                <div class="m15-kv"><span>合格</span><b style="color:#22913c">11 项</b></div>
+                <div class="m15-kv"><span>关注</span><b style="color:#d48806">1 项（K1）</b></div>
+                <div class="m15-kv"><span>导出文件</span><b>标定台导出文件</b></div>
+                <div class="m15-kv"><span>用途</span><b>温补系数溯源</b></div>
+              </div>
+            </div>
           </div>
         </div>
       </template>
@@ -183,7 +246,7 @@
               <button class="btn btn-outline" @click="m15FilterBatch='';m15FilterStatus=''">重置</button>
             </div>
             <span class="spacer"></span>
-            <button class="btn btn-primary" style="align-self:flex-end" @click="$emit('toast','新建对接任务功能即将上线')">＋ 新建对接任务</button>
+            <button class="btn btn-primary" style="align-self:flex-end" @click="openCreateDockTask">＋ 新建对接任务</button>
           </div>
           <div class="table-inner">
             <table>
@@ -198,13 +261,17 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="t in dockTasks" :key="t.id">
+                <tr v-for="t in m15FilteredTasks" :key="t.id">
                   <td>
                     <span style="color:#1668a8;cursor:pointer;font-weight:500" @click="m15Open(t)">{{ t.name }}</span>
                   </td>
                   <td>{{ t.srcType }}</td>
                   <td>{{ t.count }}</td>
-                  <td><span class="badge on"><i></i>{{ t.status }}</span></td>
+                  <td>
+                    <span class="badge" :class="t.status === '成功' ? 'on' : t.status === '进行中' ? 'run' : 'hold'">
+                      <i></i>{{ t.status }}
+                    </span>
+                  </td>
                   <td style="color:#8a99a8">{{ t.time }}</td>
                   <td style="text-align:center">
                     <div class="ops" style="justify-content:center">
@@ -216,10 +283,59 @@
             </table>
           </div>
           <div class="pager">
-            <span>共 <b>{{ dockTasks.length }}</b> 条记录</span>
+            <span>共 <b>{{ m15FilteredTasks.length }}</b> 条记录</span>
           </div>
         </div>
       </template>
+
+      <el-dialog
+        v-model="m15CreateVisible"
+        title="新建对接任务"
+        width="520px"
+        align-center
+        destroy-on-close
+        :close-on-click-modal="false"
+      >
+        <el-form label-width="7.5em" require-asterisk-position="right" class="m15-create-form">
+          <el-form-item label="任务名称" required>
+            <el-input v-model="m15CreateForm.name" maxlength="40" placeholder="如 精度试验数据回传接入" />
+          </el-form-item>
+          <el-form-item label="数据源类型" required>
+            <el-select
+              v-model="m15CreateForm.srcType"
+              filterable
+              allow-create
+              default-first-option
+              style="width:100%"
+              placeholder="请选择或输入"
+            >
+              <el-option v-for="o in m15SrcTypeOpts" :key="o" :label="o" :value="o" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="数据量" required>
+            <el-input v-model="m15CreateForm.count" maxlength="20" placeholder="如 30发 / 12项" />
+          </el-form-item>
+          <el-form-item label="关联批次">
+            <el-select v-model="m15CreateForm.batch" style="width:100%" placeholder="请选择批次">
+              <el-option label="D-07" value="D-07" />
+              <el-option label="D-06" value="D-06" />
+              <el-option label="D-08" value="D-08" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="初始状态">
+            <el-radio-group v-model="m15CreateForm.status">
+              <el-radio value="成功">成功</el-radio>
+              <el-radio value="进行中">进行中</el-radio>
+            </el-radio-group>
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <div class="m15-dlg-foot">
+            <el-button @click="m15CreateVisible = false">取消</el-button>
+            <el-button type="primary" @click="submitCreateDockTask">创建</el-button>
+          </div>
+        </template>
+      </el-dialog>
   </div>
 </template>
 
@@ -235,3 +351,112 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.m15-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+  /* 顶栏+面包屑+返回操作条约占 200px，详情区占满剩余视口 */
+  height: calc(100vh - 200px);
+  max-height: calc(100vh - 200px);
+  min-height: 360px;
+}
+.m15-list-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+.m15-panel-h {
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.m15-table-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.m15-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+.m15-chart-panel {
+  flex: 1.15;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.m15-chart-el {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+.m15-meta-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+.m15-kv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  flex: 1;
+  align-content: start;
+}
+.m15-kv {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f5f8fb;
+  border: 1px solid #e8f2fb;
+}
+.m15-kv span { font-size: 12px; color: #8a99a8; }
+.m15-kv b { font-size: 13.5px; color: #1a2b3c; font-weight: 600; }
+
+.m15-create-form :deep(.el-form-item__label) {
+  justify-content: flex-start;
+  text-align: left !important;
+  white-space: nowrap;
+  box-sizing: border-box;
+  padding-right: 18px !important;
+  position: relative;
+}
+/* 文字左对齐；必填 * 在标签区右侧，与输入框留出间距 */
+.m15-create-form :deep(.el-form-item.is-required:not(.is-no-asterisk) > .el-form-item__label::before) {
+  content: none !important;
+  margin: 0 !important;
+}
+.m15-create-form :deep(.el-form-item.is-required:not(.is-no-asterisk) > .el-form-item__label::after) {
+  content: '*' !important;
+  color: #f5222d;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  line-height: 1;
+}
+.m15-dlg-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.m15-dlg-foot :deep(.el-button + .el-button) { margin-left: 0; }
+.m15-dlg-foot :deep(.el-button--primary),
+.m15-dlg-foot :deep(.el-button--primary > span) { color: #fff !important; }
+</style>

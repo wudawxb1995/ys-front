@@ -107,7 +107,7 @@
                 <tr>
                   <td class="strong">统计窗口</td>
                   <td class="muted">单发判定</td>
-                  <td><span class="sys">系统默认</span></td>
+                  <td><span class="sys">--</span></td>
                   <td class="muted">—</td>
                 </tr>
               </tbody>
@@ -153,9 +153,6 @@
               <div class="row"><span class="lab">关系总数</span><span class="val strong">200 余条</span></div>
               <div class="row"><span class="lab">最近更新</span><span class="val">2024-10-15</span></div>
               <div class="row"><span class="lab">来源</span><span class="val">第一部分</span></div>
-            </div>
-            <div class="m14-graph-tip">
-              此图谱为只读背景资产，如需查看完整图谱请切换至增量式智能探针推理图谱构建系统
             </div>
           </section>
         </div>
@@ -532,17 +529,22 @@ export default {
 .m14-alarm .desc { font-size: 13px; color: #5a6978; }
 
 .m14-graph {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background: #f8fbff;
   border-left: 3px solid #1668a8;
   border-radius: 0 8px 8px 0;
-  padding: 16px;
+  padding: 16px 18px;
   min-width: 0;
+  box-sizing: border-box;
 }
 .m14-graph-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
 }
 .m14-graph-head .tit {
   display: flex;
@@ -561,27 +563,24 @@ export default {
   border-radius: 4px;
 }
 .m14-graph-grid {
+  flex: 1;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px 20px;
+  gap: 14px 28px;
+  align-content: space-evenly;
+  min-height: 112px;
 }
 .m14-graph-grid .row {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-}
-.m14-graph-grid .lab { font-size: 13px; color: #8a99a8; }
-.m14-graph-grid .val { font-size: 13px; color: #1a2b3c; }
-.m14-graph-grid .val.strong { font-weight: 500; }
-.m14-graph-tip {
-  margin-top: 12px;
-  padding: 8px 10px;
-  background: #fffbe6;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #7a5a10;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
   line-height: 1.5;
 }
+.m14-graph-grid .lab { font-size: 13px; color: #8a99a8; }
+.m14-graph-grid .val { font-size: 13.5px; color: #1a2b3c; }
+.m14-graph-grid .val.strong { font-weight: 600; }
 
 /* 列表：工具栏与表格间距减半；搜索靠左 + 查询 */
 .m14-list-card :deep(.m14-toolbar) {

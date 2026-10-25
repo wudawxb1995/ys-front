@@ -3,7 +3,6 @@
     <div class="post-trial-shell">
       <div class="entry-title">
         <h2>{{ title }}</h2>
-        <p>{{ page.desc }}</p>
       </div>
 
     <template v-if="stage === 'outline'">
@@ -92,7 +91,6 @@
         </section>
         <section class="sec-frame">
           <h3><i></i>勾选本次生成素材 <em>每类选 1 项</em></h3>
-          <p class="need-hint">素材来自指标树、精度试验数据回传与探针平台已归档解读报告；报告名称可按需修改。</p>
           <section class="name-block">
             <div class="field">
               <span class="field-cap">报告名称</span>
@@ -108,7 +106,6 @@
             <section v-for="group in materialPools" :key="group.key" class="need-col">
               <div class="need-col-head">
                 <b>{{ group.title }}</b>
-                <small>{{ group.hint }}</small>
               </div>
               <label
                 v-for="opt in group.options"
@@ -391,7 +388,7 @@
     <template v-else-if="stage === 'review'">
       <template v-if="reviewMode === 'tasks'">
         <section class="sec-frame">
-          <h3><i></i>智能审查任务 <em>术语规范 · 数据勾稽 · 判据引用</em></h3>
+          <h3><i></i>智能审查任务</h3>
           <div class="filter-row">
             <el-input v-model="taskSearch" placeholder="搜索任务名称或审查对象" clearable />
             <el-select v-model="taskStatus" style="width: 140px">
@@ -405,8 +402,8 @@
             </div>
           </div>
           <div class="metric-table-wrap">
-            <el-table :data="filteredTasks" class="metric-ep" @row-click="openReview">
-              <el-table-column prop="name" label="任务名称" min-width="200" />
+            <el-table :data="filteredTasks" class="metric-ep" table-layout="fixed" @row-click="openReview">
+              <el-table-column prop="name" label="任务名称" min-width="200" show-overflow-tooltip />
               <el-table-column prop="target" label="审查对象" min-width="200" show-overflow-tooltip />
               <el-table-column prop="rules" label="审查规则集" min-width="220" show-overflow-tooltip />
               <el-table-column prop="issues" label="意见数" width="90" align="center" />
@@ -415,7 +412,7 @@
                   <span class="badge" :class="statusBadgeClass(row.status)"><i></i>{{ row.status }}</span>
                 </template>
               </el-table-column>
-              <el-table-column prop="time" label="完成时间" width="170" />
+              <el-table-column prop="time" label="完成时间" width="170" show-overflow-tooltip />
               <el-table-column label="操作" width="120" align="center">
                 <template #default>
                   <div class="ops">
@@ -520,7 +517,7 @@
       <section class="sec-frame">
         <h3><i></i>文档归集 <em>试验报告V2（定稿）已入库</em></h3>
         <div class="filter-row">
-          <el-input v-model="archiveSearch" placeholder="搜索文档名称或编号" clearable />
+          <el-input v-model="archiveSearch" placeholder="搜索文档名称或编号" clearable @keyup.enter="applyArchiveFilter" />
           <el-select v-model="archiveType" style="width: 180px">
             <el-option label="全部类型" value="全部类型" />
             <el-option label="性能鉴定试验报告" value="性能鉴定试验报告" />
@@ -528,8 +525,8 @@
             <el-option label="异常分析报告" value="异常分析报告" />
           </el-select>
           <div class="btn-row">
-            <el-button type="primary">查询</el-button>
-            <el-button @click="archiveSearch = ''; archiveType = '全部类型'">重置</el-button>
+            <el-button type="primary" @click="applyArchiveFilter">查询</el-button>
+            <el-button @click="resetArchiveFilter">重置</el-button>
             <el-button @click="toast('批量归集窗口已打开')">新增</el-button>
           </div>
         </div>
@@ -554,7 +551,7 @@
             </el-table-column>
           </el-table>
         </div>
-        <div class="archive-foot"><span>试验报告V2（定稿）已完成版本固化与归档入库</span><b>下一阶段：归档报告知识化转化</b></div>
+        <div class="archive-foot"><span>试验报告V2（定稿）已完成版本固化与归档入库</span></div>
       </section>
     </template>
     </div>
@@ -892,6 +889,16 @@ const taskStatus = ref('全部状态')
 const issueFilter = ref('全部类型')
 const archiveSearch = ref('')
 const archiveType = ref('全部类型')
+/** 已生效的查询条件（仅点「查询」后更新，避免输入即过滤） */
+const archiveQuery = ref({ search: '', type: '全部类型' })
+function applyArchiveFilter() {
+  archiveQuery.value = { search: archiveSearch.value.trim(), type: archiveType.value }
+}
+function resetArchiveFilter() {
+  archiveSearch.value = ''
+  archiveType.value = '全部类型'
+  archiveQuery.value = { search: '', type: '全部类型' }
+}
 const assembling = ref(false)
 const archiving = ref(false)
 const locating = ref(false)
@@ -990,8 +997,9 @@ const liveArchiveRows = computed(() => {
   })
 })
 const filteredArchive = computed(() => liveArchiveRows.value.filter((row) => {
-  const matchSearch = !archiveSearch.value || `${row.name}${row.id}${row.source}`.includes(archiveSearch.value)
-  const matchType = archiveType.value === '全部类型' || row.type === archiveType.value
+  const { search, type } = archiveQuery.value
+  const matchSearch = !search || `${row.name}${row.id}${row.source}`.includes(search)
+  const matchType = type === '全部类型' || row.type === type
   return matchSearch && matchType
 }))
 
@@ -1252,8 +1260,6 @@ function scatterStyle(index) {
 }
 .entry-title { margin-bottom: 2px; padding-bottom: 12px; border-bottom: 1px solid #eef3f8; }
 .entry-title h2 { font-size: 18px; color: #1f3d5a; font-weight: 700; }
-.entry-title p { margin-top: 6px; color: #6d8092; font-size: 13px; line-height: 1.6; }
-.need-hint { margin: -4px 0 14px; color: #6d8092; font-size: 13.5px; line-height: 1.6; }
 .name-block {
   border: 1px solid #e6eef6;
   border-radius: 8px;
@@ -1282,9 +1288,8 @@ function scatterStyle(index) {
   background: #f7fbff;
   min-width: 0;
 }
-.need-col-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+.need-col-head { margin-bottom: 10px; }
 .need-col-head b { font-size: 14px; color: #0d4e83; }
-.need-col-head small { color: #8a99a8; font-size: 12px; }
 .need-opt {
   display: flex;
   gap: 10px;

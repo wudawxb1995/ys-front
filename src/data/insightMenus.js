@@ -57,7 +57,7 @@ export function insightSystems() {
           ],
         )),
         g('ext-g', '技术创新点智能抽取', 'spark', [
-          leaf('points', '技术创新点抽取', {
+          leaf('points', '创新点抽取', {
             type: 'm29',
             desc: '从326篇科技文献（含归档试验报告V2）中抽取58个技术创新点，每个创新点含四要素及原文页码溯源。',
           }),

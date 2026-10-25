@@ -1,14 +1,8 @@
 <template>
   <div class="rich-type-m11">
     <div class="m11-shell">
-      <!-- 需求摘要卡（联动定稿方案） -->
+      <!-- 关联方案与需求标签 -->
       <div class="m11-req">
-        <div class="m11-req-head">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#0d4e83" stroke-width="1.8" class="m11-req-ico"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          <span class="m11-req-title">需求摘要</span>
-          <span class="m11-req-sub">自动解析自定稿方案《{{ m11SchemeTitle }}》</span>
-          <el-button class="m11-req-btn" @click="m11ReparseScheme">重新解析</el-button>
-        </div>
         <div class="m11-req-bind">
           <span class="lab">关联方案</span>
           <el-select
@@ -25,7 +19,7 @@
               :value="op.value"
             />
           </el-select>
-          <span class="m11-view-hint">{{ m11ViewMeta?.hint }}</span>
+          <el-button @click="m11ReparseScheme">重新解析</el-button>
         </div>
         <div class="m11-req-tags">
           <span v-for="tag in m11ReqTags" :key="tag" class="m11-tag">
@@ -112,7 +106,7 @@
 
       <!-- 四算法综合对比 -->
       <div class="m11-compare">
-        <div class="m11-compare-title">四算法综合对比（各算法 TOP1 · 关联《{{ m11SchemeTitle }}》）</div>
+        <div class="m11-compare-title">四算法综合对比</div>
         <div class="m11-compare-grid">
           <div
             v-for="t in m11Tabs"
@@ -161,18 +155,6 @@ export default {
   border-radius: 10px;
   padding: 14px 18px;
 }
-.m11-req-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-.m11-req-ico { width: 16px; height: 16px; flex: 0 0 auto; }
-.m11-req-title { font-weight: 700; font-size: 13.5px; color: #0d4e83; }
-.m11-req-sub { font-size: 12.5px; color: #4a7fa8; }
-.m11-req-btn { margin-left: auto; }
-
 .m11-req-bind {
   display: flex;
   align-items: center;
@@ -185,11 +167,6 @@ export default {
   color: #5c7084;
   font-weight: 600;
   white-space: nowrap;
-}
-.m11-view-hint {
-  font-size: 12.5px;
-  color: #8a99a8;
-  line-height: 1.4;
 }
 
 .m11-req-tags { display: flex; gap: 10px; flex-wrap: wrap; }

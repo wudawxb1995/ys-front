@@ -22,7 +22,7 @@
           <div class="m03-dash m03-tree-panel">
             <h3 class="m03-dash-title">
               <i></i>指标树结构
-              <button type="button" class="m03-expand-link" @click="m03ExpandAll">展开全部</button>
+              <button type="button" class="m03-expand-link" @click="m03ExpandAll">{{ m03AllExpanded ? '收起全部' : '展开全部' }}</button>
             </h3>
             <div class="m03-tree-scroll">
               <metric-tree-node
@@ -44,7 +44,6 @@
               <div class="m03-attr-scroll">
                 <div class="m03-attr-hero">
                   <div class="m03-attr-name">{{ m03SelNode.name }}</div>
-                  <div class="m03-attr-sub">指标项 · 属性详情</div>
                 </div>
 
                 <div class="m03-attr-grid">
@@ -193,13 +192,11 @@
               @click="m03ToggleDomain(d)"
             >{{ d }}</button>
           </div>
-          <div class="m03-link-hint">勾选性能域后，下方指标项数自动联动更新</div>
         </el-form-item>
         <el-form-item label="指标项数">
           <div class="m03-count-box">
             <span class="m03-count-num">{{ m03CreatePreviewCount }}</span>
             <span class="m03-count-unit">项</span>
-            <span class="m03-count-tip">由来源文档抽取结果 × 所选性能域联动计算</span>
           </div>
         </el-form-item>
         <el-form-item label="初始状态">
@@ -282,7 +279,6 @@
           <span class="m03-page-tag">第 {{ m03Trace.srcPage }} 页</span>
           <p class="m03-trace-text" v-html="m03Trace.html" />
         </div>
-        <div class="m03-trace-foot">高亮句为抽取/映射依据，可与来源文档对照核验</div>
       </div>
       <template #footer>
         <el-button type="primary" @click="m03TraceVisible = false">关闭</el-button>
@@ -405,7 +401,6 @@ export default {
 }
 .m03-attr-hero { margin-bottom: 14px; }
 .m03-attr-name { font-size: 16px; font-weight: 700; color: #1f3d5a; }
-.m03-attr-sub { margin-top: 4px; font-size: 13px; color: #8a99a8; }
 .m03-attr-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -503,12 +498,6 @@ export default {
   color: #0d4e83;
   font-weight: 600;
 }
-.m03-link-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #8a99a8;
-  line-height: 1.4;
-}
 .m03-count-box {
   display: flex;
   align-items: baseline;
@@ -527,11 +516,6 @@ export default {
   line-height: 1;
 }
 .m03-count-unit { font-size: 13px; color: #6d8092; }
-.m03-count-tip {
-  margin-left: auto;
-  font-size: 12px;
-  color: #8a99a8;
-}
 
 .m03-trace-head {
   display: flex;
@@ -580,10 +564,5 @@ export default {
   border-radius: 3px;
   box-shadow: inset 0 -2px 0 #d0ab68;
   font-weight: 600;
-}
-.m03-trace-foot {
-  margin-top: 12px;
-  font-size: 12px;
-  color: #8a99a8;
 }
 </style>

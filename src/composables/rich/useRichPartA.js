@@ -1,7 +1,7 @@
 /**
  * Rich 页通用镜头（录入 / 解析 / 图谱 / m01 / m03 / m08 / m11）
  */
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, toRaw, watch } from 'vue'
 import { useRows } from '@/composables/tables'
 import { nowText } from '@/utils/format'
 import { resourceDetails } from '@/data/mock'
@@ -18,6 +18,10 @@ import { m03TreeData } from '@/data/m03-tree'
 import { m02Domains, getM02RowsForDoc, getM02CountForDoc } from '@/data/m02-indicators'
 
 export function buildRichPartA({ toast, router, route, props, bag }) {
+/** 深拷贝：兼容 Vue Proxy（structuredClone 对响应式对象会抛错） */
+function cloneDeep(data) {
+  return JSON.parse(JSON.stringify(data == null ? data : toRaw(data)))
+}
 function kpiIcon(label = '') {
   if (/卡片/.test(label)) return 'card'
   if (/问答/.test(label)) return 'chat'
@@ -670,9 +674,9 @@ function m03FlatNodes(nodes = []) {
 /** 按来源文档抽取结果 + 所选性能域，生成/裁剪指标树（与列表 count 联动） */
 function buildM03TreeForRow(row) {
   if (row?.tree?.length) {
-    return structuredClone(row.tree)
+    return cloneDeep(row.tree)
   }
-  const tree = structuredClone(m03TreeData)
+  const tree = cloneDeep(m03TreeData)
   const domainSet = Array.isArray(row?.domains) && row.domains.length
     ? new Set(row.domains)
     : null
@@ -732,7 +736,7 @@ function m03ApplyTreeForRow(row) {
 function m03SnapshotTreeToRow() {
   const row = m03CurrentRow.value
   if (!row) return
-  row.tree = structuredClone(m03Tree.value)
+  row.tree = cloneDeep(m03Tree.value)
   row.count = m03FlatNodes(m03Tree.value).filter((n) => n.level === 3).length
 }
 
@@ -751,7 +755,13 @@ function m03SaveToStore() {
     return
   }
   const row = m03List.value.find((r) => r.id === cur.id) || cur
-  m03SnapshotTreeToRow()
+  try {
+    m03SnapshotTreeToRow()
+  } catch (err) {
+    console.error(err)
+    toast('保存失败，请重试', 'error')
+    return
+  }
   const version = (row?.version || 'V1.0').replace(/^指标树\s*/, '')
   const leafCount = m03FlatNodes(m03Tree.value).filter((n) => n.level === 3).length
   const count = leafCount || row?.count || 28
@@ -895,7 +905,7 @@ function m03SubmitCreate() {
 }
 
 // 四级树：打开详情时按「来源文档 × 性能域」重建；编辑后快照写回列表行
-const m03Tree = ref(structuredClone(m03TreeData))
+const m03Tree = ref(cloneDeep(m03TreeData))
 
 const m03SelId = ref('i-jd-1')
 
@@ -903,8 +913,15 @@ const m03AllNodes = computed(() => m03FlatNodes(m03Tree.value))
 const m03SelNode = computed(() => m03AllNodes.value.find((n) => n.id === m03SelId.value) || null)
 
 function m03Select(node) { m03SelId.value = node.id }
+const m03AllExpanded = computed(() => {
+  const nodes = m03AllNodes.value.filter((n) => n.children?.length)
+  return nodes.length > 0 && nodes.every((n) => n.open)
+})
 function m03ExpandAll() {
-  m03AllNodes.value.forEach((n) => { if (n.children) n.open = true })
+  const expand = !m03AllExpanded.value
+  m03AllNodes.value.forEach((n) => {
+    if (n.children?.length) n.open = expand
+  })
 }
 
 const m03SrcDocLabel = computed(() => m03CurrentRow.value?.srcDoc || 'D-01《某型研制总要求》')
@@ -2468,6 +2485,7 @@ watch(
     m03AllNodes,
     m03SelNode,
     m03Select,
+    m03AllExpanded,
     m03ExpandAll,
     m08List,
     m08DetailOpen,

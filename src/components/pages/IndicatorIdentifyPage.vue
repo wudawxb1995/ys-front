@@ -20,7 +20,7 @@
           <div class="m02-doc-ico" :class="detail.iconKind">{{ detail.iconText }}</div>
           <div class="m02-doc-meta">
             <div class="m02-doc-name">{{ detail.doc }}</div>
-            <div class="m02-doc-sub">来源文档：{{ detail.name }} · 抽取完成：{{ detail.finishedAt }}</div>
+            <div class="m02-doc-sub">来源文档：{{ detail.name }}　抽取完成：{{ detail.finishedAt }}</div>
           </div>
         </div>
       </div>
@@ -68,7 +68,7 @@
         <div class="m02-dash m02-table-panel">
           <h3 class="m02-dash-title">
             <i></i>抽取结果
-            <span class="m02-hint">共 <b>{{ visibleRows.length }}</b> 项 · 点击行可回溯原文</span>
+            <span class="m02-hint">共 <b>{{ visibleRows.length }}</b> 项</span>
           </h3>
           <div class="m02-table-scroll">
             <table class="m02-table">

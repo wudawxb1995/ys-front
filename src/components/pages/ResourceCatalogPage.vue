@@ -2,7 +2,6 @@
   <div class="res-manage">
     <div class="entry-title">
       <h2>{{ title || '数据资源管理' }}</h2>
-      <p>{{ page?.desc || '按名称、类别与解析状态检索已录入资源，查看处理结果或发起解析。' }}</p>
     </div>
 
     <div class="stat-row">
@@ -57,9 +56,7 @@
           <el-button :disabled="!checkedNames.size" @click="batchDelete">批量删除</el-button>
           <el-button type="primary" @click="goResAdd">导入资料</el-button>
         </div>
-        <p class="sel-hint" :class="{ muted: !checkedNames.size }">
-          {{ checkedNames.size ? `已选 ${checkedNames.size} 条` : '勾选条目后可执行批量删除' }}
-        </p>
+        <p v-if="checkedNames.size" class="sel-hint">已选 {{ checkedNames.size }} 条</p>
 
         <div class="table-wrap">
           <table>
@@ -267,7 +264,6 @@ function goResAdd() {
   overflow: hidden;
 }
 .entry-title h2 { font-size: 20px; color: #0d4e83; font-weight: 700; letter-spacing: .3px; }
-.entry-title p { margin-top: 4px; color: #6d8092; font-size: 13.5px; line-height: 1.6; }
 
 .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 .stat {
@@ -381,7 +377,6 @@ function goResAdd() {
   font-weight: 600;
 }
 .sel-hint { font-size: 13px; color: #1668a8; font-weight: 500; margin-bottom: 10px; }
-.sel-hint.muted { color: #a0aab4; font-weight: 400; }
 
 .list-frame .table-wrap {
   border: 0;

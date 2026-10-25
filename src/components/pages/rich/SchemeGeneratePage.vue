@@ -35,11 +35,6 @@
         </div>
         <div class="m08-step-line"></div>
       </div>
-      <p class="m08-steps-hint">
-        {{ m08IsDraft
-          ? '草稿可点击任一步骤继续配置（仅弹窗，不页内跳转）'
-          : '点击已完成步骤可查看说明（仅弹窗，不页内跳转）' }}
-      </p>
 
       <el-dialog
         v-model="m08StepDialog"
@@ -222,9 +217,6 @@
         <div class="m08-panel-head">
           <span class="m08-panel-title">试验因子配置</span>
           <span class="m08-factor-count">已配置因子：{{ m08FactorCount }}个</span>
-          <span class="m08-factor-tip">
-            {{ m08Snap.factorOk ? '（≥ 20 个，符合指标要求）' : '（未达 ≥20，草稿/归档快照）' }}
-          </span>
           <span class="spacer"></span>
           <el-button
             :disabled="m08Snap.readonlyFactors"
@@ -333,7 +325,6 @@
 
       <!-- 版本条：V1 初稿 → 各轮对话优化 → 定稿；点击可回溯到对应校核轮次 -->
       <div class="m08-panel m08-ver-bar">
-        <p class="m08-ver-hint">版本演进由右侧「多轮校核优化」对话驱动：V1 初稿 → 第1轮→V2 → 第2轮→V3 → 第3轮→V4 定稿。点击节点可跳转到对应轮次。</p>
         <div class="m08-vers">
           <div v-for="(ver, vi) in m08Versions" :key="ver.ver" class="m08-ver-item">
             <div
@@ -450,7 +441,6 @@
               <span class="m08-opt-meta">{{ op.status }} · {{ op.count || 0 }} 项</span>
             </el-option>
           </el-select>
-          <div class="m08-create-hint">选项来自「数据模型管理」指标树列表，与建模结果联动</div>
         </el-form-item>
         <el-form-item label="大纲模板" required>
           <el-select
@@ -574,7 +564,6 @@ export default {
 .m08-step-cur .m08-step-dot { border-color: #1668a8; color: #1668a8; background: #e8f2fb; }
 .m08-step-cur .m08-step-label { color: #1668a8; font-weight: 600; }
 .m08-step-focus .m08-step-dot { box-shadow: 0 0 0 3px rgba(22, 104, 168, .25); }
-.m08-steps-hint { margin: -4px 0 0; font-size: 12px; color: #8a99a8; text-align: center; }
 .m08-step-dlg-body { margin: 0 0 12px; font-size: 14px; line-height: 1.7; color: #3f5062; }
 .m08-step-dlg-demo { margin: 0; font-size: 13px; line-height: 1.6; color: #0d4e83; background: #eaf3fd; padding: 10px 12px; border-radius: 8px; }
 
@@ -593,7 +582,6 @@ export default {
 }
 .m08-panel-title { font-weight: 600; font-size: 13.5px; color: #1f3d5a; }
 .m08-factor-count { font-size: 20px; font-weight: 700; color: #c8902a; margin-left: 4px; }
-.m08-factor-tip { font-size: 13px; color: #8a99a8; }
 .spacer { flex: 1; }
 
 .m08-factor-grid {
@@ -753,7 +741,6 @@ export default {
 .m08-chat-row :deep(.el-button + .el-button) { margin-left: 0; }
 
 .m08-ver-bar { padding: 12px 18px; }
-.m08-ver-hint { margin: 0 0 12px; font-size: 12.5px; color: #5c7084; line-height: 1.6; }
 .m08-vers { display: flex; align-items: center; }
 .m08-ver-item { display: flex; align-items: center; flex: 1; }
 .m08-ver-node {
@@ -807,13 +794,6 @@ export default {
   color: #8a99a8;
   font-size: 12px;
 }
-.m08-create-hint {
-  margin-top: 6px;
-  font-size: 12px;
-  color: #8a99a8;
-  line-height: 1.5;
-}
-
 @media (max-width: 1200px) {
   .m08-factor-grid { grid-template-columns: repeat(4, 1fr); }
   .m08-lower { grid-template-columns: 1fr; }

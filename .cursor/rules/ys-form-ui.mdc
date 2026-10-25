@@ -189,7 +189,7 @@ alwaysApply: false
 - EP：`el-button` / `el-input` / `el-select` / `el-table`；虚线框标题在框内；并排按钮 `gap: 8px`
 
 ### Q. 创新点抽取 / 技术体系图谱（InnovationExtract m29 · TechSystemGraph m30）
-- 菜单叶子名必须是「技术创新点抽取」（禁止「识别」）；统计条文案「抽取技术创新点」58 个
+- 菜单叶子名必须是「创新点抽取」（禁止「识别」「技术创新点抽取」）；统计条文案「抽取技术创新点」58 个
 - 整页白底壳（同 m31）；列表区用 `.crud-body`，筛选与表格之间**无分隔线**
 - 结果表与 CrudPage 同构：普通 `<table>` + `.table-inner` + 外侧 `.pager`；操作列 `.ops a` 蓝字「展开/收起」；**默认全部收起**；四要素标题左蓝竖条 + `ref-tag`
 - 来源文献指认句：归档后固定「3篇（含本次试验报告V2）」，跟 `demo-store.trialReportV2Archived`

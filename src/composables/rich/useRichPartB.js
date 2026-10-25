@@ -4,13 +4,14 @@
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useDemoStore, confirmRootCause, archiveInterpretReport, updateActiveProbeCount, syncTrialDataDock, setGraphBrowse } from '@/composables/demo-store'
 import { deviationTotal } from '@/data/deviations'
+import { nowText } from '@/utils/format'
 import {
   judgeInnovations, techTree as judgeTree,
   judgeTemplates, judgeReportSections, judgeBasisReports,
   innovBarData, trendLineData,
   trainTask, lossChartData, evalChartData, gpuChartData, memChartData,
   agentTemplates, resourceKpis as judgeResourceKpis, resGrowthData,
-  probes, shots30, dockTasks, causeChain, evidence, candidates,
+  probes, shots30, dockTasks as dockTasksSeed, causeChain, evidence, candidates,
 } from '@/data/mock'
 import * as echarts from 'echarts'
 
@@ -339,21 +340,277 @@ function initV0Chart() {
 function startScan() {
   if (scanCol.value >= 0) return
   scanCol.value = 0
+  const maxCol = m15ViewKind.value === 'ballistic' ? 6 : 4
   scanTimer = setInterval(() => {
     scanCol.value++
-    if (scanCol.value >= 6) {
+    if (scanCol.value >= maxCol) {
       clearInterval(scanTimer)
       scanTimer = null
       alertVisible.value = true
     }
-  }, 800)
+  }, 700)
+}
+
+/** 对接任务详情类型：精度弹道 / 气象 / 标定 */
+const m15ViewKind = computed(() => {
+  const t = m15Detail.value
+  if (!t) return 'ballistic'
+  if (t.id === 'T02' || /气象/.test(t.name || '') || /气象/.test(t.srcType || '')) return 'weather'
+  if (t.id === 'T03' || /标定/.test(t.name || '') || /标定/.test(t.srcType || '')) return 'calib'
+  return 'ballistic'
+})
+
+const m15DetailMeta = computed(() => {
+  const t = m15Detail.value || {}
+  const kind = m15ViewKind.value
+  if (kind === 'weather') {
+    return {
+      summary: `${t.count || '30组'} · ${String(t.time || '').slice(0, 10) || '2024-10-18'} · 全部合格`,
+      scanLabel: '启动气象校核',
+      scanDone: '校核完成',
+      scanRun: '校核中…',
+      alertTitle: '提示 · 气象窗口校核通过',
+      alertBody: '温湿度、风速均在试验窗口内，可支撑精度试验数据融合。',
+      alertSub: '校核时间：08:00:12　建议：继续执行弹道数据对接任务',
+      showRootCause: false,
+    }
+  }
+  if (kind === 'calib') {
+    return {
+      summary: `${t.count || '12项'} · ${String(t.time || '').slice(0, 10) || '2024-10-17'} · 1项关注`,
+      scanLabel: '启动标定复核',
+      scanDone: '复核完成',
+      scanRun: '复核中…',
+      alertTitle: '关注 · 温补系数偏差偏大',
+      alertBody: '温补系数相对出厂值偏差 4.8%，仍在容差 5% 内，建议记录并跟踪。',
+      alertSub: '复核时间：16:20:33　建议：归档标定报告，供根因分析引用',
+      showRootCause: false,
+    }
+  }
+  return {
+    summary: '30发 · 2024-10-18 · 异常1发',
+    scanLabel: '启动智能检测',
+    scanDone: '检测完成',
+    scanRun: '检测中…',
+    alertTitle: '告警 · 第 19 发 · 立靶高低偏差超限',
+    alertBody: '探针：弹着点散布探针 P01　检测值：+0.42 mil（判据：≤0.30 mil）',
+    alertSub: '触发时间：11:22:07　建议：标记为异常，进入根因分析流程',
+    showRootCause: true,
+  }
+})
+
+/** 气象 30 组（T02） */
+const weather30 = Array.from({ length: 30 }, (_, i) => {
+  const n = i + 1
+  const temp = +(18.2 + Math.sin(n * 0.35) * 1.6 + (n % 5) * 0.08).toFixed(1)
+  const humidity = Math.round(42 + Math.cos(n * 0.28) * 6 + (n % 3))
+  const wind = +(2.1 + Math.sin(n * 0.5) * 0.8 + (n % 4) * 0.1).toFixed(1)
+  const pressure = +(1012 + Math.sin(n * 0.2) * 1.2).toFixed(1)
+  return {
+    id: n,
+    ts: `07:${String(40 + Math.floor(n / 2)).padStart(2, '0')}:${String((n * 7) % 60).padStart(2, '0')}`,
+    temp,
+    humidity,
+    wind,
+    pressure,
+    anomaly: false,
+  }
+})
+
+/** 标定台 12 项（T03） */
+const calib12 = [
+  { id: 1, name: '温补系数 K0', value: '1.024', unit: '—', criterion: '1.000±0.050', result: '合格', watch: false },
+  { id: 2, name: '温补系数 K1', value: '0.048', unit: '1/℃', criterion: '≤0.050', result: '关注', watch: true },
+  { id: 3, name: '零位偏置', value: '0.12', unit: 'mil', criterion: '≤0.20', result: '合格', watch: false },
+  { id: 4, name: '标度因数', value: '0.998', unit: '—', criterion: '0.995~1.005', result: '合格', watch: false },
+  { id: 5, name: '横滚安装角', value: '0.08', unit: '°', criterion: '≤0.15', result: '合格', watch: false },
+  { id: 6, name: '俯仰安装角', value: '0.06', unit: '°', criterion: '≤0.15', result: '合格', watch: false },
+  { id: 7, name: '陀螺漂移', value: '0.32', unit: '°/h', criterion: '≤0.50', result: '合格', watch: false },
+  { id: 8, name: '加速度计偏置', value: '0.8', unit: 'mg', criterion: '≤1.5', result: '合格', watch: false },
+  { id: 9, name: '时间同步偏差', value: '6', unit: 'μs', criterion: '≤10', result: '合格', watch: false },
+  { id: 10, name: '电源纹波', value: '28', unit: 'mV', criterion: '≤50', result: '合格', watch: false },
+  { id: 11, name: '通信误码率', value: '0', unit: '—', criterion: '=0', result: '合格', watch: false },
+  { id: 12, name: '自检总项', value: '12/12', unit: '项', criterion: '全部完成', result: '合格', watch: false },
+]
+
+function initWeatherChart() {
+  if (!v0ChartEl.value) return
+  if (v0Chart) { v0Chart.dispose(); v0Chart = null }
+  v0Chart = echarts.init(v0ChartEl.value)
+  v0Chart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['气温℃', '风速m/s'], top: 4, textStyle: { color: '#8a99a8', fontSize: 11 } },
+    grid: { top: 36, right: 48, bottom: 36, left: 44 },
+    xAxis: {
+      type: 'category',
+      data: weather30.map((r) => r.id),
+      name: '组次',
+      nameTextStyle: { color: '#8a99a8', fontSize: 11 },
+      axisLabel: { color: '#8a99a8', fontSize: 11, interval: 4 },
+      axisLine: { lineStyle: { color: '#dce8f2' } },
+      axisTick: { show: false },
+    },
+    yAxis: [
+      {
+        type: 'value', name: '℃', min: 15, max: 22,
+        nameTextStyle: { color: '#8a99a8', fontSize: 11 },
+        axisLabel: { color: '#8a99a8', fontSize: 11 },
+        splitLine: { lineStyle: { color: '#eef3f8' } },
+        axisLine: { show: false }, axisTick: { show: false },
+      },
+      {
+        type: 'value', name: 'm/s', min: 0, max: 5,
+        nameTextStyle: { color: '#8a99a8', fontSize: 11 },
+        axisLabel: { color: '#8a99a8', fontSize: 11 },
+        splitLine: { show: false },
+        axisLine: { show: false }, axisTick: { show: false },
+      },
+    ],
+    series: [
+      {
+        name: '气温℃', type: 'line', data: weather30.map((r) => r.temp), smooth: true,
+        lineStyle: { color: '#1668a8', width: 2 }, symbol: 'circle', symbolSize: 4, itemStyle: { color: '#1668a8' },
+        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(22,104,168,.14)' }, { offset: 1, color: 'rgba(22,104,168,0)' }] } },
+      },
+      {
+        name: '风速m/s', type: 'line', yAxisIndex: 1, data: weather30.map((r) => r.wind), smooth: true,
+        lineStyle: { color: '#22913c', width: 2 }, symbol: 'none', itemStyle: { color: '#22913c' },
+      },
+    ],
+  })
+}
+
+function initCalibChart() {
+  if (!v0ChartEl.value) return
+  if (v0Chart) { v0Chart.dispose(); v0Chart = null }
+  v0Chart = echarts.init(v0ChartEl.value)
+  const rows = calib12.filter((r) => r.unit !== '项' && r.name !== '自检总项').slice(0, 8)
+  v0Chart.setOption({
+    tooltip: { trigger: 'axis' },
+    grid: { top: 28, right: 16, bottom: 52, left: 48 },
+    xAxis: {
+      type: 'category',
+      data: rows.map((r) => r.name.replace(/系数|偏置|安装角/, '')),
+      axisLabel: { color: '#8a99a8', fontSize: 10, rotate: 28, interval: 0 },
+      axisLine: { lineStyle: { color: '#dce8f2' } },
+      axisTick: { show: false },
+    },
+    yAxis: {
+      type: 'value', name: '相对达标度', max: 100, min: 60,
+      nameTextStyle: { color: '#8a99a8', fontSize: 11 },
+      axisLabel: { color: '#8a99a8', fontSize: 11, formatter: '{value}%' },
+      splitLine: { lineStyle: { color: '#eef3f8' } },
+      axisLine: { show: false }, axisTick: { show: false },
+    },
+    series: [{
+      type: 'bar',
+      barWidth: 18,
+      data: rows.map((r) => ({
+        value: r.watch ? 82 : 90 + (r.id % 7),
+        itemStyle: {
+          color: r.watch
+            ? { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#e8b84a' }, { offset: 1, color: '#d0ab68' }] }
+            : { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#5aa6de' }, { offset: 1, color: '#1668a8' }] },
+          borderRadius: [3, 3, 0, 0],
+        },
+      })),
+    }],
+  })
+}
+
+function initM15Chart() {
+  const kind = m15ViewKind.value
+  if (kind === 'weather') initWeatherChart()
+  else if (kind === 'calib') initCalibChart()
+  else initV0Chart()
 }
 
 function m15Open(task) {
   m15Detail.value = task
   scanCol.value = -1
   alertVisible.value = false
-  nextTick(() => initV0Chart())
+  nextTick(() => {
+    initM15Chart()
+    requestAnimationFrame(() => initM15Chart())
+  })
+}
+
+/** 对接任务列表（可新建） */
+const dockTasks = ref(dockTasksSeed.map((t) => ({ ...t })))
+const m15CreateVisible = ref(false)
+const m15CreateForm = reactive({
+  name: '',
+  srcType: '弹道测量+遥测文件',
+  count: '',
+  batch: 'D-07',
+  status: '成功',
+})
+const m15SrcTypeOpts = [
+  '弹道测量+遥测文件',
+  '气象站接口',
+  '标定台导出文件',
+  '雷达测速文件',
+  '惯导遥测流',
+]
+
+const m15FilteredTasks = computed(() => {
+  let list = dockTasks.value
+  if (m15FilterStatus.value) {
+    list = list.filter((t) => t.status === m15FilterStatus.value)
+  }
+  if (m15FilterBatch.value) {
+    // 演示：批次筛选主要用于 T01/新建任务（带 batch 字段）
+    list = list.filter((t) => !t.batch || t.batch === m15FilterBatch.value || t.id === 'T01')
+  }
+  return list
+})
+
+function openCreateDockTask() {
+  m15CreateForm.name = ''
+  m15CreateForm.srcType = m15SrcTypeOpts[0]
+  m15CreateForm.count = '30发'
+  m15CreateForm.batch = m15FilterBatch.value || 'D-07'
+  m15CreateForm.status = '成功'
+  m15CreateVisible.value = true
+}
+
+function submitCreateDockTask() {
+  const name = (m15CreateForm.name || '').trim()
+  const srcType = (m15CreateForm.srcType || '').trim()
+  const count = (m15CreateForm.count || '').trim()
+  if (!name) {
+    toast('请填写任务名称', 'warning')
+    return
+  }
+  if (!srcType) {
+    toast('请选择数据源类型', 'warning')
+    return
+  }
+  if (!count) {
+    toast('请填写数据量', 'warning')
+    return
+  }
+  if (dockTasks.value.some((t) => t.name === name)) {
+    toast('任务名称已存在', 'warning')
+    return
+  }
+  const maxNum = dockTasks.value.reduce((m, t) => {
+    const n = Number(String(t.id || '').replace(/\D/g, ''))
+    return Number.isFinite(n) ? Math.max(m, n) : m
+  }, 0)
+  const id = `T${String(maxNum + 1).padStart(2, '0')}`
+  const row = {
+    id,
+    name,
+    srcType,
+    count,
+    batch: m15CreateForm.batch || 'D-07',
+    status: m15CreateForm.status || '成功',
+    time: nowText(),
+  }
+  dockTasks.value.unshift(row)
+  m15CreateVisible.value = false
+  toast(`已新建对接任务「${name}」`, 'success')
 }
 
 // ── M19 根因分析工作台 ──────────────────────────────────────────────────
@@ -369,7 +626,7 @@ const m19FilterStatus = ref('')
 const demoStore = useDemoStore()
 
 // Part2 对接任务 T01 → Part3 素材「精度试验数据回传」基线
-const dockT01 = dockTasks.find((t) => t.id === 'T01') || dockTasks[0]
+const dockT01 = dockTasks.value.find((t) => t.id === 'T01') || dockTasks.value[0]
 if (dockT01) syncTrialDataDock(dockT01)
 
 // m19：采纳根因 + 触发解读报告生成 → 写入 demo-store
@@ -382,7 +639,6 @@ function doM19ConfirmRootCause() {
   const evt = m19Detail.value || { id: 'EVT-001', name: '第19发超差事件' }
   confirmRootCause(top, evt)
   pendingM22ReportId = 'RPT-001'
-  toast('根因已采纳，正在打开解读报告')
   router.push({ name: 'app', params: { pid: 'probe', sid: 'probe-interpret', mid: 'report-list' } })
 }
 
@@ -594,6 +850,7 @@ watch(m19Detail, (val) => {
     nextTick(() => {
       resizeM19Charts()
       requestAnimationFrame(() => resizeM19Charts())
+      setTimeout(() => resizeM19Charts(), 80)
     })
     return
   }
@@ -1530,14 +1787,25 @@ onBeforeUnmount(() => {
     submitCreateProbe,
     previewProbeCite,
     m15Detail,
+    m15ViewKind,
+    m15DetailMeta,
+    weather30,
+    calib12,
     scanCol,
     alertVisible,
     m15FilterBatch,
     m15FilterStatus,
+    m15CreateVisible,
+    m15CreateForm,
+    m15SrcTypeOpts,
+    m15FilteredTasks,
+    openCreateDockTask,
+    submitCreateDockTask,
     scanTimer,
     v0ChartEl,
     v0Chart,
     initV0Chart,
+    initM15Chart,
     startScan,
     m15Open,
     m19Detail,
