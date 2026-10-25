@@ -3,16 +3,19 @@
     <!-- 顶部统计条 -->
     <div class="kpi-row kpi-row-3">
       <div class="kpi">
+        <div class="mark"><Icon name="doc" /></div>
         <div class="label">收录科技文献</div>
-        <div class="value">326 <small>篇</small></div>
+        <div class="value">326<small>篇</small></div>
       </div>
       <div class="kpi">
+        <div class="mark"><Icon name="spark" /></div>
         <div class="label">抽取技术创新点</div>
-        <div class="value">58 <small>个</small></div>
+        <div class="value">58<small>个</small></div>
       </div>
       <div class="kpi">
+        <div class="mark"><Icon name="target" /></div>
         <div class="label">覆盖技术方向</div>
-        <div class="value">6 <small>个</small></div>
+        <div class="value">6<small>个</small></div>
       </div>
     </div>
 
@@ -103,9 +106,10 @@
 <script>
 import { useRichPage } from '@/composables/rich/useRichPage'
 import SelectField from '@/components/SelectField.vue'
+import Icon from '@/components/Icon.vue'
 
 export default {
-  components: { SelectField },
+  components: { SelectField, Icon },
   props: { page: Object, title: String },
   setup(props) {
     return useRichPage(props)

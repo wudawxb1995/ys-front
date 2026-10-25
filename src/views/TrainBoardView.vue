@@ -92,7 +92,7 @@
         </div>
         <div class="split">
           <div class="panel chart-panel">
-            <header><h3>评估指标</h3><span>准确率 / 召回率</span></header>
+            <header><h3>评估指标</h3><span>准确率 / 召回率 / F1</span></header>
             <div ref="evalEl" class="chart"></div>
           </div>
           <div class="panel chart-panel">
@@ -188,11 +188,13 @@ const lossX = ref(['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8'])
 const evalX = ref(['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8'])
 const accuracy = ref([0.72, 0.76, 0.79, 0.82, 0.84, 0.86, 0.87, 0.88])
 const recall = ref([0.68, 0.71, 0.74, 0.77, 0.80, 0.82, 0.83, 0.85])
+const f1 = ref([0.70, 0.73, 0.76, 0.79, 0.82, 0.84, 0.85, 0.86])
 const memX = ref(['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8'])
 const memY = ref([58, 60, 61, 62, 63, 62, 64, 63])
+const memCap = ref([72, 72, 72, 72, 72, 72, 72, 72])
 const logs = ref([
   { id: 1, time: '15:36:02', text: 'step 18420  loss 0.830  lr 1.2e-5  tokens/s 1860' },
-  { id: 2, time: '15:35:48', text: '评估批次完成  准确率 0.881  召回率 0.852' },
+  { id: 2, time: '15:35:48', text: '评估批次完成  准确率 0.881  召回率 0.852  F1 0.866' },
   { id: 3, time: '15:35:11', text: 'GPU1 利用率 92%  显存 64/80 GB  温度 71°C' },
 ])
 let logSeq = 4
@@ -275,15 +277,32 @@ function paint() {
     series: [
       { name: '准确率', type: 'line', data: plain(accuracy.value), smooth: true, symbol: 'circle', symbolSize: 6, lineStyle: { color: '#3ec6ff', width: 2 }, itemStyle: { color: '#3ec6ff' } },
       { name: '召回率', type: 'line', data: plain(recall.value), smooth: true, symbol: 'circle', symbolSize: 6, lineStyle: { color: '#d0ab68', width: 2 }, itemStyle: { color: '#d0ab68' } },
+      {
+        name: 'F1', type: 'line', data: plain(f1.value), smooth: true, symbol: 'circle', symbolSize: 6,
+        lineStyle: { color: '#49d39a', width: 2.2 }, itemStyle: { color: '#49d39a' },
+        areaStyle: { color: 'rgba(73,211,154,.12)' },
+        markLine: {
+          silent: true, symbol: 'none',
+          lineStyle: { color: '#49d39a', type: 'dashed', width: 1 },
+          data: [{ yAxis: 0.85, label: { formatter: '目标', color: '#49d39a', fontSize: 10 } }],
+        },
+      },
     ],
   })
   memChart?.setOption({
     ...base(memX.value, { min: 40, max: 80 }),
-    series: [{
-      type: 'line', data: plain(memY.value), smooth: true, symbol: 'none',
-      lineStyle: { color: '#49d39a', width: 2 },
-      areaStyle: { color: 'rgba(73,211,154,.16)' },
-    }],
+    legend: { top: 0, right: 8, textStyle: { color: '#9eb4c8', fontSize: 11 }, itemWidth: 12, itemHeight: 8 },
+    series: [
+      {
+        name: '已用均值', type: 'line', data: plain(memY.value), smooth: true, symbol: 'none',
+        lineStyle: { color: '#49d39a', width: 2 },
+        areaStyle: { color: 'rgba(73,211,154,.16)' },
+      },
+      {
+        name: '预留上限', type: 'line', data: plain(memCap.value), smooth: false, symbol: 'none',
+        lineStyle: { color: '#8ea4bb', width: 1.4, type: 'dashed' },
+      },
+    ],
   })
 }
 
@@ -319,13 +338,16 @@ function tick() {
   if (step.value % 80 === 0) {
     const acc = Math.min(0.94, +(accuracy.value.at(-1) + 0.002).toFixed(3))
     const rec = Math.min(0.92, +(recall.value.at(-1) + 0.002).toFixed(3))
+    const nextF1 = Math.min(0.93, +((2 * acc * rec) / (acc + rec)).toFixed(3))
     evalX.value = [...evalX.value.slice(-11), `S${step.value}`]
     accuracy.value = [...accuracy.value.slice(-11), acc]
     recall.value = [...recall.value.slice(-11), rec]
+    f1.value = [...f1.value.slice(-11), nextF1]
     const mem = Math.round(gpus.value.reduce((sum, item) => sum + item.mem, 0) / gpus.value.length)
     memX.value = [...memX.value.slice(-11), `S${step.value}`]
     memY.value = [...memY.value.slice(-11), mem]
-    pushLog(`评估批次完成  准确率 ${acc.toFixed(3)}  召回率 ${rec.toFixed(3)}`)
+    memCap.value = [...memCap.value.slice(-11), 72]
+    pushLog(`评估批次完成  准确率 ${acc.toFixed(3)}  召回率 ${rec.toFixed(3)}  F1 ${nextF1.toFixed(3)}`)
   } else if (step.value % 40 === 0) {
     const hot = [...gpus.value].sort((a, b) => b.util - a.util)[0]
     pushLog(`${hot.id} 利用率 ${hot.util}%  显存 ${hot.mem}/80 GB  温度 ${hot.temp}°C`)
@@ -462,13 +484,28 @@ onBeforeUnmount(() => {
 .gpu-list.paused .roll { animation-play-state: paused; }
 .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .kpis article {
-  padding: 10px 12px 8px;
+  position: relative;
+  overflow: hidden;
+  min-height: 78px;
+  padding: 12px 12px 10px 14px;
   border: 1px solid rgba(80, 150, 196, .28);
   border-radius: 12px;
   background: linear-gradient(180deg, rgba(16, 42, 68, .9), rgba(8, 22, 38, .9));
 }
+.kpis article::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: #3ec6ff;
+}
+.kpis article:nth-child(2)::before { background: #d0ab68; }
+.kpis article:nth-child(3)::before { background: #49d39a; }
+.kpis article:nth-child(4)::before { background: #7aa2ff; }
+.kpis article:nth-child(5)::before { background: #3ec6ff; }
+.kpis article:nth-child(6)::before { background: #d0ab68; }
 .kpis span, .kpis em { display: block; color: #8eabc2; font-size: 12px; }
-.kpis b { display: block; margin: 2px 0; font-size: 22px; line-height: 1; color: #f3f8fc; font-variant-numeric: tabular-nums; }
+.kpis b { display: block; margin: 4px 0 2px; font-size: 22px; line-height: 1; color: #f3f8fc; font-variant-numeric: tabular-nums; }
 .kpis small { margin-left: 4px; font-size: 12px; color: #8eabc2; font-weight: 500; }
 .kpis em.ok { color: #49d39a; }
 .body { flex: 1; min-height: 0; display: grid; grid-template-columns: 248px minmax(0, 1fr) 292px; gap: 8px; }

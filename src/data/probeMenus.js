@@ -104,7 +104,7 @@ export function probeSystems() {
           },
           [
             ['probe-create', '探针创建'],
-            ['probe-list', '探针参数配置'],
+            ['probe-list', '探针管理'],
             ['probe-edit', '探针编辑'],
             ['probe-del', '探针删除'],
           ],

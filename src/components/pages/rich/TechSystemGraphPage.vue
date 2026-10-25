@@ -51,7 +51,6 @@
           <em v-if="activeDirName">当前：{{ activeDirName }}</em>
         </h3>
         <div class="m30-graph-toolbar">
-          <span>默认放大主结构 · 外圈可裁切 · 拖拽/滚轮继续查看</span>
           <button type="button" class="tb-btn" @click="resetView">复位视图</button>
         </div>
         <div class="m30-graph-scroll" ref="containerEl">
@@ -564,7 +563,7 @@ export default {
 .m30-graph-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-bottom: 8px;
   font-size: 12px;
   color: #8a99a8;

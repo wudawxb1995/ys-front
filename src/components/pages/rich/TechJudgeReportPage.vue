@@ -36,11 +36,11 @@
         </div>
         <div v-if="m31Editing" class="edit-banner">当前为在线编辑模式，可直接修改各节正文，完成后点击「完成编辑」保存。</div>
 
-        <!-- 双栏：左侧章节导航 + 右侧正文 -->
-        <div style="display:grid;grid-template-columns:170px 1fr;gap:14px;align-items:start">
+        <!-- 双栏：左侧章节导航 + 右侧正文（固定高度滚动，章节全部展开） -->
+        <div class="m31-preview-layout">
 
           <!-- 左侧章节导航 -->
-          <div class="panel" style="padding:10px 0;position:sticky;top:16px">
+          <div class="panel m31-toc">
             <div style="font-size:12px;color:#8a99a8;font-weight:600;padding:4px 14px 10px;letter-spacing:.5px">章节目录</div>
             <div v-for="sec in m31Sections" :key="sec.no"
               class="m31-nav-item" :class="{on: activeReportSection===sec.no}"
@@ -59,16 +59,15 @@
             </div>
           </div>
 
-          <!-- 右侧正文区 -->
-          <div style="display:flex;flex-direction:column;gap:14px">
+          <!-- 右侧正文区：全章展开 + 固定高度滚动 -->
+          <div class="m31-report-scroll">
 
             <!-- 第1节：技术现状综述 -->
-            <div id="m31sec1" class="panel" :class="{'m31-section-active': activeReportSection===1}" style="padding:22px 26px" @click="activeReportSection=1">
+            <div id="m31sec1" class="panel m31-sec" :class="{'m31-section-active': activeReportSection===1}" @click="activeReportSection=1">
               <div class="m31-section-anchor">
                 <span class="m31-section-no">01</span>
                 <h3 class="report-section-title" style="margin-bottom:0">技术现状综述</h3>
               </div>
-              <template v-if="activeReportSection===1">
                 <el-input
                   v-if="m31Editing"
                   v-model="m31Draft.s1p1"
@@ -97,17 +96,14 @@
                     <div>[6] 某型温补失效案例分析，2019</div>
                   </div>
                 </div>
-              </template>
-              <p v-else class="report-body" style="margin-top:10px;color:#8a99a8;font-size:13px">涵盖定位定向技术领域现状综述，引用6篇核心文献……</p>
             </div>
 
             <!-- 第2节：创新点分布分析 -->
-            <div id="m31sec2" class="panel" :class="{'m31-section-active': activeReportSection===2}" style="padding:22px 26px" @click="activeReportSection=2">
+            <div id="m31sec2" class="panel m31-sec" :class="{'m31-section-active': activeReportSection===2}" @click="activeReportSection=2">
               <div class="m31-section-anchor">
                 <span class="m31-section-no">02</span>
                 <h3 class="report-section-title" style="margin-bottom:0">创新点分布分析</h3>
               </div>
-              <template v-if="activeReportSection===2">
                 <el-input
                   v-if="m31Editing"
                   v-model="m31Draft.s2p1"
@@ -126,7 +122,7 @@
                   <!-- 右：技术体系子图（SVG） -->
                   <div style="background:#f8fbfe;border:1px solid var(--line);border-radius:8px;padding:12px 10px">
                     <div style="font-size:12px;color:#7a8b9a;margin-bottom:10px;font-weight:500">定位定向技术体系</div>
-                    <svg viewBox="0 0 160 190" width="100%" style="display:block;overflow:visible">
+                    <svg viewBox="0 0 160 120" width="100%" style="display:block;overflow:visible">
                       <!-- 根节点 -->
                       <rect x="20" y="4" width="120" height="28" rx="6" fill="var(--blue)"/>
                       <text x="80" y="22" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">定位定向技术</text>
@@ -158,38 +154,47 @@
                       <!-- 本次试验沉淀徽标 -->
                       <rect x="2" y="93" width="56" height="16" rx="8" fill="var(--gold)"/>
                       <text x="30" y="104" text-anchor="middle" fill="#fff" font-size="9" font-weight="600">本次试验沉淀</text>
-                      <!-- 图例 -->
-                      <rect x="2" y="120" width="8" height="8" rx="2" fill="#fff8e0" stroke="var(--gold)" stroke-width="1.2"/>
-                      <text x="14" y="128" fill="#8a6000" font-size="9">研究热点方向</text>
-                      <circle cx="6" cy="142" r="5" fill="var(--blue)"/>
-                      <text x="14" y="146" fill="#7a8b9a" font-size="9">创新点数量</text>
                     </svg>
                   </div>
                 </div>
                 <!-- 分布汇总表 -->
-                <table class="inner-table" style="width:100%;margin-top:4px">
-                  <thead><tr><th>技术方向</th><th>创新点数量</th><th>占比</th><th>备注</th></tr></thead>
-                  <tbody>
-                    <tr style="background:#fffaf0">
-                      <td><b style="color:#8a6000">定位定向技术</b> <span style="background:var(--gold);color:#fff;font-size:11px;padding:1px 6px;border-radius:6px;margin-left:4px">重点</span></td>
-                      <td><b style="color:var(--blue)">12</b></td><td>20.7%</td><td style="color:#8a6000;font-size:12px">含本次试验沉淀</td>
-                    </tr>
-                    <tr v-for="(name,i) in innovBarData.xData.slice(1)" :key="i">
-                      <td>{{ name }}</td><td>{{ innovBarData.yData[i+1] }}</td><td>{{ (innovBarData.yData[i+1]/58*100).toFixed(1) }}%</td><td style="color:#8a99a8;font-size:12px">—</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </template>
-              <p v-else class="report-body" style="margin-top:10px;color:#8a99a8;font-size:13px">58个创新点按6个方向分布，定位定向技术方向12个（含本次试验沉淀）……</p>
+                <div class="dist-table-wrap">
+                  <table class="inner-table dist-table">
+                    <thead>
+                      <tr>
+                        <th>技术方向</th>
+                        <th>创新点数量</th>
+                        <th>占比</th>
+                        <th>备注</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr class="focus-row">
+                        <td>
+                          <b class="dir-focus">定位定向技术</b>
+                          <span class="focus-tag">重点</span>
+                        </td>
+                        <td><b class="num-focus">{{ innovBarData.yData[0] }}</b></td>
+                        <td>{{ (innovBarData.yData[0]/58*100).toFixed(1) }}%</td>
+                        <td class="note-focus">工程化{{ innovBarData.engineering?.[0] ?? '—' }} / 基础{{ innovBarData.basic?.[0] ?? '—' }} · {{ innovBarData.notes?.[0] }}</td>
+                      </tr>
+                      <tr v-for="(name,i) in innovBarData.xData.slice(1)" :key="i">
+                        <td>{{ name }}</td>
+                        <td>{{ innovBarData.yData[i+1] }}</td>
+                        <td>{{ (innovBarData.yData[i+1]/58*100).toFixed(1) }}%</td>
+                        <td class="note-muted">工程化{{ innovBarData.engineering?.[i+1] ?? '—' }} / 基础{{ innovBarData.basic?.[i+1] ?? '—' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
             </div>
 
             <!-- 第3节：技术发展趋势研判 -->
-            <div id="m31sec3" class="panel" :class="{'m31-section-active': activeReportSection===3}" style="padding:22px 26px" @click="activeReportSection=3">
+            <div id="m31sec3" class="panel m31-sec" :class="{'m31-section-active': activeReportSection===3}" @click="activeReportSection=3">
               <div class="m31-section-anchor">
                 <span class="m31-section-no">03</span>
                 <h3 class="report-section-title" style="margin-bottom:0">技术发展趋势研判</h3>
               </div>
-              <template v-if="activeReportSection===3">
                 <el-input
                   v-if="m31Editing"
                   v-model="m31Draft.s3p1"
@@ -199,7 +204,7 @@
                   style="margin-top:14px"
                 />
                 <p v-else class="report-body" style="margin-top:14px">{{ m31Draft.s3p1 }}</p>
-                <div ref="trendLineEl" style="width:100%;height:220px;margin:12px 0 16px"></div>
+                <div ref="trendLineEl" style="width:100%;height:248px;margin:12px 0 16px"></div>
                 <el-input
                   v-if="m31Editing"
                   v-model="m31Draft.s3p2"
@@ -208,17 +213,14 @@
                   class="edit-area"
                 />
                 <p v-else class="report-body">{{ m31Draft.s3p2 }}</p>
-              </template>
-              <p v-else class="report-body" style="margin-top:10px;color:#8a99a8;font-size:13px">近5年创新点数量持续上升，年均增长约2.5个……</p>
             </div>
 
             <!-- 第4节：建议方向与对策 -->
-            <div id="m31sec4" class="panel" :class="{'m31-section-active': activeReportSection===4}" style="padding:22px 26px" @click="activeReportSection=4">
+            <div id="m31sec4" class="panel m31-sec" :class="{'m31-section-active': activeReportSection===4}" @click="activeReportSection=4">
               <div class="m31-section-anchor">
                 <span class="m31-section-no">04</span>
                 <h3 class="report-section-title" style="margin-bottom:0">建议方向与对策</h3>
               </div>
-              <template v-if="activeReportSection===4">
                 <!-- 首条：麦金色高亮 -->
                 <div class="m31-highlight-block" style="margin-top:16px">
                   <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -272,8 +274,6 @@
                   <span style="color:#1668a8;font-size:13px;font-weight:600">科研项目方案多维查重</span>
                   <span style="margin-left:auto;font-size:12px;color:#8a99a8">入口露出 · 8 维</span>
                 </div>
-              </template>
-              <p v-else class="report-body" style="margin-top:10px;color:#8a99a8;font-size:13px">首条建议：温补技术工程化改进；另含2条建议方向……</p>
             </div>
 
           </div>
@@ -284,7 +284,6 @@
       <template v-else>
         <div class="entry-title">
           <h2>{{ title || '技术研判报告生成' }}</h2>
-          <p>选择研判模板与技术方向对象，生成并预览研判报告；默认对象为定位定向技术。</p>
         </div>
 
         <div class="gen-bar">
@@ -292,8 +291,8 @@
             <span>模板 <b>{{ m31SelectedTplName || '未选择' }}</b></span>
             <span class="dot">·</span>
             <span>对象 <b>{{ m31Object.direction }}</b></span>
-            <span v-if="m31Object.archiveTitle" class="dot">·</span>
-            <span v-if="m31Object.archiveTitle" class="muted">依据 {{ m31Object.archiveTitle }}</span>
+            <span class="dot">·</span>
+            <span class="muted">依据 <b>{{ m31BasisTitle || '未选择' }}</b></span>
           </div>
           <el-button type="primary" @click="m31GenerateReport">生成研判报告</el-button>
         </div>
@@ -326,6 +325,14 @@
                 v-model="m31Direction"
                 :options="m31DirectionOpts"
                 placeholder="请选择技术方向"
+              />
+            </div>
+            <div class="obj-pick">
+              <span class="k">依据报告</span>
+              <SelectField
+                v-model="m31BasisId"
+                :options="m31BasisOpts"
+                placeholder="请选择依据报告"
               />
             </div>
             <div class="obj-stats">
@@ -686,5 +693,82 @@ export default {
   font-size: 14px;
   font-weight: 700;
   color: var(--navy-2);
+}
+
+.dist-table-wrap {
+  margin-top: 8px;
+  border: 1px solid #dce8f2;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+.dist-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13.5px;
+}
+.dist-table th {
+  background: #eef5fb;
+  color: #33506a;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 11px 14px;
+  text-align: left;
+  border-bottom: 1px solid #dce8f2;
+}
+.dist-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #eef3f8;
+  color: #3f5062;
+  vertical-align: middle;
+}
+.dist-table tbody tr:last-child td { border-bottom: none; }
+.dist-table tbody tr:hover td { background: #f7fbfe; }
+.dist-table .focus-row td { background: #fffaf0; }
+.dist-table .focus-row:hover td { background: #fff6e4; }
+.dir-focus { color: #8a6000; }
+.focus-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: var(--gold, #d0ab68);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: 1px;
+}
+.num-focus { color: var(--blue, #1668a8); }
+.note-focus { color: #8a6000; font-size: 12px; }
+.note-muted { color: #8a99a8; font-size: 12px; }
+
+.m31-preview-layout {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 14px;
+  align-items: stretch;
+  height: calc(100vh - 220px);
+  min-height: 560px;
+  max-height: 820px;
+}
+.m31-toc {
+  padding: 10px 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+.m31-report-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.m31-sec {
+  padding: 22px 26px;
+  flex: 0 0 auto;
 }
 </style>

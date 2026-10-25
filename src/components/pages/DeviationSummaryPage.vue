@@ -7,9 +7,21 @@
         <p>共 <b>{{ total }}</b> 项正偏离，覆盖试验前、试验中、试验后与知识沉淀全链路；点击条目可记录演示指认位置（sessionStorage 持久化）。</p>
       </div>
       <div class="hero-kpi">
-        <div class="kpi"><div class="label">正偏离项</div><div class="value">{{ total }}</div></div>
-        <div class="kpi"><div class="label">已浏览</div><div class="value">{{ viewedCount }}</div></div>
-        <div class="kpi"><div class="label">最近指认</div><div class="value sm">{{ lastTitle }}</div></div>
+        <div class="kpi">
+          <div class="mark"><Icon name="spark" /></div>
+          <div class="label">正偏离项</div>
+          <div class="value">{{ total }}</div>
+        </div>
+        <div class="kpi">
+          <div class="mark"><Icon name="eye" /></div>
+          <div class="label">已浏览</div>
+          <div class="value">{{ viewedCount }}</div>
+        </div>
+        <div class="kpi">
+          <div class="mark"><Icon name="target" /></div>
+          <div class="label">最近指认</div>
+          <div class="value sm">{{ lastTitle }}</div>
+        </div>
       </div>
     </div>
 
@@ -54,6 +66,7 @@
 import { computed, ref } from 'vue'
 import { deviationGroups, deviationTotal, deviationFlat } from '@/data/deviations'
 import { useDemoStore, markDeviationViewed } from '@/composables/demo-store'
+import Icon from '@/components/Icon.vue'
 
 defineProps({ page: Object, title: String })
 
@@ -101,12 +114,17 @@ function mark(item) {
 .dev-hero p { color: #75889b; font-size: 13.5px; margin: 8px 0 0; max-width: 560px; line-height: 1.6; }
 .dev-hero b { color: #0d4e83; }
 .hero-kpi { display: flex; gap: 12px; flex: 0 0 auto; }
-.kpi {
-  min-width: 108px; background: #f4f8fc; border: 1px solid #e4ecf4; border-radius: 8px; padding: 12px 14px;
+.hero-kpi .kpi {
+  min-width: 168px;
+  background: #fff;
 }
-.kpi .label { font-size: 12px; color: #8a99a8; }
-.kpi .value { font-size: 24px; font-weight: 800; color: #0d4e83; margin-top: 4px; line-height: 1.2; }
-.kpi .value.sm { font-size: 13px; font-weight: 600; color: #1f3d5a; max-width: 140px; }
+.hero-kpi .kpi .value.sm {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f3d5a;
+  max-width: 140px;
+  line-height: 1.35;
+}
 .filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .filter-chip {
   height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid #d6e4f0;

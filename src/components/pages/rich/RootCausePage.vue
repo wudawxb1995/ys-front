@@ -17,15 +17,37 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:12px;align-items:stretch">
 
           <!-- 左上：异常事件摘要卡 -->
-          <div class="panel">
+          <div class="panel m19-summary">
             <h3 style="margin-bottom:10px"><i></i>异常事件摘要</h3>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;background:#f4f8fc;border-radius:6px;padding:12px;font-size:13px">
-              <div><span style="color:#8a99a8">事件名称</span><div style="font-weight:600;color:#1a2b3c;margin-top:2px">{{ m19Detail.name }}</div></div>
-              <div><span style="color:#8a99a8">状态</span><div style="margin-top:2px"><span :class="'badge '+m19Detail.statusClass"><i></i>{{ m19Detail.status }}</span></div></div>
-              <div><span style="color:#8a99a8">触发探针</span><div style="color:#333;margin-top:2px">{{ m19Detail.probe }}</div></div>
-              <div><span style="color:#8a99a8">关联批次</span><div style="color:#333;margin-top:2px">D-07（30发）</div></div>
-              <div><span style="color:#8a99a8">发生时间</span><div style="color:#333;margin-top:2px">{{ m19Detail.time }}</div></div>
-              <div><span style="color:#8a99a8">异常发次</span><div style="color:#d4380d;font-weight:600;margin-top:2px">第 19 发</div></div>
+            <div class="m19-summary-meta">
+              <div><span>事件名称</span><b>{{ m19Detail.name }}</b></div>
+              <div><span>状态</span><div><span :class="'badge '+m19Detail.statusClass"><i></i>{{ m19Detail.status }}</span></div></div>
+              <div><span>触发探针</span><em>{{ m19Detail.probe }}</em></div>
+              <div><span>关联批次</span><em>D-07（30发）</em></div>
+              <div><span>发生时间</span><em>{{ m19Detail.time }}</em></div>
+              <div><span>异常发次</span><strong class="warn">第 19 发</strong></div>
+            </div>
+            <div class="m19-summary-kpis">
+              <div class="m19-kpi">
+                <span>立靶高低偏</span>
+                <b class="warn">+0.42 mil</b>
+                <em>判据 ≤ 0.30</em>
+              </div>
+              <div class="m19-kpi">
+                <span>炮口初速</span>
+                <b class="warn">818.3 m/s</b>
+                <em>下限 820</em>
+              </div>
+              <div class="m19-kpi">
+                <span>姿态角 pitch</span>
+                <b class="warn">+0.38°</b>
+                <em>阈值 ±0.20°</em>
+              </div>
+              <div class="m19-kpi">
+                <span>系统温度跳变</span>
+                <b class="warn">+2.1 ℃</b>
+                <em>TH-03 测点</em>
+              </div>
             </div>
           </div>
 
@@ -243,3 +265,77 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.m19-summary {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.m19-summary-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  background: #f4f8fc;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+.m19-summary-meta span {
+  display: block;
+  color: #8a99a8;
+  font-size: 12px;
+}
+.m19-summary-meta b {
+  display: block;
+  font-weight: 600;
+  color: #1a2b3c;
+  margin-top: 2px;
+}
+.m19-summary-meta em {
+  display: block;
+  font-style: normal;
+  color: #333;
+  margin-top: 2px;
+}
+.m19-summary-meta .warn {
+  display: block;
+  color: #d4380d;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.m19-summary-kpis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+  flex: 1;
+}
+.m19-kpi {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e8f2fb;
+  background: #fff;
+  min-height: 72px;
+}
+.m19-kpi span {
+  font-size: 11.5px;
+  color: #8a99a8;
+}
+.m19-kpi b {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2b3c;
+  line-height: 1.2;
+}
+.m19-kpi b.warn { color: #d4380d; }
+.m19-kpi em {
+  font-style: normal;
+  font-size: 11px;
+  color: #9aa8b5;
+}
+</style>

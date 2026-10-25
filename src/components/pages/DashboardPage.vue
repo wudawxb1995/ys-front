@@ -50,12 +50,15 @@ const props = defineProps({ page: Object })
 function kpiIcon(label = '') {
   if (/卡片/.test(label)) return 'card'
   if (/问答/.test(label)) return 'chat'
-  if (/图谱|关系/.test(label)) return 'graph'
+  if (/图谱|关系|节点/.test(label)) return 'graph'
   if (/接口|服务/.test(label)) return 'plugin'
-  if (/算法|模型/.test(label)) return 'model'
+  if (/探针|模型|算法/.test(label)) return 'model'
   if (/任务|对接/.test(label)) return 'flow'
   if (/准确|率|评估/.test(label)) return 'chart'
-  if (/文档|报告|资源|数据/.test(label)) return 'folder'
+  if (/创新|方向|覆盖/.test(label)) return 'spark'
+  if (/文献|文书|文档|报告/.test(label)) return 'doc'
+  if (/资源|数据|数据集/.test(label)) return 'database'
+  if (/抽取|收录/.test(label)) return 'extract'
   return 'chart'
 }
 defineEmits(['open'])

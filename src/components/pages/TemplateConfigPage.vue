@@ -329,15 +329,32 @@ function addChild() {
 .tpl-actions :deep(.btn-outline:hover) { background: #f4f9fd; border-color: #0870bf; }
 .tpl-actions :deep(.btn-primary) { background: #0870bf; border-color: #0870bf; box-shadow: 0 2px 6px rgba(8, 112, 191, .22); }
 .tpl-actions :deep(.btn-primary:hover) { background: #075fa6; }
-.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 8px; }
-.kpis article { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #e5e8ef; border-bottom: 3px solid #d0ab68; border-radius: 0; padding: 10px 14px; box-shadow: 0 2px 8px rgba(18, 61, 96, .05); }
-.kpis span { display: block; color: #7d90a3; font-size: 13px; }
-.kpis b { color: #07508c; font-size: 24px; line-height: 1.15; }
-.ico { width: 38px; height: 38px; border-radius: 0; background: #eef6fd center / 20px no-repeat; flex: 0 0 38px; }
-.ico.doc { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230870bf' stroke-width='1.7'><path d='M7 3.5h7l4 4V20H7z'/><path d='M14 3.5V8h4.5'/></svg>"); }
-.ico.stack { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230870bf' stroke-width='1.7'><path d='M7 6.5h11v13H7z'/><path d='M5 4.5h11v2'/><path d='M9 10h7M9 13.5h7M9 17h4'/></svg>"); }
-.ico.link { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230870bf' stroke-width='1.7'><path d='M10 13a4 4 0 0 0 5.7.4l2-2a4 4 0 0 0-5.7-5.7l-1 1'/><path d='M14 11a4 4 0 0 0-5.7-.4l-2 2a4 4 0 0 0 5.7 5.7l1-1'/></svg>"); }
-.ico.clock { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230870bf' stroke-width='1.7'><circle cx='12' cy='12' r='8'/><path d='M12 8v5l3 2'/></svg>"); }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 8px; }
+.kpis article {
+  display: flex; align-items: center; gap: 14px;
+  min-height: 84px; padding: 14px 16px 14px 18px;
+  background: #fff; border: 1px solid #e2ebf3; border-radius: 10px;
+  position: relative; overflow: hidden;
+}
+.kpis article::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #d0ab68;
+}
+.kpis article:nth-child(2)::before { background: #1668a8; }
+.kpis article:nth-child(3)::before { background: #22913c; }
+.kpis article:nth-child(4)::before { background: #8b6bb8; }
+.kpis span { display: block; color: #6d8092; font-size: 13px; }
+.kpis b { display: block; margin-top: 4px; color: #0d4e83; font-size: 28px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.ico {
+  width: 44px; height: 44px; border-radius: 10px;
+  background: #fff8e8 center / 22px no-repeat; flex: 0 0 44px;
+}
+.kpis article:nth-child(2) .ico { background-color: #e8f2fb; }
+.kpis article:nth-child(3) .ico { background-color: #eaf7ee; }
+.kpis article:nth-child(4) .ico { background-color: #f3eef8; }
+.ico.doc { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a07820' stroke-width='1.7'><path d='M7 3.5h7l4 4V20H7z'/><path d='M14 3.5V8h4.5'/></svg>"); }
+.ico.stack { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231668a8' stroke-width='1.7'><path d='M7 6.5h11v13H7z'/><path d='M5 4.5h11v2'/><path d='M9 10h7M9 13.5h7M9 17h4'/></svg>"); }
+.ico.link { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322913c' stroke-width='1.7'><path d='M10 13a4 4 0 0 0 5.7.4l2-2a4 4 0 0 0-5.7-5.7l-1 1'/><path d='M14 11a4 4 0 0 0-5.7-.4l-2 2a4 4 0 0 0 5.7 5.7l1-1'/></svg>"); }
+.ico.clock { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b6bb8' stroke-width='1.7'><circle cx='12' cy='12' r='8'/><path d='M12 8v5l3 2'/></svg>"); }
 .workspace { display: grid; grid-template-columns: 228px minmax(0, 1fr) 430px; gap: 10px; margin-bottom: 8px; align-items: stretch; }
 .panel { background: #fff; border: 1px solid #e5e8ef; border-radius: 0; box-shadow: 0 2px 8px rgba(18, 61, 96, .05); }
 .panel-h { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; border-bottom: 1px solid #eef3f8; }

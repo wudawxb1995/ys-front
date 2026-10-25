@@ -6,7 +6,7 @@ import { useDemoStore, confirmRootCause, archiveInterpretReport, updateActivePro
 import { deviationTotal } from '@/data/deviations'
 import {
   judgeInnovations, techTree as judgeTree,
-  judgeTemplates, judgeReportSections,
+  judgeTemplates, judgeReportSections, judgeBasisReports,
   innovBarData, trendLineData,
   trainTask, lossChartData, evalChartData, gpuChartData, memChartData,
   agentTemplates, resourceKpis as judgeResourceKpis, resGrowthData,
@@ -260,7 +260,19 @@ function initV0Chart() {
   if (v0Chart) { v0Chart.dispose(); v0Chart = null }
   v0Chart = echarts.init(v0ChartEl.value)
   const xData = shots30.map(s => s.id)
-  const yData = shots30.map(s => s.v0)
+  const yData = shots30.map((s) => ({
+    value: s.v0,
+    itemStyle: s.anomaly
+      ? {
+          color: '#fff',
+          borderColor: '#d4380d',
+          borderWidth: 2.5,
+          shadowBlur: 6,
+          shadowColor: 'rgba(212,56,13,.28)',
+        }
+      : { color: '#1668a8' },
+    symbolSize: s.anomaly ? 12 : 4,
+  }))
   v0Chart.setOption({
     tooltip: {
       trigger: 'axis',
@@ -270,10 +282,11 @@ function initV0Chart() {
         const shot = shots30[p.dataIndex]
         const color = shot.anomaly ? '#d4380d' : '#1668a8'
         return `<div style="font-size:13px">
-          <b style="color:${color}">第 ${shot.id} 发</b><br/>
+          <b style="color:${color}">第 ${shot.id} 发</b>${shot.anomaly ? ' · 异常' : ''}<br/>
           初速：<b style="color:${color}">${shot.v0} m/s</b><br/>
           高低偏：${shot.dH > 0 ? '+' : ''}${shot.dH} mil<br/>
-          方向偏：${shot.dL > 0 ? '+' : ''}${shot.dL} mil
+          方向偏：${shot.dL > 0 ? '+' : ''}${shot.dL} mil<br/>
+          身管温度：${shot.barrelTemp ?? '—'} ℃
         </div>`
       },
     },
@@ -300,20 +313,24 @@ function initV0Chart() {
       splitLine: { lineStyle: { color: '#eef3f8' } },
     },
     series: [{
-      type: 'line', data: yData,
+      type: 'line', data: yData, smooth: 0.15,
       lineStyle: { color: '#1668a8', width: 2 },
-      symbol: 'circle', symbolSize: 4,
-      itemStyle: { color: '#1668a8' },
+      symbol: 'circle',
+      areaStyle: {
+        color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(22,104,168,.12)' }, { offset: 1, color: 'rgba(22,104,168,0)' }] },
+      },
       markLine: {
         silent: true,
-        lineStyle: { color: '#d4380d', type: 'dashed', width: 1.2, opacity: 0.6 },
-        data: [{ yAxis: 820, label: { formatter: '820', color: '#d4380d', fontSize: 11 } }],
+        lineStyle: { color: '#d4380d', type: 'dashed', width: 1.2, opacity: 0.7 },
+        data: [
+          { yAxis: 820, label: { formatter: '下限 820', color: '#d4380d', fontSize: 11 } },
+          { yAxis: 822.1, label: { formatter: '均值', color: '#8a99a8', fontSize: 10 }, lineStyle: { color: '#8a99a8', type: 'dotted', opacity: 0.8 } },
+        ],
       },
-      markPoint: {
-        data: [{ coord: [18, 818.3] }],
-        symbol: 'circle', symbolSize: 14,
-        itemStyle: { color: '#d4380d' },
-        label: { formatter: '818.3', color: '#d4380d', fontSize: 12, fontWeight: 'bold', position: 'top' },
+      markArea: {
+        silent: true,
+        itemStyle: { color: 'rgba(212,56,13,.045)' },
+        data: [[{ xAxis: '18' }, { xAxis: '20' }]],
       },
     }],
   })
@@ -478,78 +495,87 @@ let pitchChart = null, scatterChart = null, tempChart = null
 
 function initM19Charts() {
   nextTick(() => {
-    // ① 姿态角 pitch 时序
+    // ① 姿态角 pitch 时序（与 shots30.pitch 对齐）
     if (pitchChartEl.value) {
       pitchChart && pitchChart.dispose()
       pitchChart = echarts.init(pitchChartEl.value)
-      const pitchData = Array.from({length:30}, (_,i) => {
-        if (i === 18) return [i+1, 0.38]
-        return [i+1, +(Math.sin(i*0.8)*0.06 + 0.04).toFixed(3)]
-      })
+      const pitchData = shots30.map((s) => [s.id, s.pitch ?? +(Math.sin(s.id * 0.8) * 0.06 + 0.04).toFixed(3)])
       pitchChart.setOption({
-        grid: { top:28, right:16, bottom:28, left:44 },
-        tooltip: { trigger:'axis', formatter: p => `第 ${p[0].data[0]} 发<br/>pitch偏差：<b>${p[0].data[1]}°</b>` },
-        xAxis: { type:'value', min:1, max:30, name:'发次', nameLocation:'end', nameGap:6,
-          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
-          axisLine:{lineStyle:{color:'#dce8f2'}}, axisTick:{show:false}, splitLine:{show:false} },
-        yAxis: { type:'value', name:'°', nameLocation:'end', nameGap:6,
-          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
-          axisLine:{show:false}, axisTick:{show:false}, splitLine:{lineStyle:{color:'#eef3f8'}} },
-        series:[{
-          type:'line', data: pitchData,
-          lineStyle:{color:'#1668a8',width:1.8}, symbol:'none',
-          markLine:{ silent:true, lineStyle:{color:'#d4380d',type:'dashed',width:1,opacity:.6},
-            data:[{yAxis:0.20, label:{formatter:'阈值0.20°',color:'#d4380d',fontSize:10}}] },
-          markPoint:{ data:[{coord:[19,0.38]}], symbol:'circle', symbolSize:10,
-            itemStyle:{color:'#d4380d'},
-            label:{formatter:'漂移起点',color:'#d4380d',fontSize:10,fontWeight:'bold',position:'top'} },
+        grid: { top: 28, right: 16, bottom: 28, left: 44 },
+        tooltip: { trigger: 'axis', formatter: (p) => `第 ${p[0].data[0]} 发<br/>pitch偏差：<b>${p[0].data[1]}°</b>` },
+        xAxis: { type: 'value', min: 1, max: 30, name: '发次', nameLocation: 'end', nameGap: 6,
+          nameTextStyle: { color: '#8a99a8', fontSize: 11 }, axisLabel: { color: '#8a99a8', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false }, splitLine: { show: false } },
+        yAxis: { type: 'value', name: '°', nameLocation: 'end', nameGap: 6,
+          nameTextStyle: { color: '#8a99a8', fontSize: 11 }, axisLabel: { color: '#8a99a8', fontSize: 11 },
+          axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#eef3f8' } } },
+        series: [{
+          type: 'line', data: pitchData, smooth: true,
+          lineStyle: { color: '#1668a8', width: 1.8 },
+          symbol: (val) => (val[1] > 0.2 ? 'circle' : 'none'),
+          symbolSize: 8,
+          itemStyle: { color: (p) => (p.data[1] > 0.2 ? '#d4380d' : '#1668a8') },
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(22,104,168,.1)' }, { offset: 1, color: 'rgba(22,104,168,0)' }] } },
+          markLine: { silent: true, lineStyle: { color: '#d4380d', type: 'dashed', width: 1, opacity: .6 },
+            data: [{ yAxis: 0.20, label: { formatter: '阈值0.20°', color: '#d4380d', fontSize: 10 } }] },
         }],
       })
     }
-    // ② 身管温度与初速散点
+    // ② 身管温度 × 初速散点（真实相关轴）
     if (scatterChartEl.value) {
       scatterChart && scatterChart.dispose()
       scatterChart = echarts.init(scatterChartEl.value)
-      const normalData = shots30.filter(s=>!s.anomaly).map(s=>[s.id, s.v0])
-      const anomalyData = shots30.filter(s=>s.anomaly).map(s=>[s.id, s.v0])
+      const normalData = shots30.filter((s) => !s.anomaly).map((s) => [s.barrelTemp, s.v0, s.id])
+      const anomalyData = shots30.filter((s) => s.anomaly).map((s) => [s.barrelTemp, s.v0, s.id])
       scatterChart.setOption({
-        grid:{ top:28, right:16, bottom:28, left:44 },
-        tooltip:{ trigger:'item', formatter:p=>`第 ${p.data[0]} 发<br/>初速：<b>${p.data[1]} m/s</b>` },
-        xAxis:{ type:'value', min:1, max:30, name:'发次', nameLocation:'end', nameGap:6,
-          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
-          axisLine:{lineStyle:{color:'#dce8f2'}}, axisTick:{show:false}, splitLine:{show:false} },
-        yAxis:{ type:'value', min:815, max:830, name:'m/s', nameLocation:'end', nameGap:6,
-          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
-          axisLine:{show:false}, axisTick:{show:false}, splitLine:{lineStyle:{color:'#eef3f8'}} },
-        series:[
-          { type:'scatter', data:normalData, symbolSize:6, itemStyle:{color:'#1668a8',opacity:.7} },
-          { type:'scatter', data:anomalyData, symbolSize:10, itemStyle:{color:'#d4380d'},
-            label:{show:true, formatter:'818.3', color:'#d4380d', fontSize:10, fontWeight:'bold', position:'top'} },
+        grid: { top: 28, right: 16, bottom: 36, left: 48 },
+        tooltip: { trigger: 'item', formatter: (p) => `第 ${p.data[2]} 发<br/>身管温度：<b>${p.data[0]} ℃</b><br/>初速：<b>${p.data[1]} m/s</b>` },
+        xAxis: { type: 'value', name: '身管温度 ℃', nameLocation: 'middle', nameGap: 22,
+          nameTextStyle: { color: '#8a99a8', fontSize: 11 }, axisLabel: { color: '#8a99a8', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false }, splitLine: { show: false } },
+        yAxis: { type: 'value', min: 815, max: 830, name: 'm/s', nameLocation: 'end', nameGap: 6,
+          nameTextStyle: { color: '#8a99a8', fontSize: 11 }, axisLabel: { color: '#8a99a8', fontSize: 11 },
+          axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#eef3f8' } } },
+        series: [
+          { name: '正常发次', type: 'scatter', data: normalData, symbolSize: 8,
+            itemStyle: { color: '#1668a8', opacity: .72 },
+            emphasis: { scale: 1.3 } },
+          { name: '异常发次', type: 'effectScatter', data: anomalyData, symbolSize: 14,
+            rippleEffect: { scale: 2.4, brushType: 'stroke' },
+            itemStyle: { color: '#d4380d' } },
         ],
       })
     }
-    // ③ 定位定向系统内部温度
+    // ③ 定位定向系统内部温度（跳变区间高亮）
     if (tempChartEl.value) {
       tempChart && tempChart.dispose()
       tempChart = echarts.init(tempChartEl.value)
       const tempData = [
-        [0,23.1],[1,23.2],[2,23.1],[3,23.2],[4.2,25.3],[5,25.1],[6,25.2],[7,25.1],[8,25.2],[9,25.1],
+        [0, 23.1], [1, 23.2], [2, 23.1], [3, 23.2], [4.0, 23.4], [4.2, 25.3], [4.5, 25.2], [5, 25.1], [6, 25.2], [7, 25.1], [8, 25.2], [9, 25.1],
       ]
       tempChart.setOption({
-        grid:{ top:28, right:16, bottom:28, left:44 },
-        tooltip:{ trigger:'axis', formatter: p=>`T+${p[0].data[0]}s<br/>温度：<b>${p[0].data[1]}℃</b>` },
-        xAxis:{ type:'value', name:'秒', nameLocation:'end', nameGap:6,
-          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
-          axisLine:{lineStyle:{color:'#dce8f2'}}, axisTick:{show:false}, splitLine:{show:false} },
-        yAxis:{ type:'value', min:22, max:27, name:'℃', nameLocation:'end', nameGap:6,
-          nameTextStyle:{color:'#8a99a8',fontSize:11}, axisLabel:{color:'#8a99a8',fontSize:11},
-          axisLine:{show:false}, axisTick:{show:false}, splitLine:{lineStyle:{color:'#eef3f8'}} },
-        series:[{
-          type:'line', data:tempData,
-          lineStyle:{color:'#1668a8',width:1.8}, symbol:'none',
-          markPoint:{ data:[{coord:[4.2,25.3]}], symbol:'circle', symbolSize:10,
-            itemStyle:{color:'#d4380d'},
-            label:{formatter:'T+4.2s\n+2.1℃',color:'#d4380d',fontSize:10,fontWeight:'bold',position:'top'} },
+        grid: { top: 28, right: 16, bottom: 28, left: 44 },
+        tooltip: { trigger: 'axis', formatter: (p) => `T+${p[0].data[0]}s<br/>温度：<b>${p[0].data[1]}℃</b>` },
+        xAxis: { type: 'value', name: '秒', nameLocation: 'end', nameGap: 6,
+          nameTextStyle: { color: '#8a99a8', fontSize: 11 }, axisLabel: { color: '#8a99a8', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false }, splitLine: { show: false } },
+        yAxis: { type: 'value', min: 22, max: 27, name: '℃', nameLocation: 'end', nameGap: 6,
+          nameTextStyle: { color: '#8a99a8', fontSize: 11 }, axisLabel: { color: '#8a99a8', fontSize: 11 },
+          axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#eef3f8' } } },
+        series: [{
+          type: 'line', data: tempData, smooth: true,
+          lineStyle: { color: '#1668a8', width: 2 },
+          symbol: 'circle',
+          symbolSize: (val) => (val[0] >= 4 && val[0] <= 5 ? 8 : 4),
+          itemStyle: {
+            color: (p) => (p.data?.[0] >= 4 && p.data?.[0] <= 5 ? '#d4380d' : '#1668a8'),
+          },
+          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(22,104,168,.16)' }, { offset: 1, color: 'rgba(22,104,168,0)' }] } },
+          markArea: {
+            silent: true,
+            itemStyle: { color: 'rgba(212,56,13,.08)' },
+            data: [[{ xAxis: 4.0 }, { xAxis: 5.0 }]],
+          },
         }],
       })
     }
@@ -672,14 +698,70 @@ const m31DirectionOpts = computed(() =>
 )
 const m31Direction = ref('定位定向技术')
 
+/** 依据文书：合并上游归档标题 + 预置可选列表，避免写死单一报告 */
+const m31BasisOpts = computed(() => {
+  const opts = []
+  const seen = new Set()
+  const push = (id, name, kind = '', tag = '') => {
+    const n = String(name || '').trim()
+    if (!n || seen.has(n)) return
+    seen.add(n)
+    opts.push({ value: id || n, label: n, kind, tag })
+  }
+  const archivedInterpret = demoStore.reportArchived?.title
+  if (archivedInterpret) {
+    push('BASIS-ARCH-INTERPRET', archivedInterpret, '解读报告', '已归档')
+  }
+  const judgeIn = demoStore.judgeInputReportTitle
+  if (judgeIn) {
+    push('BASIS-ARCH-JUDGE', judgeIn, '试验报告', '上游带入')
+  }
+  for (const b of judgeBasisReports) {
+    push(b.id, b.name, b.kind, b.tag)
+  }
+  return opts
+})
+
+function m31DefaultBasisId() {
+  const opts = m31BasisOpts.value
+  if (!opts.length) return ''
+  if (demoStore.reportArchived?.title) {
+    const hit = opts.find((o) => o.label === demoStore.reportArchived.title)
+    if (hit) return hit.value
+  }
+  if (demoStore.judgeInputReportTitle) {
+    const hit = opts.find((o) => o.label === demoStore.judgeInputReportTitle)
+    if (hit) return hit.value
+  }
+  return opts[0].value
+}
+
+const m31BasisId = ref('')
+watch(m31BasisOpts, (opts) => {
+  if (!opts.length) {
+    m31BasisId.value = ''
+    return
+  }
+  if (!opts.some((o) => o.value === m31BasisId.value)) {
+    m31BasisId.value = m31DefaultBasisId()
+  }
+}, { immediate: true })
+
+const m31BasisTitle = computed(() =>
+  m31BasisOpts.value.find((o) => o.value === m31BasisId.value)?.label
+  || demoStore.judgeInputReportTitle
+  || '试验报告V2',
+)
+
 const m31Object = computed(() => {
   const direction = m31Direction.value || '定位定向技术'
   const dirNode = judgeTree.children.find((d) => d.name === direction) || judgeTree.children[0]
   const inns = judgeInnovations.filter((i) => i.direction === direction)
-  // 定位定向：分镜口径 7 个；其它方向按抽取结果 / 子树规模
-  const innovCount = direction === '定位定向技术'
-    ? 7
-    : Math.max(inns.length, dirNode?.children?.length || 0)
+  // 与创新点分布柱状图 / 技术体系树 innovCount 口径对齐
+  const barIdx = innovBarData.xData.indexOf(direction)
+  const innovCount = barIdx >= 0
+    ? innovBarData.yData[barIdx]
+    : (dirNode?.innovCount || Math.max(inns.length, dirNode?.children?.length || 0))
   const confMean = inns.length
     ? (inns.reduce((s, i) => s + (i.confidence || 0), 0) / inns.length).toFixed(2)
     : '0.80'
@@ -691,11 +773,12 @@ const m31Object = computed(() => {
     confMean,
     children: (dirNode?.children || []).map((c) => ({
       name: c.name,
+      innovCount: c.innovCount || 0,
       highlight: !!c.highlight,
       badge: c.caseBadge || (c.highlight ? '本次试验沉淀' : ''),
     })),
-    archiveTitle: demoStore.judgeInputReportTitle || '',
-    archiveAt: demoStore.judgeInputArchivedAt || '',
+    archiveTitle: m31BasisTitle.value,
+    archiveAt: demoStore.judgeInputArchivedAt || demoStore.reportArchived?.archivedAt || '',
   }
 })
 
@@ -732,9 +815,22 @@ function initM31Charts() {
     if (innovBarEl.value) {
       if (innovBarChart) { innovBarChart.dispose(); innovBarChart = null }
       innovBarChart = echarts.init(innovBarEl.value)
+      const eng = innovBarData.engineering || innovBarData.yData
+      const basic = innovBarData.basic || innovBarData.yData.map(() => 0)
       innovBarChart.setOption({
-        grid: { top: 28, right: 20, bottom: 48, left: 48 },
-        tooltip: { trigger: 'axis' },
+        grid: { top: 36, right: 16, bottom: 48, left: 44 },
+        legend: { top: 2, right: 4, textStyle: { fontSize: 11, color: '#7a8b9a' }, itemWidth: 10, itemHeight: 8 },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          formatter: (params) => {
+            const i = params[0]?.dataIndex ?? 0
+            const total = (eng[i] || 0) + (basic[i] || 0)
+            const note = (innovBarData.notes && innovBarData.notes[i]) || ''
+            const rows = params.map((p) => `${p.marker}${p.seriesName}：<b>${p.value}</b>`).join('<br/>')
+            return `<div style="font-size:12px"><b>${innovBarData.xData[i]}</b>（合计 ${total}）<br/>${rows}${note ? `<br/><span style="color:#8a6000">${note}</span>` : ''}</div>`
+          },
+        },
         xAxis: {
           type: 'category', data: innovBarData.xData,
           axisLabel: { color: '#8a99a8', fontSize: 11, rotate: 20 },
@@ -749,43 +845,102 @@ function initM31Charts() {
           axisLine: { show: false },
           axisTick: { show: false },
         },
-        series: [{
-          type: 'bar', data: innovBarData.yData,
-          itemStyle: {
-            color: (p) => p.dataIndex === 0 ? '#d0ab68' : '#1668a8',
-            borderRadius: [3, 3, 0, 0],
+        series: [
+          {
+            name: '工程化', type: 'bar', stack: 'inn', data: eng, barWidth: '52%',
+            itemStyle: {
+              color: (p) => (p.dataIndex === 0
+                ? { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#e8c878' }, { offset: 1, color: '#d0ab68' }] }
+                : { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#3a8fd4' }, { offset: 1, color: '#1668a8' }] }),
+              borderRadius: [0, 0, 0, 0],
+            },
           },
-          barWidth: '50%',
-        }],
+          {
+            name: '基础研究', type: 'bar', stack: 'inn', data: basic, barWidth: '52%',
+            itemStyle: {
+              color: (p) => (p.dataIndex === 0 ? 'rgba(208,171,104,.45)' : 'rgba(22,104,168,.35)'),
+              borderRadius: [3, 3, 0, 0],
+            },
+            markLine: {
+              silent: true,
+              symbol: 'none',
+              lineStyle: { color: '#d0ab68', type: 'dashed', width: 1.2 },
+              data: [{ yAxis: 9.7, label: { formatter: '均值', color: '#8a6000', fontSize: 10 } }],
+            },
+          },
+        ],
       })
     }
     if (trendLineEl.value) {
       if (trendLineChart) { trendLineChart.dispose(); trendLineChart = null }
       trendLineChart = echarts.init(trendLineEl.value)
       trendLineChart.setOption({
-        grid: { top: 28, right: 20, bottom: 28, left: 48 },
-        tooltip: { trigger: 'axis' },
+        grid: { top: 28, right: 52, bottom: 52, left: 44 },
+        legend: {
+          bottom: 2,
+          left: 'center',
+          itemGap: 18,
+          textStyle: { fontSize: 11, color: '#7a8b9a' },
+          itemWidth: 12,
+          itemHeight: 8,
+        },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
         xAxis: {
-          type: 'category', data: trendLineData.xData,
+          type: 'category', data: trendLineData.xData, boundaryGap: false,
           axisLabel: { color: '#8a99a8', fontSize: 12 },
           axisLine: { lineStyle: { color: '#dce8f2' } },
           axisTick: { show: false },
         },
-        yAxis: {
-          type: 'value', name: '个',
-          nameTextStyle: { color: '#8a99a8', fontSize: 11 },
-          axisLabel: { color: '#8a99a8', fontSize: 12 },
-          splitLine: { lineStyle: { color: '#eef3f8' } },
-          axisLine: { show: false },
-          axisTick: { show: false },
-        },
-        series: [{
-          type: 'line', data: trendLineData.yData,
-          lineStyle: { color: '#1668a8', width: 2 },
-          symbol: 'circle', symbolSize: 6,
-          itemStyle: { color: '#1668a8' },
-          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(22,104,168,.18)' }, { offset: 1, color: 'rgba(22,104,168,0)' }] } },
-        }],
+        yAxis: [
+          {
+            type: 'value', name: '个', max: 70,
+            nameTextStyle: { color: '#8a99a8', fontSize: 11 },
+            axisLabel: { color: '#8a99a8', fontSize: 12 },
+            splitLine: { lineStyle: { color: '#eef3f8' } },
+            axisLine: { show: false },
+            axisTick: { show: false },
+          },
+          {
+            type: 'value', name: '工程化%', min: 30, max: 100,
+            nameTextStyle: { color: '#8a99a8', fontSize: 11 },
+            axisLabel: { color: '#8a99a8', fontSize: 11, formatter: '{value}%' },
+            splitLine: { show: false },
+            axisLine: { show: false },
+            axisTick: { show: false },
+          },
+        ],
+        series: [
+          {
+            name: '当年新增', type: 'bar', data: trendLineData.yData, barWidth: 18, yAxisIndex: 0,
+            itemStyle: {
+              color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#5aa6de' }, { offset: 1, color: '#1668a8' }] },
+              borderRadius: [3, 3, 0, 0],
+            },
+          },
+          {
+            name: '累计创新点', type: 'line', data: trendLineData.cumulative || trendLineData.yData, yAxisIndex: 0,
+            smooth: true, symbol: 'circle', symbolSize: 7,
+            lineStyle: { color: '#d0ab68', width: 2.4 },
+            itemStyle: { color: '#d0ab68' },
+            areaStyle: {
+              color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(208,171,104,.22)' }, { offset: 1, color: 'rgba(208,171,104,0)' }] },
+            },
+            markPoint: {
+              data: [{ type: 'max', name: '峰值' }],
+              symbol: 'circle',
+              symbolSize: 28,
+              symbolOffset: [0, -16],
+              itemStyle: { color: '#d0ab68' },
+              label: { fontSize: 10, color: '#fff', fontWeight: 600 },
+            },
+          },
+          {
+            name: '工程化占比', type: 'line', data: trendLineData.engRate || [], yAxisIndex: 1,
+            smooth: true, symbol: 'diamond', symbolSize: 6,
+            lineStyle: { color: '#22913c', width: 2, type: 'dashed' },
+            itemStyle: { color: '#22913c' },
+          },
+        ],
       })
     }
   })
@@ -829,6 +984,10 @@ function m31GenerateReport() {
   const list = Array.isArray(demoStore.judgeGeneratedReports)
     ? [...demoStore.judgeGeneratedReports]
     : []
+  if (!m31BasisId.value) {
+    toast('请先选择依据报告', 'error')
+    return
+  }
   const rpt = {
     id: `RPT-J${Date.now()}`,
     title,
@@ -837,6 +996,8 @@ function m31GenerateReport() {
     status: '已生成',
     statusClass: 'on',
     tplId,
+    basisId: m31BasisId.value,
+    basisTitle: m31BasisTitle.value,
   }
   demoStore.judgeGeneratedReports = [rpt, ...list]
   toast('研判报告已生成')
@@ -850,10 +1011,12 @@ let m31EditSnapshot = null
 
 function m31DefaultDraft(rpt) {
   const dir = rpt?.direction || '定位定向技术'
-  const archive = demoStore.judgeInputReportTitle || '试验报告V2'
+  const archive = rpt?.basisTitle || m31BasisTitle.value || demoStore.judgeInputReportTitle || '试验报告V2'
   const archiveAt = demoStore.judgeInputArchivedAt
     ? `${demoStore.judgeInputArchivedAt.slice(0, 10)}归档`
-    : '已归档'
+    : (demoStore.reportArchived?.archivedAt
+      ? `${String(demoStore.reportArchived.archivedAt).slice(0, 10)}归档`
+      : '已归档')
   return {
     s1p1: `${dir}是现代精确制导武器系统和试验鉴定领域的核心支撑技术之一。近年来，随着对精度要求的持续提高，该技术在温度补偿、初始对准、误差建模等方面取得了一系列进展。本报告基于收录的326篇科技文献（含${archive}，${archiveAt}），系统分析${dir}方向创新点的现状与趋势。`,
     s1p2: `当前该方向共收录创新点12个，覆盖温补技术、定向精密校准、初始对准三个三级方向。其中温补技术方向在近2年产出了5个创新点，是当前研究最活跃的子方向，与本次试验第19发超差事件的根因直接相关。`,
@@ -888,7 +1051,13 @@ function m31OpenReport(rpt) {
   m31Detail.value = rpt
   m31EnsureDraft(rpt)
   activeReportSection.value = 1
-  nextTick(() => initM31Charts())
+  nextTick(() => {
+    const scroller = document.querySelector('.m31-report-scroll')
+    if (scroller) scroller.scrollTop = 0
+    initM31Charts()
+    // 图表在滚动容器内，稍后再 resize 一次
+    setTimeout(() => initM31Charts(), 80)
+  })
 }
 
 function m31StartEdit() {
@@ -1040,13 +1209,15 @@ function m31ResetCharts() {
 function m31GoSection(no) {
   activeReportSection.value = no
   nextTick(() => {
-    // 滚动到目标节
     const el = document.getElementById(`m31sec${no}`)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    // 切换到第2节或第3节时初始化图表
-    if (no === 2 || no === 3) {
-      nextTick(() => initM31Charts())
+    const scroller = el?.closest?.('.m31-report-scroll')
+    if (el && scroller) {
+      const top = el.offsetTop - scroller.offsetTop - 8
+      scroller.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+    } else if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
+    initM31Charts()
   })
 }
 
@@ -1145,59 +1316,121 @@ const chartAxisStyle = {
 
 function initM32TrainCharts() {
   nextTick(() => {
-    // 训练损失曲线
+    // 训练损失：train + val 双线 + 平滑面积
     if (lossChartEl.value) {
       if (lossChart) { lossChart.dispose(); lossChart = null }
       lossChart = echarts.init(lossChartEl.value)
       lossChart.setOption({
-        grid: { top: 24, right: 16, bottom: 28, left: 48 },
+        grid: { top: 36, right: 16, bottom: 28, left: 48 },
         tooltip: { trigger: 'axis' },
-        xAxis: { type: 'category', data: lossChartData.xData, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
+        legend: { top: 2, right: 4, textStyle: { fontSize: 11, color: '#7a8b9a' }, itemWidth: 12, itemHeight: 8 },
+        xAxis: { type: 'category', data: lossChartData.xData, boundaryGap: false, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
         yAxis: { type: 'value', name: 'Loss', nameTextStyle: { color: '#8a99a8', fontSize: 11 }, ...chartAxisStyle },
-        series: [{ type: 'line', data: lossChartData.yData, lineStyle: { color: '#1668a8', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#1668a8' } }],
+        series: [
+          {
+            name: 'Train Loss', type: 'line', data: lossChartData.yData, smooth: true,
+            lineStyle: { color: '#1668a8', width: 2.2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#1668a8' },
+            areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(22,104,168,.2)' }, { offset: 1, color: 'rgba(22,104,168,0)' }] } },
+          },
+          {
+            name: 'Val Loss', type: 'line', data: lossChartData.valLoss || lossChartData.yData, smooth: true,
+            lineStyle: { color: '#d0ab68', width: 2, type: 'dashed' }, symbol: 'diamond', symbolSize: 5, itemStyle: { color: '#d0ab68' },
+          },
+        ],
       })
     }
-    // 评估指标（准确率+召回率双折线）
+    // 评估指标：准确率 + 召回率 + F1
     if (evalChartEl.value) {
       if (evalChart) { evalChart.dispose(); evalChart = null }
       evalChart = echarts.init(evalChartEl.value)
       evalChart.setOption({
-        grid: { top: 32, right: 16, bottom: 28, left: 48 },
-        tooltip: { trigger: 'axis' },
-        legend: { top: 4, right: 8, textStyle: { fontSize: 11, color: '#7a8b9a' }, itemWidth: 12, itemHeight: 8 },
-        xAxis: { type: 'category', data: evalChartData.xData, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
-        yAxis: { type: 'value', min: 0.6, max: 1.0, axisLabel: { color: '#8a99a8', fontSize: 11, formatter: v => v.toFixed(2) }, ...chartAxisStyle },
+        grid: { top: 36, right: 16, bottom: 28, left: 48 },
+        tooltip: { trigger: 'axis', valueFormatter: (v) => Number(v).toFixed(3) },
+        legend: { top: 2, right: 4, textStyle: { fontSize: 11, color: '#7a8b9a' }, itemWidth: 12, itemHeight: 8 },
+        xAxis: { type: 'category', data: evalChartData.xData, boundaryGap: false, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
+        yAxis: { type: 'value', min: 0.6, max: 1.0, axisLabel: { color: '#8a99a8', fontSize: 11, formatter: (v) => v.toFixed(2) }, ...chartAxisStyle },
         series: [
-          { name: '准确率', type: 'line', data: evalChartData.accuracy, lineStyle: { color: '#1668a8', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#1668a8' } },
-          { name: '召回率', type: 'line', data: evalChartData.recall,   lineStyle: { color: '#d0ab68', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#d0ab68' } },
+          { name: '准确率', type: 'line', data: evalChartData.accuracy, smooth: true, lineStyle: { color: '#1668a8', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#1668a8' } },
+          { name: '召回率', type: 'line', data: evalChartData.recall, smooth: true, lineStyle: { color: '#d0ab68', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#d0ab68' } },
+          {
+            name: 'F1', type: 'line', data: evalChartData.f1 || [], smooth: true,
+            lineStyle: { color: '#22913c', width: 2.2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#22913c' },
+            areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(34,145,60,.14)' }, { offset: 1, color: 'rgba(34,145,60,0)' }] } },
+            markLine: {
+              silent: true, symbol: 'none',
+              lineStyle: { color: '#22913c', type: 'dashed', width: 1 },
+              data: [{ yAxis: 0.85, label: { formatter: '目标 0.85', color: '#22913c', fontSize: 10 } }],
+            },
+          },
         ],
       })
     }
-    // GPU 利用率
+    // GPU 利用率：渐变柱 + 告警线 + 温度提示
     if (gpuChartEl.value) {
       if (gpuChart) { gpuChart.dispose(); gpuChart = null }
       gpuChart = echarts.init(gpuChartEl.value)
       gpuChart.setOption({
-        grid: { top: 24, right: 16, bottom: 28, left: 48 },
-        tooltip: { trigger: 'axis' },
+        grid: { top: 28, right: 16, bottom: 28, left: 48 },
+        tooltip: {
+          trigger: 'axis',
+          formatter: (params) => {
+            const i = params[0]?.dataIndex ?? 0
+            const temp = (gpuChartData.temp && gpuChartData.temp[i]) || '—'
+            const mem = (gpuChartData.memUsed && gpuChartData.memUsed[i]) || '—'
+            return `${gpuChartData.xData[i]}<br/>利用率：<b>${params[0].value}%</b><br/>温度：${temp}℃<br/>显存：${mem} GB`
+          },
+        },
         xAxis: { type: 'category', data: gpuChartData.xData, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
         yAxis: { type: 'value', min: 70, max: 100, name: '%', nameTextStyle: { color: '#8a99a8', fontSize: 11 }, ...chartAxisStyle },
-        series: [{ type: 'bar', data: gpuChartData.yData, itemStyle: { color: '#1668a8', borderRadius: [3, 3, 0, 0] }, barWidth: '50%' }],
+        series: [{
+          type: 'bar',
+          data: gpuChartData.yData.map((v) => ({
+            value: v,
+            itemStyle: { color: v >= 90 ? '#d4380d' : v >= 88 ? '#d0ab68' : '#1668a8', borderRadius: [3, 3, 0, 0] },
+          })),
+          barWidth: '48%',
+          markLine: {
+            silent: true, symbol: 'none',
+            lineStyle: { color: '#d4380d', type: 'dashed', width: 1.2 },
+            data: [{ yAxis: 90, label: { formatter: '告警 90%', color: '#d4380d', fontSize: 10 } }],
+          },
+        }],
       })
     }
-    // 显存占用
+    // 显存：已用面积 + 预留虚线
     if (memChartEl.value) {
       if (memChart) { memChart.dispose(); memChart = null }
       memChart = echarts.init(memChartEl.value)
       memChart.setOption({
-        grid: { top: 24, right: 16, bottom: 28, left: 48 },
+        grid: { top: 36, right: 16, bottom: 28, left: 48 },
         tooltip: { trigger: 'axis' },
-        xAxis: { type: 'category', data: memChartData.xData, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
-        yAxis: { type: 'value', name: 'GB', nameTextStyle: { color: '#8a99a8', fontSize: 11 }, ...chartAxisStyle },
-        series: [{ type: 'line', data: memChartData.yData, lineStyle: { color: '#22913c', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#22913c' } }],
+        legend: { top: 2, right: 4, textStyle: { fontSize: 11, color: '#7a8b9a' }, itemWidth: 12, itemHeight: 8 },
+        xAxis: { type: 'category', data: memChartData.xData, boundaryGap: false, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
+        yAxis: { type: 'value', name: 'GB', min: 30, max: 56, nameTextStyle: { color: '#8a99a8', fontSize: 11 }, ...chartAxisStyle },
+        series: [
+          {
+            name: '已用显存', type: 'line', data: memChartData.yData, smooth: true,
+            lineStyle: { color: '#22913c', width: 2.2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#22913c' },
+            areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(34,145,60,.22)' }, { offset: 1, color: 'rgba(34,145,60,0)' }] } },
+          },
+          {
+            name: '预留上限', type: 'line', data: memChartData.reserved || memChartData.yData.map(() => 48),
+            lineStyle: { color: '#8a99a8', width: 1.5, type: 'dashed' }, symbol: 'none',
+          },
+        ],
       })
     }
   })
+}
+
+function hexToRgba(hex, alpha) {
+  const h = String(hex || '#1668a8').replace('#', '')
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h
+  const n = parseInt(full, 16)
+  const r = (n >> 16) & 255
+  const g = (n >> 8) & 255
+  const b = n & 255
+  return `rgba(${r},${g},${b},${alpha})`
 }
 
 function initM32ResourceChart() {
@@ -1205,17 +1438,42 @@ function initM32ResourceChart() {
     if (resGrowthEl.value) {
       if (resGrowthChart) { resGrowthChart.dispose(); resGrowthChart = null }
       resGrowthChart = echarts.init(resGrowthEl.value)
+      const palette = {
+        文献: '#1668a8', 文书: '#5aa6de', 创新点: '#d0ab68', 图谱节点: '#22913c', 数据集: '#8b6bb8', 探针模型: '#d4380d',
+      }
+      const stackSeries = resGrowthData.series
+        ? Object.entries(resGrowthData.series).map(([name, data]) => {
+            const c = palette[name] || '#1668a8'
+            return {
+              name, type: 'line', stack: 'total', data, smooth: true, symbol: 'none',
+              lineStyle: { width: 1.6, color: c },
+              itemStyle: { color: c },
+              areaStyle: {
+                color: {
+                  type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+                  colorStops: [
+                    { offset: 0, color: hexToRgba(c, 0.42) },
+                    { offset: 0.55, color: hexToRgba(c, 0.16) },
+                    { offset: 1, color: hexToRgba(c, 0.02) },
+                  ],
+                },
+              },
+              emphasis: { focus: 'series' },
+            }
+          })
+        : [{
+            name: '资产合计', type: 'line', data: resGrowthData.yData, smooth: true,
+            lineStyle: { color: '#1668a8', width: 2 }, symbol: 'circle', symbolSize: 5, itemStyle: { color: '#1668a8' },
+            areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(22,104,168,.18)' }, { offset: 1, color: 'rgba(22,104,168,0)' }] } },
+          }]
       resGrowthChart.setOption({
-        grid: { top: 28, right: 20, bottom: 36, left: 52 },
-        tooltip: { trigger: 'axis' },
-        xAxis: { type: 'category', data: resGrowthData.xData, axisLabel: { color: '#8a99a8', fontSize: 11, rotate: 20 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
+        color: Object.values(palette),
+        grid: { top: 44, right: 20, bottom: 36, left: 52 },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+        legend: { top: 2, type: 'scroll', textStyle: { fontSize: 11, color: '#7a8b9a' }, itemWidth: 10, itemHeight: 8 },
+        xAxis: { type: 'category', data: resGrowthData.xData, boundaryGap: false, axisLabel: { color: '#8a99a8', fontSize: 11, rotate: 20 }, axisLine: { lineStyle: { color: '#dce8f2' } }, axisTick: { show: false } },
         yAxis: { type: 'value', name: '资产数', nameTextStyle: { color: '#8a99a8', fontSize: 11 }, axisLabel: { color: '#8a99a8', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { lineStyle: { color: '#eef3f8' } } },
-        series: [{
-          type: 'line', data: resGrowthData.yData,
-          lineStyle: { color: '#1668a8', width: 2 }, symbol: 'circle', symbolSize: 5,
-          itemStyle: { color: '#1668a8' },
-          areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(22,104,168,.18)' }, { offset: 1, color: 'rgba(22,104,168,0)' }] } },
-        }],
+        series: stackSeries,
       })
     }
   })
@@ -1322,6 +1580,9 @@ onBeforeUnmount(() => {
     m31SelectedTplName,
     m31Direction,
     m31DirectionOpts,
+    m31BasisId,
+    m31BasisOpts,
+    m31BasisTitle,
     m31Object,
     activeReportSection,
     m31FilterDirection,

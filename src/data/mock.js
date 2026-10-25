@@ -1099,52 +1099,52 @@ export const resourceDetails = {
 
 // ── D-08：探针配置包（12个探针，全部已启用） ──────────────────────────
 export const probes = [
-  { id:'P01', name:'弹着点散布探针',   obj:'立靶偏差',      criteria:'|dH|≤0.30mil & |dL|≤0.30mil', srcNode:'散布精度指标', metrics:5, updated:'2024-10-10' },
-  { id:'P02', name:'初速一致性探针',   obj:'炮口初速',      criteria:'v0 ≥ 820 m/s',                 srcNode:'初速指标',     metrics:3, updated:'2024-10-10' },
-  { id:'P03', name:'姿态角漂移探针',   obj:'飞行姿态角',    criteria:'|Δpitch|≤0.20°',              srcNode:'姿态稳定性',   metrics:4, updated:'2024-10-10' },
-  { id:'P04', name:'身管温度探针',     obj:'身管温度',      criteria:'ΔT≤15℃',                      srcNode:'热变形指标',   metrics:2, updated:'2024-10-10' },
-  { id:'P05', name:'温补系数探针',     obj:'定位定向温补',  criteria:'偏差≤5%',                      srcNode:'温补系数',     metrics:2, updated:'2024-10-10' },
-  { id:'P06', name:'气象修正探针',     obj:'气象修正有效性',criteria:'修正残差≤0.05mil',              srcNode:'气象修正',     metrics:3, updated:'2024-10-11' },
-  { id:'P07', name:'遥测信号探针',     obj:'遥测链路',      criteria:'丢包率≤0.1%',                  srcNode:'信号完整性',   metrics:3, updated:'2024-10-11' },
-  { id:'P08', name:'定向精度探针',     obj:'方位定向',      criteria:'方位误差≤0.15mil',             srcNode:'定向精度',     metrics:3, updated:'2024-10-11' },
-  { id:'P09', name:'时统精度探针',     obj:'时间同步',      criteria:'时差≤10μs',                   srcNode:'时间同步',     metrics:2, updated:'2024-10-11' },
-  { id:'P10', name:'惯导精度探针',     obj:'惯导漂移',      criteria:'漂移≤0.01°/h',                srcNode:'惯导误差',     metrics:4, updated:'2024-10-12' },
-  { id:'P11', name:'供电稳定性探针',   obj:'弹载供电',      criteria:'电压波动≤±5%',                 srcNode:'供电指标',     metrics:2, updated:'2024-10-12' },
-  { id:'P12', name:'弹道偏差探针',     obj:'弹道CEP',       criteria:'CEP≤0.50mil',                  srcNode:'弹道偏差',     metrics:4, updated:'2024-10-12' },
+  { id:'P01', name:'弹着点散布探针',   obj:'立靶偏差',      criteria:'|dH|≤0.30mil & |dL|≤0.30mil', srcNode:'散布精度指标', metrics:5, hits:3,  severity:'高', updated:'2024-10-10' },
+  { id:'P02', name:'初速一致性探针',   obj:'炮口初速',      criteria:'v0 ≥ 820 m/s',                 srcNode:'初速指标',     metrics:3, hits:1,  severity:'高', updated:'2024-10-10' },
+  { id:'P03', name:'姿态角漂移探针',   obj:'飞行姿态角',    criteria:'|Δpitch|≤0.20°',              srcNode:'姿态稳定性',   metrics:4, hits:1,  severity:'中', updated:'2024-10-10' },
+  { id:'P04', name:'身管温度探针',     obj:'身管温度',      criteria:'ΔT≤15℃',                      srcNode:'热变形指标',   metrics:2, hits:0,  severity:'中', updated:'2024-10-10' },
+  { id:'P05', name:'温补系数探针',     obj:'定位定向温补',  criteria:'偏差≤5%',                      srcNode:'温补系数',     metrics:2, hits:2,  severity:'高', updated:'2024-10-10' },
+  { id:'P06', name:'气象修正探针',     obj:'气象修正有效性',criteria:'修正残差≤0.05mil',              srcNode:'气象修正',     metrics:3, hits:0,  severity:'低', updated:'2024-10-11' },
+  { id:'P07', name:'遥测信号探针',     obj:'遥测链路',      criteria:'丢包率≤0.1%',                  srcNode:'信号完整性',   metrics:3, hits:0,  severity:'中', updated:'2024-10-11' },
+  { id:'P08', name:'定向精度探针',     obj:'方位定向',      criteria:'方位误差≤0.15mil',             srcNode:'定向精度',     metrics:3, hits:1,  severity:'高', updated:'2024-10-11' },
+  { id:'P09', name:'时统精度探针',     obj:'时间同步',      criteria:'时差≤10μs',                   srcNode:'时间同步',     metrics:2, hits:0,  severity:'低', updated:'2024-10-11' },
+  { id:'P10', name:'惯导精度探针',     obj:'惯导漂移',      criteria:'漂移≤0.01°/h',                srcNode:'惯导误差',     metrics:4, hits:0,  severity:'中', updated:'2024-10-12' },
+  { id:'P11', name:'供电稳定性探针',   obj:'弹载供电',      criteria:'电压波动≤±5%',                 srcNode:'供电指标',     metrics:2, hits:0,  severity:'低', updated:'2024-10-12' },
+  { id:'P12', name:'弹道偏差探针',     obj:'弹道CEP',       criteria:'CEP≤0.50mil',                  srcNode:'弹道偏差',     metrics:4, hits:1,  severity:'高', updated:'2024-10-12' },
 ]
 
-// ── D-07：精度试验数据集（30发弹道数据，第19发预置异常） ────────────────
+// ── D-07：精度试验数据集（30发弹道数据，第19发预置异常；含身管温度/姿态角） ────────────────
 export const shots30 = [
-  { id:1,  ts:'09:04:12', v0:822.1, dH: 0.08, dL:-0.05, anomaly:false },
-  { id:2,  ts:'09:06:38', v0:821.8, dH:-0.11, dL: 0.03, anomaly:false },
-  { id:3,  ts:'09:09:15', v0:823.4, dH: 0.14, dL:-0.08, anomaly:false },
-  { id:4,  ts:'09:12:02', v0:820.9, dH:-0.07, dL: 0.12, anomaly:false },
-  { id:5,  ts:'09:15:44', v0:822.6, dH: 0.19, dL:-0.10, anomaly:false },
-  { id:6,  ts:'09:19:31', v0:821.3, dH:-0.15, dL: 0.08, anomaly:false },
-  { id:7,  ts:'09:23:07', v0:823.1, dH: 0.22, dL:-0.14, anomaly:false },
-  { id:8,  ts:'09:27:52', v0:820.5, dH:-0.09, dL: 0.06, anomaly:false },
-  { id:9,  ts:'09:32:18', v0:822.8, dH: 0.17, dL:-0.11, anomaly:false },
-  { id:10, ts:'09:36:44', v0:821.6, dH:-0.13, dL: 0.09, anomaly:false },
-  { id:11, ts:'09:41:29', v0:823.0, dH: 0.20, dL:-0.07, anomaly:false },
-  { id:12, ts:'09:46:03', v0:820.7, dH:-0.18, dL: 0.15, anomaly:false },
-  { id:13, ts:'09:51:37', v0:822.3, dH: 0.12, dL:-0.09, anomaly:false },
-  { id:14, ts:'09:56:12', v0:821.1, dH:-0.21, dL: 0.13, anomaly:false },
-  { id:15, ts:'10:02:44', v0:823.7, dH: 0.25, dL:-0.06, anomaly:false },
-  { id:16, ts:'10:08:19', v0:820.4, dH:-0.10, dL: 0.17, anomaly:false },
-  { id:17, ts:'10:14:55', v0:822.5, dH: 0.16, dL:-0.12, anomaly:false },
-  { id:18, ts:'10:21:08', v0:821.9, dH:-0.23, dL: 0.10, anomaly:false },
-  { id:19, ts:'11:22:07', v0:818.3, dH: 0.42, dL: 0.18, anomaly:true  },
-  { id:20, ts:'11:28:41', v0:822.0, dH:-0.08, dL: 0.05, anomaly:false },
-  { id:21, ts:'11:34:16', v0:821.4, dH: 0.13, dL:-0.10, anomaly:false },
-  { id:22, ts:'11:40:52', v0:823.2, dH:-0.17, dL: 0.08, anomaly:false },
-  { id:23, ts:'11:47:28', v0:820.8, dH: 0.21, dL:-0.13, anomaly:false },
-  { id:24, ts:'11:54:03', v0:822.7, dH:-0.12, dL: 0.16, anomaly:false },
-  { id:25, ts:'12:01:39', v0:821.5, dH: 0.18, dL:-0.07, anomaly:false },
-  { id:26, ts:'12:08:14', v0:823.3, dH:-0.14, dL: 0.11, anomaly:false },
-  { id:27, ts:'12:15:50', v0:820.6, dH: 0.09, dL:-0.15, anomaly:false },
-  { id:28, ts:'12:23:26', v0:822.4, dH:-0.20, dL: 0.07, anomaly:false },
-  { id:29, ts:'12:31:01', v0:821.2, dH: 0.15, dL:-0.09, anomaly:false },
-  { id:30, ts:'14:05:44', v0:821.5, dH:-0.07, dL: 0.04, anomaly:false },
+  { id:1,  ts:'09:04:12', v0:822.1, dH: 0.08, dL:-0.05, barrelTemp:28.2, pitch:0.04, anomaly:false },
+  { id:2,  ts:'09:06:38', v0:821.8, dH:-0.11, dL: 0.03, barrelTemp:29.1, pitch:-0.02, anomaly:false },
+  { id:3,  ts:'09:09:15', v0:823.4, dH: 0.14, dL:-0.08, barrelTemp:30.0, pitch:0.06, anomaly:false },
+  { id:4,  ts:'09:12:02', v0:820.9, dH:-0.07, dL: 0.12, barrelTemp:30.8, pitch:0.03, anomaly:false },
+  { id:5,  ts:'09:15:44', v0:822.6, dH: 0.19, dL:-0.10, barrelTemp:31.6, pitch:0.05, anomaly:false },
+  { id:6,  ts:'09:19:31', v0:821.3, dH:-0.15, dL: 0.08, barrelTemp:32.4, pitch:-0.01, anomaly:false },
+  { id:7,  ts:'09:23:07', v0:823.1, dH: 0.22, dL:-0.14, barrelTemp:33.1, pitch:0.07, anomaly:false },
+  { id:8,  ts:'09:27:52', v0:820.5, dH:-0.09, dL: 0.06, barrelTemp:33.9, pitch:0.02, anomaly:false },
+  { id:9,  ts:'09:32:18', v0:822.8, dH: 0.17, dL:-0.11, barrelTemp:34.6, pitch:0.05, anomaly:false },
+  { id:10, ts:'09:36:44', v0:821.6, dH:-0.13, dL: 0.09, barrelTemp:35.2, pitch:-0.03, anomaly:false },
+  { id:11, ts:'09:41:29', v0:823.0, dH: 0.20, dL:-0.07, barrelTemp:35.9, pitch:0.06, anomaly:false },
+  { id:12, ts:'09:46:03', v0:820.7, dH:-0.18, dL: 0.15, barrelTemp:36.5, pitch:0.01, anomaly:false },
+  { id:13, ts:'09:51:37', v0:822.3, dH: 0.12, dL:-0.09, barrelTemp:37.1, pitch:0.04, anomaly:false },
+  { id:14, ts:'09:56:12', v0:821.1, dH:-0.21, dL: 0.13, barrelTemp:37.8, pitch:-0.02, anomaly:false },
+  { id:15, ts:'10:02:44', v0:823.7, dH: 0.25, dL:-0.06, barrelTemp:38.4, pitch:0.08, anomaly:false },
+  { id:16, ts:'10:08:19', v0:820.4, dH:-0.10, dL: 0.17, barrelTemp:39.0, pitch:0.03, anomaly:false },
+  { id:17, ts:'10:14:55', v0:822.5, dH: 0.16, dL:-0.12, barrelTemp:39.6, pitch:0.05, anomaly:false },
+  { id:18, ts:'10:21:08', v0:821.9, dH:-0.23, dL: 0.10, barrelTemp:40.2, pitch:-0.04, anomaly:false },
+  { id:19, ts:'11:22:07', v0:818.3, dH: 0.42, dL: 0.18, barrelTemp:42.8, pitch:0.38, anomaly:true  },
+  { id:20, ts:'11:28:41', v0:822.0, dH:-0.08, dL: 0.05, barrelTemp:41.1, pitch:0.04, anomaly:false },
+  { id:21, ts:'11:34:16', v0:821.4, dH: 0.13, dL:-0.10, barrelTemp:40.6, pitch:0.02, anomaly:false },
+  { id:22, ts:'11:40:52', v0:823.2, dH:-0.17, dL: 0.08, barrelTemp:40.0, pitch:-0.01, anomaly:false },
+  { id:23, ts:'11:47:28', v0:820.8, dH: 0.21, dL:-0.13, barrelTemp:39.5, pitch:0.06, anomaly:false },
+  { id:24, ts:'11:54:03', v0:822.7, dH:-0.12, dL: 0.16, barrelTemp:39.1, pitch:0.03, anomaly:false },
+  { id:25, ts:'12:01:39', v0:821.5, dH: 0.18, dL:-0.07, barrelTemp:38.7, pitch:0.05, anomaly:false },
+  { id:26, ts:'12:08:14', v0:823.3, dH:-0.14, dL: 0.11, barrelTemp:38.2, pitch:-0.02, anomaly:false },
+  { id:27, ts:'12:15:50', v0:820.6, dH: 0.09, dL:-0.15, barrelTemp:37.8, pitch:0.04, anomaly:false },
+  { id:28, ts:'12:23:26', v0:822.4, dH:-0.20, dL: 0.07, barrelTemp:37.4, pitch:0.01, anomaly:false },
+  { id:29, ts:'12:31:01', v0:821.2, dH: 0.15, dL:-0.09, barrelTemp:37.0, pitch:0.05, anomaly:false },
+  { id:30, ts:'14:05:44', v0:821.5, dH:-0.07, dL: 0.04, barrelTemp:35.6, pitch:0.02, anomaly:false },
 ]
 
 // D-07：对接任务列表（3条）
@@ -1181,13 +1181,15 @@ export const candidates = [
 // 第四部分：研判平台 Mock 数据（D-15 ～ D-19）
 // ════════════════════════════════════════════════════════════════════
 
-// ── D-16 创新点列表（研判平台用，6条） ──────────────────────────────
+// ── D-16 创新点列表（研判平台用；定位定向方向详尽，与柱状图合计58对齐示意） ──────────────────────────────
 export const judgeInnovations = [
   {
     id: 'INN-001',
     name: '定位定向系统温补技术',
     source: '3篇（含本次试验报告V2）',
     direction: '定位定向技术',
+    year: 2024,
+    maturity: '工程化',
     confidence: 0.93,
     q: '某型鉴定试验第19发立靶高低偏差0.42 mil超判据（≤0.30 mil），根因定位定向系统温补失效。',
     qRef: '原文P.23',
@@ -1199,10 +1201,114 @@ export const judgeInnovations = [
     eRef: '原文P.31',
   },
   {
+    id: 'INN-001b',
+    name: '定向精密校准闭环方法',
+    source: '2篇',
+    direction: '定位定向技术',
+    year: 2023,
+    maturity: '工程化',
+    confidence: 0.90,
+    q: '外场标定耗时长，校准残差受温度与振动耦合影响。',
+    qRef: '原文P.18',
+    p: '引入多姿态观测与残差反馈闭环，形成可复用的精密校准流程。',
+    pRef: '原文P.19',
+    i: '提出「粗校—精校—复核」三段式闭环，温度分段建模后残差收敛更快。',
+    iRef: '原文P.20',
+    e: '外场校准时间缩短约35%，残差标准差下降至0.08 mil。',
+    eRef: '原文P.22',
+  },
+  {
+    id: 'INN-001c',
+    name: '初始对准多位置融合算法',
+    source: '2篇',
+    direction: '定位定向技术',
+    year: 2024,
+    maturity: '工程化',
+    confidence: 0.88,
+    q: '快速反应场景下初始对准时间偏长，影响试验节拍。',
+    qRef: '原文P.09',
+    p: '多位置观测与卡尔曼滤波融合，压缩对准收敛时间。',
+    pRef: '原文P.10',
+    i: '按噪声水平自适应调整观测权重，兼顾收敛速度与精度。',
+    iRef: '原文P.11',
+    e: '对准时间由约12分钟压缩至4分钟以内，精度不降低。',
+    eRef: '原文P.12',
+  },
+  {
+    id: 'INN-001d',
+    name: '温漂在线辨识与预测',
+    source: '1篇',
+    direction: '定位定向技术',
+    year: 2022,
+    maturity: '基础研究',
+    confidence: 0.84,
+    q: '温漂呈现非平稳特性，离线标定难以覆盖突变工况。',
+    qRef: '原文P.14',
+    p: '基于滑动窗口的温漂在线辨识，结合短时预测修正。',
+    pRef: '原文P.15',
+    i: '引入温漂状态机，区分缓变与突变并切换修正策略。',
+    iRef: '原文P.16',
+    e: '突变工况下定向角瞬时偏差峰值下降约27%。',
+    eRef: '原文P.17',
+  },
+  {
+    id: 'INN-001e',
+    name: '低成本温补方案工程化',
+    source: '2篇（含试验沉淀）',
+    direction: '定位定向技术',
+    year: 2024,
+    maturity: '工程化',
+    confidence: 0.91,
+    q: '高精度温补硬件成本高，批量装备推广受限。',
+    qRef: '原文P.27',
+    p: '以算法补偿为主、少量测温点为辅的低成本温补方案。',
+    pRef: '原文P.28',
+    i: '温补系数与自校准算法融合，形成可复制的分级修正流程。',
+    iRef: '原文P.29',
+    e: '单套成本下降约40%，复测后精度满足 ≤0.30 mil 判据。',
+    eRef: '原文P.30',
+  },
+  {
+    id: 'INN-001f',
+    name: '定向误差多源归因模型',
+    source: '1篇',
+    direction: '定位定向技术',
+    year: 2021,
+    maturity: '基础研究',
+    confidence: 0.82,
+    q: '定向误差来源混杂，难以快速定位主导因素。',
+    qRef: '原文P.05',
+    p: '构建温度、振动、电磁干扰多因素归因模型。',
+    pRef: '原文P.06',
+    i: '用方差分解量化各因素贡献，支撑试验科目优先级安排。',
+    iRef: '原文P.07',
+    e: '归因模型在两型试验中解释度达0.78以上。',
+    eRef: '原文P.08',
+  },
+  {
+    id: 'INN-001g',
+    name: '定向精度综合评估标准',
+    source: '1篇',
+    direction: '定位定向技术',
+    year: 2023,
+    maturity: '工程化',
+    confidence: 0.86,
+    q: '现行评估偏重单一指标，难以反映复杂环境综合表现。',
+    qRef: '原文P.33',
+    p: '建立涵盖温度、振动、电磁干扰的综合评估指标体系。',
+    pRef: '原文P.34',
+    i: '提出加权综合得分与门限判据，服务型号定型试验。',
+    iRef: '原文P.35',
+    e: '在三型对比试验中区分度优于单指标法。',
+    eRef: '原文P.36',
+  },
+  {
     id: 'INN-002',
     name: '弹着点散布修正方法',
     source: '2篇',
     direction: '弹道修正技术',
+    year: 2023,
+    maturity: '工程化',
     confidence: 0.87,
     q: '弹着点散布超限问题在多型试验中反复出现，缺乏系统化修正手段。',
     qRef: '原文P.12',
@@ -1218,6 +1324,8 @@ export const judgeInnovations = [
     name: '惯导初始对准快速收敛算法',
     source: '2篇',
     direction: '惯导技术',
+    year: 2022,
+    maturity: '工程化',
     confidence: 0.85,
     q: '惯导初始对准耗时长，影响试验效率和快速响应能力。',
     qRef: '原文P.08',
@@ -1233,6 +1341,8 @@ export const judgeInnovations = [
     name: '遥测信号自适应降噪方法',
     source: '1篇',
     direction: '遥测技术',
+    year: 2023,
+    maturity: '基础研究',
     confidence: 0.81,
     q: '复杂电磁环境下遥测信号信噪比低，关键数据丢失风险高。',
     qRef: '原文P.45',
@@ -1248,6 +1358,8 @@ export const judgeInnovations = [
     name: '气象参数实时修正模型',
     source: '2篇',
     direction: '气象修正',
+    year: 2024,
+    maturity: '工程化',
     confidence: 0.79,
     q: '传统气象修正在高低温差大时残差超标，影响弹道解算精度。',
     qRef: '原文P.31',
@@ -1263,6 +1375,8 @@ export const judgeInnovations = [
     name: '多源信号融合处理架构',
     source: '3篇',
     direction: '信号处理',
+    year: 2021,
+    maturity: '工程化',
     confidence: 0.76,
     q: '弹道测量、遥测、光测多源数据异构，融合效率低。',
     qRef: '原文P.56',
@@ -1281,50 +1395,56 @@ export const techTree = {
   children: [
     {
       name: '定位定向技术',
+      innovCount: 12,
       children: [
-        { name: '温补技术', highlight: true, caseLabel: '第19发超差事件·温补失效案例', caseBadge: '本次试验沉淀' },
-        { name: '定向精密校准' },
-        { name: '初始对准' },
+        { name: '温补技术', innovCount: 5, highlight: true, caseLabel: '第19发超差事件·温补失效案例', caseBadge: '本次试验沉淀' },
+        { name: '定向精密校准', innovCount: 4 },
+        { name: '初始对准', innovCount: 3 },
       ],
     },
     {
       name: '弹道修正技术',
+      innovCount: 9,
       children: [
-        { name: '散布修正' },
-        { name: '弹道参数辨识' },
-        { name: '弹道一致性' },
+        { name: '散布修正', innovCount: 4 },
+        { name: '弹道参数辨识', innovCount: 3 },
+        { name: '弹道一致性', innovCount: 2 },
       ],
     },
     {
       name: '惯导技术',
+      innovCount: 8,
       children: [
-        { name: '初始对准快速收敛' },
-        { name: '惯导误差补偿' },
-        { name: '组合导航' },
+        { name: '初始对准快速收敛', innovCount: 3 },
+        { name: '惯导误差补偿', innovCount: 3 },
+        { name: '组合导航', innovCount: 2 },
       ],
     },
     {
       name: '遥测技术',
+      innovCount: 11,
       children: [
-        { name: '自适应降噪' },
-        { name: '信号增强' },
-        { name: '链路冗余' },
+        { name: '自适应降噪', innovCount: 4 },
+        { name: '信号增强', innovCount: 4 },
+        { name: '链路冗余', innovCount: 3 },
       ],
     },
     {
       name: '气象修正',
+      innovCount: 7,
       children: [
-        { name: '实时修正模型' },
-        { name: '气象参数估计' },
-        { name: '弹道气象修正' },
+        { name: '实时修正模型', innovCount: 3 },
+        { name: '气象参数估计', innovCount: 2 },
+        { name: '弹道气象修正', innovCount: 2 },
       ],
     },
     {
       name: '信号处理',
+      innovCount: 11,
       children: [
-        { name: '多源融合架构' },
-        { name: '特征提取' },
-        { name: '异常检测' },
+        { name: '多源融合架构', innovCount: 4 },
+        { name: '特征提取', innovCount: 4 },
+        { name: '异常检测', innovCount: 3 },
       ],
     },
   ],
@@ -1337,9 +1457,20 @@ export const judgeTemplates = [
   { id: 'TPL-03', name: '技术成熟度评估', recommended: false },
 ]
 
+/** 研判报告可选用的依据文书（可与上游归档结论联动） */
+export const judgeBasisReports = [
+  { id: 'BASIS-19', name: '第19发超差事件解读报告', kind: '解读报告', tag: '本次试验沉淀' },
+  { id: 'BASIS-V2', name: '某型性能鉴定试验报告 V2', kind: '试验报告', tag: '定稿归档' },
+  { id: 'BASIS-LIT', name: '定位定向技术专题文献综述（2024）', kind: '科技文献', tag: '文献库' },
+  { id: 'BASIS-CASE', name: '温补失效历史案例库摘录', kind: '历史案例', tag: '案例库' },
+]
+
 // ── D-18 研判报告 ──────────────────────────────────────────────────
 export const judgeReports = [
-  { id: 'RPT-J001', title: '定位定向技术发展方向研判报告', direction: '定位定向技术', time: '2024-10-18', status: '已生成', statusClass: 'on' },
+  { id: 'RPT-J001', title: '定位定向技术发展方向研判报告', direction: '定位定向技术', tpl: 'TPL-01', time: '2024-10-18 16:42:08', status: '已生成', statusClass: 'on' },
+  { id: 'RPT-J002', title: '定位定向技术创新点态势分析报告', direction: '定位定向技术', tpl: 'TPL-02', time: '2024-10-12 11:05:33', status: '已生成', statusClass: 'on' },
+  { id: 'RPT-J003', title: '弹道修正技术发展方向研判报告', direction: '弹道修正技术', tpl: 'TPL-01', time: '2024-09-28 09:18:51', status: '已生成', statusClass: 'on' },
+  { id: 'RPT-J004', title: '惯导技术技术成熟度评估报告', direction: '惯导技术', tpl: 'TPL-03', time: '2024-09-15 14:26:17', status: '已生成', statusClass: 'on' },
 ]
 
 /** 技术研判报告预览目录（分镜四节） */
@@ -1443,43 +1574,59 @@ export const reviewReportBodies = {
   },
 }
 
-// ECharts: 创新点分布柱状图数据
+// ECharts: 创新点分布（堆叠：工程化 + 基础研究，合计58，与 KPI「创新点」一致）
 export const innovBarData = {
   xData: ['定位定向技术', '弹道修正技术', '惯导技术', '遥测技术', '气象修正', '信号处理'],
   yData: [12, 9, 8, 11, 7, 11],
+  engineering: [8, 6, 5, 7, 4, 7],
+  basic: [4, 3, 3, 4, 3, 4],
+  notes: ['含本次试验沉淀5项', '散布修正为重点', '对准收敛成果突出', '强干扰场景验证', '高温差场景验证', '多源融合落地'],
 }
 
-// ECharts: 近5年趋势折线图数据
+// ECharts: 近5年趋势（新增 / 累计 / 工程化占比）
 export const trendLineData = {
   xData: ['2020', '2021', '2022', '2023', '2024'],
-  yData: [6, 9, 12, 15, 16],
+  yData: [6, 8, 11, 14, 19],
+  cumulative: [6, 14, 25, 39, 58],
+  engRate: [42, 50, 56, 64, 71],
 }
 
 // ── D-19 管理端数据 ────────────────────────────────────────────────
 export const trainTask = {
   name: '试验鉴定领域大模型SFT-V3',
   statusLabel: '训练中·第8/12轮',
+  baseModel: 'Qwen2.5-32B',
+  dataset: '鉴定语料库 V3.2 · 128.6万条',
+  lr: '1.2e-5',
+  batchSize: 64,
+  gpuCluster: 'A100×8',
+  eta: '约 4.2 小时',
 }
 
 export const lossChartData = {
   xData: ['E1','E2','E3','E4','E5','E6','E7','E8'],
   yData: [2.84, 2.21, 1.76, 1.42, 1.18, 1.02, 0.91, 0.83],
+  valLoss: [2.91, 2.28, 1.88, 1.55, 1.32, 1.16, 1.05, 0.97],
 }
 
 export const evalChartData = {
   xData: ['E1','E2','E3','E4','E5','E6','E7','E8'],
   accuracy: [0.72, 0.76, 0.79, 0.82, 0.84, 0.86, 0.87, 0.88],
   recall:   [0.68, 0.71, 0.74, 0.77, 0.80, 0.82, 0.83, 0.85],
+  f1:       [0.70, 0.73, 0.76, 0.79, 0.82, 0.84, 0.85, 0.86],
 }
 
 export const gpuChartData = {
   xData: ['GPU0','GPU1','GPU2','GPU3','GPU4','GPU5','GPU6','GPU7'],
   yData: [87, 92, 85, 89, 91, 84, 88, 86],
+  temp: [68, 74, 66, 71, 73, 65, 70, 67],
+  memUsed: [62, 68, 58, 64, 66, 56, 63, 60],
 }
 
 export const memChartData = {
   xData: ['E1','E2','E3','E4','E5','E6','E7','E8'],
   yData: [38, 41, 43, 42, 44, 43, 45, 44],
+  reserved: [48, 48, 48, 48, 48, 48, 48, 48],
 }
 
 export const agentTemplates = [
@@ -1519,15 +1666,27 @@ export const agentTemplates = [
 ]
 
 export const resourceKpis = [
-  { label: '数据集', value: 14 },
-  { label: '探针模型', value: 12 },
-  { label: '文书', value: 38 },
-  { label: '文献', value: 326 },
-  { label: '创新点', value: 58 },
-  { label: '图谱节点', value: 247 },
+  { label: '数据集', value: 14, delta: '+2', tip: '本月新增精度/气象两类数据集' },
+  { label: '探针模型', value: 12, delta: '0', tip: '与探针配置包 P01–P12 一一对应' },
+  { label: '文书', value: 38, delta: '+5', tip: '含试验报告与评审报告草稿' },
+  { label: '文献', value: 326, delta: '+18', tip: '专业文献入库（已解析）' },
+  { label: '创新点', value: 58, delta: '+7', tip: '与六方向创新点分布合计一致' },
+  { label: '图谱节点', value: 247, delta: '+12', tip: '技术体系树与证据链节点汇总' },
 ]
 
+/** 近30日资产增长：分项堆叠末日=文献326+文书38+创新点58+图谱247+数据集14+探针12=695 */
 export const resGrowthData = {
   xData: ['10-1','10-3','10-5','10-7','10-9','10-11','10-13','10-15','10-17','10-19','10-21','10-23','10-25','10-27','10-29'],
-  yData: [520, 538, 551, 569, 582, 598, 615, 631, 648, 664, 681, 697, 714, 732, 751],
+  series: {
+    文献:     [286, 292, 298, 304, 308, 312, 316, 318, 320, 321, 322, 323, 324, 325, 326],
+    文书:     [ 28,  29,  30,  31,  32,  33,  34,  34,  35,  36,  36,  37,  37,  38,  38],
+    创新点:   [ 42,  44,  46,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  57,  58],
+    图谱节点: [148, 162, 172, 184, 192, 202, 210, 218, 224, 230, 234, 238, 242, 245, 247],
+    数据集:   [ 10,  11,  11,  12,  12,  12,  13,  13,  13,  13,  14,  14,  14,  14,  14],
+    探针模型: [  6,   7,   8,   8,   9,   9,  10,  10,  11,  11,  11,  12,  12,  12,  12],
+  },
 }
+// 兼容旧单线口径：各日分项合计
+resGrowthData.yData = resGrowthData.xData.map((_, i) =>
+  Object.values(resGrowthData.series).reduce((s, arr) => s + arr[i], 0),
+)
