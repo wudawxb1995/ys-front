@@ -31,9 +31,9 @@ defineExpose({ locateBlock })
 .report-chapter h3 { color: #07518a; font-size: 16px; padding: 12px 0; border-bottom: 1px solid #e3e9ee; margin: 0 0 14px; }
 .report-block { border: 1px solid transparent; border-radius: 6px; padding: 10px 12px; margin: 8px 0; scroll-margin: 16px; }
 .report-block p { margin: 0 0 7px; white-space: pre-wrap; }
-.report-block.located { background: #faf3e6; border-color: #17669c; box-shadow: 0 0 0 2px #e4eef6; }
+.report-block.located { background: #fbf6ec; border-color: #e4d3b0; box-shadow: none; }
 .block-source { color: #8b9cac; font-size: 11px; display: block; }
-.block-location { color: #07618d; display: block; margin-top: 7px; }
+.block-location { color: #1668a8; display: block; margin-top: 7px; font-size: 12px; }
 .report-metric-wrap { overflow-x: auto; margin: 10px 0; }
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
 th, td { text-align: left; padding: 9px 10px; border: 1px solid #e3e9ee; }

@@ -645,7 +645,9 @@ const dockTasks = ref(dockTasksSeed.map((t) => ({ ...t })))
 const m15CreateVisible = ref(false)
 const m15CreateForm = reactive({
   name: '精度试验数据对接 (30发)',
-  sources: ['弹道测量文件（光测+雷达）', '遥测数据流（定位定向/温度/链路）', '气象保障数据'],
+  treeVer: '',
+  indicatorId: '',
+  sources: [],
   count: '30发',
 })
 const m15SourceOpts = [
@@ -673,9 +675,39 @@ const m15FilteredTasks = computed(() => {
   return list
 })
 
+const m15TreeOptions = computed(() => {
+  const list = getPersistedM03List()
+  const published = list.filter((row) => row.status === '已发布')
+  return (published.length ? published : list).map((row) => ({
+    value: row.version,
+    label: `${row.version} · ${row.count}项指标`,
+    count: Number(row.count) || 28,
+    srcDoc: row.srcDoc || '',
+  }))
+})
+const m15TreeIndicators = computed(() => {
+  const ver = m15CreateForm.treeVer
+  if (!ver) return []
+  const tree = m15TreeOptions.value.find((row) => row.value === ver)
+  const rows = getM02RowsForDoc(tree?.srcDoc || '某型装备研制总要求')
+  const n = tree?.count && tree.count < rows.length ? tree.count : rows.length
+  return rows.slice(0, n)
+})
+
+function m15PickTree() {
+  m15CreateForm.indicatorId = ''
+  m15CreateForm.sources = []
+}
+
+function m15PickIndicator() {
+  m15CreateForm.sources = []
+}
+
 function openCreateDockTask() {
   m15CreateForm.name = '精度试验数据对接 (30发)'
-  m15CreateForm.sources = [...m15SourceOpts]
+  m15CreateForm.treeVer = ''
+  m15CreateForm.indicatorId = ''
+  m15CreateForm.sources = []
   m15CreateForm.count = '30发'
   m15CreateVisible.value = true
 }
@@ -699,8 +731,17 @@ function startDockReturn(task) {
 function submitCreateDockTask() {
   const name = (m15CreateForm.name || '').trim()
   const sources = (m15CreateForm.sources || []).filter(Boolean)
+  const indicator = m15TreeIndicators.value.find((row) => row.id === m15CreateForm.indicatorId)
   if (!name) {
     toast('请填写任务名称', 'warning')
+    return
+  }
+  if (!m15CreateForm.treeVer) {
+    toast('请选择指标树', 'warning')
+    return
+  }
+  if (!indicator) {
+    toast('请选择指标', 'warning')
     return
   }
   if (!sources.length) {
@@ -721,6 +762,9 @@ function submitCreateDockTask() {
     name,
     srcType: sources.join(' + '),
     sources: [...sources],
+    treeVer: m15CreateForm.treeVer,
+    indicatorId: indicator.id,
+    indicatorName: indicator.name,
     count: m15CreateForm.count || '30发',
     received: 0,
     batch: 'D-07',
@@ -1945,6 +1989,10 @@ onBeforeUnmount(() => {
     m15FilterStatus,
     m15CreateVisible,
     m15CreateForm,
+    m15TreeOptions,
+    m15TreeIndicators,
+    m15PickTree,
+    m15PickIndicator,
     m15SrcTypeOpts,
     m15SourceOpts,
     m15TaskMeta,

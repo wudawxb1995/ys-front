@@ -7,6 +7,7 @@
     <IndicatorExtractPage v-else-if="page?.type === 'parse-preview'" :key="pageKey" :page="page" :title="title" />
     <PostTrialPage v-else-if="page?.type === 'post-trial'" :key="pageKey" :page="page" :title="title" />
     <ReportWorkflowPage v-else-if="page?.type === 'report-flow'" :key="pageKey" :page="page" :title="title" />
+    <InsightFlowPage v-else-if="page?.type === 'insight-flow'" :key="pageKey" />
     <TemplateConfigPage v-else-if="page?.type === 'template-config'" :key="pageKey" />
     <DeviationSummaryPage v-else-if="page?.type === 'deviations'" :key="pageKey" :page="page" :title="title" />
     <CollectPrototypePage v-else-if="page?.type === 'doc-feature' && prototypeScenes.includes(page?.scene)" :key="pageKey" :page="page" :title="title" />
@@ -38,6 +39,7 @@ import CollectPrototypePage from '@/components/pages/CollectPrototypePage.vue'
 import TemplateConfigPage from '@/components/pages/TemplateConfigPage.vue'
 import PostTrialPage from '@/components/pages/PostTrialPage.vue'
 import ReportWorkflowPage from '@/components/pages/ReportWorkflowPage.vue'
+import InsightFlowPage from '@/components/pages/InsightFlowPage.vue'
 import RichPage from '@/views/RichPage.vue'
 
 const props = defineProps({ page: Object, title: String })

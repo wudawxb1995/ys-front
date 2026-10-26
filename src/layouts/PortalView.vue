@@ -56,6 +56,10 @@ const router = useRouter()
 const apps = appPlatforms()
 
 function enter(app) {
+  if (app.id === 'doc') {
+    router.push({ name: 'app', params: { pid: 'doc', sid: 'write', mid: 'generate-requirement' } })
+    return
+  }
   const system = app.systems[0]
   const leaf = firstLeaf(system)
   router.push({ name: 'app', params: { pid: app.id, sid: system.id, mid: leaf.id } })

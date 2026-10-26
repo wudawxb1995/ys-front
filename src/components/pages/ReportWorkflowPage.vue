@@ -1,25 +1,35 @@
 <template>
   <div class="report-workflow">
-    <template v-if="isReview && activeReview">
-      <section class="flow-head">
+    <template v-if="showResult">
+      <section class="flow-head review-head">
         <button type="button" class="back-link" @click="backToReport(activeReview.reportId)">← 返回报告</button>
-        <p>审查标准：报告内容审查规则 V1.0 · {{ activeReview.reportTitle }}</p>
-        <div class="review-counts">
-          <b>审查意见 {{ activeReview.issues.length }} 条</b>
-          <span v-for="level in ['严重', '重要', '一般']" :key="level" :class="severityClass(level)">{{ level }} {{ countLevel(level) }} 条</span>
-        </div>
+        <b class="review-standard">审查标准：性能鉴定试验报告审查标准 V1.0</b>
+        <div class="review-tags">核文勘误 · 标准符合性 · 语义规则 · 本体逻辑 · 跨文档联合</div>
+      </section>
+      <section class="flow-head review-count-bar">
+        <b>审查意见 {{ activeReview.issues.length }} 条</b>
+        <span v-for="level in ['严重', '重要', '一般']" :key="level" :class="severityClass(level)">{{ level }} {{ countLevel(level) }} 条</span>
+        <small>点击右侧意见，左侧原文自动定位并高亮</small>
       </section>
       <div class="review-columns">
-        <section class="flow-panel">
-          <div class="pane-heading"><b>报告原文</b><span>{{ activeReview.sections.length }} 章</span></div>
+        <section class="flow-panel doc-pane">
+          <div class="pane-heading doc-pane-head">
+            <b><span class="doc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 3.5h7.2L19 8.2V20.5H7z"/><path d="M14 3.6V8.2H19"/><path d="M9.6 12.2h5.2M9.6 15.6h5.2"/></svg></span>报告原文</b>
+            <span class="chapter-count">{{ activeReview.sections.length }} 章</span>
+          </div>
           <div class="original-scroll"><ReportDocument ref="reviewDocument" :sections="activeReview.sections" :active-block="activeIssue?.blockId" /></div>
         </section>
-        <section class="flow-panel">
+        <section class="flow-panel opinion-pane">
           <div class="review-tabs"><button v-for="type in reviewTypes" :key="type" type="button" :class="{ selected: issueFilter === type }" @click="issueFilter = type">{{ type }}</button></div>
           <div class="opinion-scroll">
             <el-empty v-if="!filteredIssues.length" description="当前范围内没有审查意见" />
             <article v-for="issue in filteredIssues" :key="issue.id" class="opinion" :class="{ selected: selectedIssueId === issue.id }" @click="locateIssue(issue)">
-              <div class="opinion-head"><el-tag size="small">{{ issue.type }}</el-tag><span :class="severityClass(issue.severity)">{{ issue.severity }}风险</span><span class="badge" :class="issue.status === '已采纳' ? 'on' : 'hold'"><i></i>{{ issue.status }}</span></div>
+              <div class="opinion-head">
+                <span class="opinion-no">{{ issueNo(issue) }}</span>
+                <span class="type-chip">{{ issue.type }}</span>
+                <span :class="severityClass(issue.severity)">{{ issue.severity }}风险</span>
+                <span class="opinion-state">{{ issueState(issue) }}</span>
+              </div>
               <button type="button" class="location-link" @click.stop="locateIssue(issue)">{{ issue.location }}</button>
               <small>提出的问题</small>
               <h4>{{ issue.title }}</h4>
@@ -33,8 +43,8 @@
                 <el-button type="primary" @click="saveManualIssue(issue)">保存并采纳</el-button>
               </div>
               <div v-else-if="issue.status === '待处理'" class="opinion-actions">
-                <el-button type="danger" plain @click.stop="rejectIssue(issue)">驳回</el-button>
-                <el-button type="primary" @click.stop="acceptIssue(issue)">{{ issue.replacement ? '采纳并修改' : '编辑并采纳' }}</el-button>
+                <button type="button" class="act-reject" @click.stop="rejectIssue(issue)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>驳回</button>
+                <button type="button" class="act-accept" @click.stop="acceptIssue(issue)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.2 6.4 11 12.5 4.8" /></svg>{{ issue.replacement ? '采纳并修改' : '编辑并采纳' }}</button>
               </div>
               <p v-else-if="issue.handledAt" class="muted">{{ issue.status }} · {{ issue.handledAt }}</p>
             </article>
@@ -51,18 +61,35 @@
           <p>选择刚生成的报告，按术语规范、数据勾稽、判据引用同时检查。意见落到原文位置，并给出依据和修改建议。</p>
         </div>
       </header>
-      <section class="flow-panel">
+      <section class="flow-panel crud-body list-card">
         <div class="pane-heading"><b>审查任务</b><el-button type="primary" @click="openReviewDialog()">＋ 新建审查任务</el-button></div>
-        <el-table :data="workflow.reviews">
-          <el-table-column label="任务" min-width="160"><template #default="{ row }">审查任务</template></el-table-column>
-          <el-table-column prop="reportTitle" label="审查对象" min-width="260" />
-          <el-table-column label="规则包" min-width="200"><template #default="{ row }">{{ row.packs.join(' / ') }}</template></el-table-column>
-          <el-table-column label="意见数" width="90"><template #default="{ row }">{{ row.issues.length }}</template></el-table-column>
-          <el-table-column prop="status" label="状态" width="100" />
-          <el-table-column prop="createdAt" label="创建时间" width="180" />
-          <el-table-column label="操作" width="110"><template #default="{ row }"><el-button link type="primary" @click="openReviewResult(row)">查看结果</el-button></template></el-table-column>
-        </el-table>
-        <el-empty v-if="!workflow.reviews.length && !busy" description="暂无审查任务，请从报告初稿送审" />
+        <div class="table-inner">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:140px">任务</th>
+                <th>审查对象</th>
+                <th>规则包</th>
+                <th style="width:90px">意见数</th>
+                <th style="width:110px">状态</th>
+                <th style="width:188px">创建时间</th>
+                <th style="width:110px">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, index) in workflow.reviews" :key="row.id">
+                <td>审查任务 #{{ workflow.reviews.length - index }}</td>
+                <td><button type="button" class="name-link" @click="openReviewResult(row)">{{ row.reportTitle }}</button></td>
+                <td>{{ row.packs.join(' / ') }}</td>
+                <td>{{ row.issues.length }}</td>
+                <td><span class="badge" :class="row.status === '已完成' ? 'on' : 'run'"><i></i>{{ row.status || '进行中' }}</span></td>
+                <td class="time">{{ row.createdAt }}</td>
+                <td><div class="ops"><button type="button" @click="openReviewResult(row)">查看结果</button></div></td>
+              </tr>
+              <tr v-if="!workflow.reviews.length && !busy" class="empty-row"><td colspan="7" class="empty">暂无审查任务，请从报告初稿送审</td></tr>
+            </tbody>
+          </table>
+        </div>
         <div v-if="busy" class="inline-busy"><span class="loading-spinner"></span><b>{{ busyTitle }}</b><p>{{ busyDetail }}</p><el-progress :percentage="progress" :stroke-width="6" :show-text="false" /></div>
       </section>
     </template>
@@ -75,16 +102,36 @@
           <p>试验完成后，按指标树自动汇集 28 项结果、原始数据与异常根因，再选择模板组稿；后续进入智能审校、定稿与归档。</p>
         </div>
       </header>
-      <section class="flow-panel">
+      <section class="flow-panel crud-body list-card">
         <div class="pane-heading"><b>报告列表</b><el-button type="primary" @click="newReport">＋ 新建报告</el-button></div>
-        <el-table :data="workflow.reports">
-          <el-table-column label="报告名称" min-width="280"><template #default="{ row }"><el-button link type="primary" @click="openReport(row)">{{ row.title }}</el-button></template></el-table-column>
-          <el-table-column label="当前环节" width="140"><template #default="{ row }">{{ stageLabel(row.stage) }}</template></el-table-column>
-          <el-table-column label="状态" width="120"><template #default="{ row }"><span class="badge" :class="row.status === '已完成' ? 'on' : 'run'"><i></i>{{ row.status || '进行中' }}</span></template></el-table-column>
-          <el-table-column prop="createdAt" label="创建时间" width="180" />
-          <el-table-column label="操作" width="140"><template #default="{ row }"><el-button link type="primary" @click="editReport(row)">编辑</el-button><el-button link type="danger" @click="deleteReport(row)">删除</el-button></template></el-table-column>
-        </el-table>
-        <el-empty v-if="!workflow.reports.length" description="暂无报告，点击新建报告开始编写" />
+        <div class="table-inner">
+          <table>
+            <thead>
+              <tr>
+                <th>报告名称</th>
+                <th style="width:140px">当前环节</th>
+                <th style="width:120px">状态</th>
+                <th style="width:188px">创建时间</th>
+                <th style="width:140px">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in workflow.reports" :key="row.id">
+                <td><button type="button" class="name-link" @click="openReport(row)">{{ row.title }}</button></td>
+                <td>{{ stageLabel(row.stage) }}</td>
+                <td><span class="badge" :class="row.status === '已完成' ? 'on' : 'run'"><i></i>{{ row.status || '进行中' }}</span></td>
+                <td class="time">{{ row.createdAt }}</td>
+                <td>
+                  <div class="ops">
+                    <button type="button" @click="editReport(row)">编辑</button>
+                    <button type="button" class="danger" @click="deleteReport(row)">删除</button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="!workflow.reports.length" class="empty-row"><td colspan="5" class="empty">暂无报告，点击新建报告开始编写</td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </template>
 
@@ -116,33 +163,50 @@
           <div><small>精度原始数据</small><strong>{{ configMaterials.shotCount }} + 1 发</strong><span>正式试验，独立复测记录</span></div>
           <div><small>异常定位与根因分析</small><strong>{{ configMaterials.cause }}</strong><span>事件 {{ configMaterials.eventId }} · 异常报告已关联</span></div>
         </div>
-        <div class="material-preview-grid">
-          <div>
+        <div class="result-board">
+          <div class="rb-head">
             <h4>{{ configMaterials.metrics.length }} 项试验结果预览</h4>
-            <el-table :data="configMaterials.metrics" height="280">
+            <span>自动关联，无需手工选素材</span>
+          </div>
+          <div class="rb-body">
+            <el-table :data="configMaterials.metrics" height="300" :row-class-name="metricRowClass" class="rb-table">
               <el-table-column prop="name" label="指标" min-width="150" />
-              <el-table-column prop="value" label="实测结果" min-width="170" />
+              <el-table-column label="实测结果" min-width="190">
+                <template #default="{ row }">
+                  <template v-if="row.linkedShot">
+                    <b>{{ configMaterials.shot.firstDh }} {{ configMaterials.shot.unit }}</b>
+                    <span class="rb-arrow">→ 复测</span>
+                    <b>{{ configMaterials.shot.retestDh }} {{ configMaterials.shot.unit }}</b>
+                  </template>
+                  <span v-else>{{ row.value }}</span>
+                </template>
+              </el-table-column>
               <el-table-column label="判定" width="120"><template #default="{ row }"><span :class="row.conclusion === '符合' ? 'judge-ok' : 'judge-retest'">{{ row.conclusion }}</span></template></el-table-column>
             </el-table>
+            <aside class="rb-side">
+              <small>异常分析报告</small>
+              <h4>{{ configMaterials.analysisTitle }}</h4>
+              <dl>
+                <div><dt>原始异常</dt><dd>第 {{ configMaterials.shot.shotNo }} 发 · {{ configMaterials.shot.firstDh }} {{ configMaterials.shot.unit }}</dd></div>
+                <div><dt>确认根因</dt><dd>{{ configMaterials.cause }}（置信度 {{ configMaterials.confidence }}）</dd></div>
+                <div><dt>复测结果</dt><dd>{{ configMaterials.shot.retestDh }} {{ configMaterials.shot.unit }} · {{ configMaterials.shot.retestDh <= configMaterials.shot.criterion ? '复测后符合' : '复测不符合' }}</dd></div>
+                <div><dt>证据材料</dt><dd>异常解读、原始记录、标定资料与复测数据</dd></div>
+              </dl>
+            </aside>
           </div>
-          <aside class="analysis-preview">
-            <small>异常分析报告</small>
-            <h4>{{ configMaterials.analysisTitle }}</h4>
-            <p>原始异常　第 {{ configMaterials.shot.shotNo }} 发 · {{ configMaterials.shot.firstDh }} {{ configMaterials.shot.unit }}</p>
-            <p>确认根因　{{ configMaterials.cause }}（置信度 {{ configMaterials.confidence }}）</p>
-            <p>复测结果　{{ configMaterials.shot.retestDh }} {{ configMaterials.shot.unit }} · {{ configMaterials.shot.retestDh <= configMaterials.shot.criterion ? '复测后符合' : '复测不符合' }}</p>
-            <p>证据材料　异常解读、原始记录、标定资料与复测数据</p>
-          </aside>
         </div>
       </section>
       <section class="flow-panel padded">
-        <h3><span class="step-number">3</span>选择报告模板</h3>
-        <div class="template-grid">
-          <button v-for="template in reportTemplates" :key="template.id" type="button" class="template-card" :class="{ selected: form.templateId === template.id }" @click="form.templateId = template.id">
+        <h3><span class="step-number">3</span>选择报告模板 <small>共 {{ reportTemplates.length }} 套 · 点击即选</small></h3>
+        <div class="template-picker">
+          <button v-for="template in reportTemplates" :key="template.id" type="button" class="template-chip" :class="{ selected: form.templateId === template.id }" :title="template.description" @click="form.templateId = template.id">
             <b>{{ template.name }}</b>
-            <span>{{ template.chapters.length }} 章 · {{ template.description }}</span>
-            <i v-if="form.templateId === template.id">已选</i>
+            <span>{{ template.chapters.length }} 章</span>
           </button>
+        </div>
+        <div class="template-detail">
+          <p>{{ selectedTemplate.description }}</p>
+          <div class="chapter-chips"><span v-for="(chapter, index) in selectedTemplate.chapters" :key="chapter">{{ String(index + 1).padStart(2, '0') }} {{ chapter }}</span></div>
         </div>
       </section>
       <footer class="flow-foot">
@@ -175,7 +239,7 @@
           </button>
         </div>
         <div v-if="currentReport.stage === 'materials'" class="section-actions">
-          <span>28 项判定、30 发正式记录和 1 发复测已进入编写范围。</span>
+          <span>{{ currentReport.materials.metrics.length }} 项判定、{{ currentReport.materials.shotCount }} 发正式记录和 1 发复测已进入编写范围。</span>
           <el-button type="primary" :disabled="busy" @click="generateOutline">按模板生成提纲</el-button>
         </div>
         <div v-if="busy && currentReport.stage === 'materials'" class="inline-busy"><span class="loading-spinner"></span><b>{{ busyTitle }}</b><el-progress :percentage="progress" :stroke-width="6" :show-text="false" /></div>
@@ -197,7 +261,7 @@
       <section v-if="currentReport.sections.length && (currentReport.stage === 'draft' || currentReport.stage === 'final')" class="flow-panel draft-panel">
         <div class="pane-heading">
           <b>初稿预览</b>
-          <div><el-button @click="sendToReview">送智能审查</el-button><el-button type="primary" :disabled="currentReport.status === '已完成'" @click="finalizeReport">{{ currentReport.status === '已完成' ? '已定稿' : '定稿' }}</el-button></div>
+          <div class="draft-actions"><el-button @click="sendToReview">送智能审查</el-button><el-button type="primary" :disabled="currentReport.status === '已完成'" @click="finalizeReport">{{ currentReport.status === '已完成' ? '已定稿' : '定稿' }}</el-button></div>
         </div>
         <ReportDocument :sections="currentReport.sections" />
       </section>
@@ -255,13 +319,18 @@ const demo = useDemoStore()
 const { toast, confirm } = useUi()
 seedWorkflow(demo)
 
-const isReview = computed(() => props.page?.mode === 'review')
+const isResultPage = computed(() => props.page?.mode === 'review-result')
+const isReview = computed(() => props.page?.mode === 'review' || isResultPage.value)
 const workflow = reportWorkflow
 const view = ref('list')
 const editingReportId = ref('')
 const currentId = ref('')
 const configMaterials = ref(null)
 const previewMaterial = ref('')
+
+function metricRowClass({ row }) {
+  return row.conclusion === '符合' ? '' : 'is-retest'
+}
 const reviewDialog = ref(false)
 const reviewReportId = ref('')
 const selectedPacks = ref([...reviewRulePacks])
@@ -280,9 +349,11 @@ const form = reactive({ title: '某型装备性能鉴定试验报告', treeId: '
 const publishedTrees = computed(() => (demo.m03List || []).filter((row) => row.status === '已发布'))
 const currentReport = computed(() => workflow.reports.find((row) => row.id === currentId.value) || null)
 const currentTemplate = computed(() => reportTemplates.find((item) => item.id === currentReport.value?.templateId) || reportTemplates[0])
+const selectedTemplate = computed(() => reportTemplates.find((item) => item.id === form.templateId) || reportTemplates[0])
 const configReady = computed(() => form.title.trim() && form.treeId && form.templateId && configMaterials.value)
 const draftReports = computed(() => workflow.reports.filter((row) => row.sections?.length))
 const activeReview = computed(() => workflow.reviews.find((row) => row.id === workflow.activeReviewId) || null)
+const showResult = computed(() => isResultPage.value && Boolean(activeReview.value))
 const filteredIssues = computed(() => (activeReview.value?.issues || []).filter((issue) => issueFilter.value === '全部' || issue.type === issueFilter.value))
 const activeIssue = computed(() => filteredIssues.value.find((issue) => issue.id === selectedIssueId.value) || null)
 const materialCards = computed(() => {
@@ -307,6 +378,13 @@ function stageLabel(stage) {
 }
 function severityClass(level) {
   return { 严重: 'sev sev-high', 重要: 'sev sev-mid', 一般: 'sev sev-low' }[level] || 'sev'
+}
+function issueNo(issue) {
+  const n = Number(String(issue.id).replace(/\D/g, '')) || 0
+  return String(n).padStart(2, '0')
+}
+function issueState(issue) {
+  return issue.status === '待处理' ? '暂存' : issue.status
 }
 function countLevel(level) {
   return (activeReview.value?.issues || []).filter((issue) => issue.severity === level).length
@@ -421,9 +499,14 @@ function openReviewDialog(reportId = '') {
   selectedPacks.value = [...reviewRulePacks]
   reviewDialog.value = true
 }
+function goReviewResult(reviewId) {
+  workflow.activeReviewId = reviewId
+  selectedIssueId.value = ''
+  issueFilter.value = '全部'
+  router.push({ name: 'app', params: { pid: 'doc', sid: 'review', mid: 'issues' } })
+}
 function openReviewResult(row) {
-  workflow.activeReviewId = row.id
-  selectedIssueId.value = row.issues[0]?.id || ''
+  goReviewResult(row.id)
 }
 async function startReview() {
   const report = draftReports.value.find((item) => item.id === reviewReportId.value)
@@ -433,9 +516,7 @@ async function startReview() {
   await runBusy('正在审查报告原文', '正在根据初稿提出问题，并整理审查依据和修改建议。')
   const review = inspectReport(report, selectedPacks.value)
   workflow.reviews.unshift(review)
-  workflow.activeReviewId = review.id
-  selectedIssueId.value = review.issues[0]?.id || ''
-  issueFilter.value = '全部'
+  goReviewResult(review.id)
 }
 function backToReport(id) {
   workflow.openReportId = id
@@ -482,7 +563,17 @@ async function locateIssue(issue) {
   await nextTick()
   reviewDocument.value?.locateBlock(issue.blockId)
 }
-function consumeHandoff() {
+async function consumeHandoff() {
+  if (isResultPage.value) {
+    if (!workflow.activeReviewId && workflow.reviews.length) workflow.activeReviewId = workflow.reviews[0].id
+    const review = activeReview.value
+    if (review) {
+      selectedIssueId.value = selectedIssueId.value || review.issues[0]?.id || ''
+      await nextTick()
+      if (activeIssue.value) reviewDocument.value?.locateBlock(activeIssue.value.blockId)
+    }
+    return
+  }
   if (isReview.value && workflow.pendingReviewReportId) openReviewDialog(workflow.pendingReviewReportId)
   if (!isReview.value && workflow.openReportId) {
     const row = workflow.reports.find((item) => item.id === workflow.openReportId)
@@ -506,30 +597,59 @@ onBeforeUnmount(() => clearInterval(progressTimer))
 .flow-panel { padding: 0 0 8px; }
 .flow-panel.padded, .flow-foot { padding: 16px 18px 18px; }
 .flow-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.list-card.flow-panel { padding: 0; border-radius: 10px; }
+.list-card .pane-heading { padding: 14px 16px 4px; }
+.list-card .name-link { border: 0; background: none; padding: 0; color: #1668a8; font-weight: 500; font-size: inherit; cursor: pointer; }
+.list-card .name-link:hover { color: #0d4e83; text-decoration: underline; }
+.list-card .ops { gap: 16px; }
+.list-card .time { color: #8a99a8; }
 .pane-heading, .section-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .pane-heading { padding: 14px 16px; }
+.draft-panel .pane-heading { padding: 16px 20px; }
+.draft-actions { display: flex; align-items: center; gap: 16px; }
+.draft-actions :deep(.el-button + .el-button) { margin-left: 0; }
 .section-actions { margin-top: 14px; }
 .pane-heading b, .flow-panel h3 { color: #1f3d5a; }
 .flow-panel h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; font-size: 15px; }
 .flow-panel h3 small, .flow-panel h3 em { margin-left: auto; color: #16815a; font-style: normal; font-size: 12px; font-weight: 500; }
 .step-number { width: 22px; height: 22px; border-radius: 50%; background: #0d4e83; color: #fff; display: inline-grid; place-items: center; font-size: 12px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; }
-.material-stats, .template-grid, .material-cards { display: grid; gap: 10px; }
+.material-stats, .material-cards { display: grid; gap: 10px; }
 .material-stats, .material-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.material-stats div, .template-card, .material-cards button, .analysis-preview { border: 1px solid #e3edf5; border-radius: 10px; background: #f8fbfe; }
-.material-stats div, .analysis-preview { padding: 12px 14px; }
-.material-stats small, .template-card span, .material-cards small, .analysis-preview small { color: #7d90a3; font-size: 12px; }
-.material-stats strong, .analysis-preview h4 { display: block; margin: 6px 0; color: #16324a; font-size: 15px; }
-.material-stats span, .analysis-preview p { display: block; color: #5d7388; font-size: 12.5px; line-height: 1.6; }
-.material-preview-grid { display: grid; grid-template-columns: 1.4fr .8fr; gap: 12px; margin-top: 12px; }
-.material-preview-grid h4 { margin: 0 0 8px; font-size: 14px; }
+.material-stats div, .material-cards button { border: 1px solid #e3edf5; border-radius: 10px; background: #f8fbfe; }
+.material-stats div { padding: 12px 14px; }
+.material-stats small, .material-cards small { color: #7d90a3; font-size: 12px; }
+.material-stats strong { display: block; margin: 6px 0; color: #16324a; font-size: 15px; }
+.material-stats span { display: block; color: #5d7388; font-size: 12.5px; line-height: 1.6; }
+
+.result-board { margin-top: 12px; border: 1px solid #e3edf5; border-radius: 10px; background: #fff; overflow: hidden; }
+.rb-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 16px; border-bottom: 1px solid #eef3f8; }
+.rb-head h4 { margin: 0; color: #1f3d5a; font-size: 14px; font-weight: 650; }
+.rb-head span { color: #16815a; font-size: 12px; }
+.rb-body { display: grid; grid-template-columns: minmax(0, 1fr) 320px; align-items: stretch; }
+.rb-arrow { margin: 0 6px; color: #8a99a8; font-size: 12px; }
+.rb-table :deep(th.el-table__cell) { background: #f6f9fc; color: #7d90a3; font-weight: 500; font-size: 12.5px; }
+.rb-table :deep(.el-table__row.is-retest > td.el-table__cell) { background: #fdf6e8; }
+.rb-side { border-left: 1px solid #eef3f8; padding: 14px 16px; }
+.rb-side small { color: #7d90a3; font-size: 12px; }
+.rb-side h4 { margin: 6px 0 10px; color: #16324a; font-size: 13.5px; line-height: 1.5; }
+.rb-side dl { display: grid; gap: 8px; margin: 0; }
+.rb-side dl div { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; }
+.rb-side dt { color: #8a99a8; font-size: 12px; }
+.rb-side dd { margin: 0; color: #3e556b; font-size: 12.5px; line-height: 1.55; }
 .judge-ok { color: #16815a; font-weight: 600; }
 .judge-retest { color: #d48806; font-weight: 600; }
-.template-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.template-card { text-align: left; padding: 12px 14px; cursor: pointer; min-height: 86px; position: relative; }
-.template-card b { display: block; color: #16324a; margin-bottom: 6px; }
-.template-card.selected { border-color: #1668a8; background: #f3f8fd; box-shadow: inset 0 0 0 1px #1668a8; }
-.template-card i { position: absolute; top: 10px; right: 10px; color: #1668a8; font-style: normal; font-size: 12px; }
+.template-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.template-chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border: 1px solid #dbe7f1; border-radius: 999px; background: #f8fbfe; color: #29465c; cursor: pointer; font-size: 13px; line-height: 1.4; }
+.template-chip b { font-weight: 650; }
+.template-chip span { color: #8a9daf; font-size: 11.5px; }
+.template-chip:hover { border-color: #9cc2e0; }
+.template-chip.selected { border-color: #1668a8; background: #eaf3fb; color: #0d4e83; box-shadow: inset 0 0 0 1px #1668a8; }
+.template-chip.selected span { color: #1668a8; }
+.template-detail { margin-top: 10px; padding: 10px 12px; border: 1px dashed #d9e7f2; border-radius: 10px; background: #fbfdff; }
+.template-detail p { margin: 0 0 8px; color: #5d7388; font-size: 12.5px; }
+.chapter-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chapter-chips span { background: #fff; border: 1px solid #e3edf5; border-radius: 6px; padding: 2px 8px; color: #4d6982; font-size: 12px; }
 .material-cards button { text-align: left; padding: 12px; cursor: pointer; }
 .material-cards div { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .material-cards b { display: block; color: #16324a; line-height: 1.45; }
@@ -544,28 +664,50 @@ onBeforeUnmount(() => clearInterval(progressTimer))
 .inline-busy b, .inline-busy p { margin: 0 0 6px; }
 .loading-spinner { width: 14px; height: 14px; margin-right: 6px; border: 2px solid #d5e4f2; border-top-color: #1668a8; border-radius: 50%; display: inline-block; vertical-align: -2px; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.review-columns { display: grid; grid-template-columns: 1.15fr .85fr; gap: 12px; min-height: 640px; }
-.review-columns .flow-panel { display: flex; flex-direction: column; min-height: 0; }
-.original-scroll, .opinion-scroll { overflow: auto; max-height: calc(100vh - 230px); }
-.review-tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 14px 10px; }
-.review-tabs button { border: 1px solid #d5e3ef; background: #fff; color: #4d6982; border-radius: 999px; padding: 4px 10px; cursor: pointer; }
-.review-tabs button.selected { background: #0d4e83; color: #fff; border-color: #0d4e83; }
-.opinion { margin: 0 12px 12px; padding: 12px; border: 1px solid #e3edf5; border-radius: 10px; cursor: pointer; }
-.opinion.selected { border-color: #1668a8; box-shadow: 0 0 0 2px #e4eef6; }
+.review-columns { display: grid; grid-template-columns: 1.15fr .85fr; gap: 12px; min-height: 640px; align-items: start; }
+.review-columns .flow-panel { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.doc-pane-head { border-bottom: 1px solid #eef3f8; }
+.doc-pane-head b { display: inline-flex; align-items: center; gap: 8px; color: #16324a; font-size: 15px; }
+.doc-ico { width: 28px; height: 28px; border-radius: 8px; background: #e8f3fb; color: #1668a8; display: grid; place-items: center; }
+.doc-ico svg { width: 16px; height: 16px; }
+.chapter-count { color: #8a9aaa; font-size: 13px; }
+.original-scroll, .opinion-scroll { overflow: auto; max-height: calc(100vh - 250px); }
+.review-tabs { display: flex; gap: 8px; flex-wrap: wrap; padding: 14px 14px 12px; }
+.review-tabs button { border: 1px solid #d7e3ee; background: #fff; color: #4d6982; border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+.review-tabs button.selected { background: #1668a8; color: #fff; border-color: #1668a8; }
+.opinion { margin: 0 12px 12px; padding: 14px; border: 1px solid #e6eef6; border-radius: 12px; background: #fff; cursor: pointer; }
+.opinion.selected { border-color: #1668a8; box-shadow: 0 0 0 3px rgba(22, 104, 168, .12); }
 .opinion-head, .opinion-actions, .manual-edit { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.opinion h4 { margin: 4px 0 8px; font-size: 14px; color: #16324a; }
-.opinion small { color: #7d90a3; }
-.opinion blockquote, .opinion-basis, .opinion-suggestion { margin: 8px 0; padding: 8px 10px; border-radius: 8px; font-size: 13px; line-height: 1.65; }
-.opinion blockquote { background: #fbf7ef; color: #5c4b32; }
-.opinion-basis { background: #f4f8fc; }
-.opinion-suggestion { background: #f3faf6; }
+.opinion-no { width: 28px; height: 28px; border-radius: 8px; background: #f3f6fa; color: #5d7388; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.type-chip { background: #e8f3fb; color: #1668a8; border-radius: 999px; padding: 2px 8px; font-size: 12px; }
+.opinion-state { margin-left: auto; color: #8a9aaa; font-size: 12px; }
+.opinion h4 { margin: 2px 0 8px; font-size: 14px; color: #16324a; font-weight: 650; }
+.opinion small { color: #8a9aaa; font-size: 12px; }
+.opinion blockquote, .opinion-basis, .opinion-suggestion { margin: 8px 0; padding: 10px 12px; border-radius: 8px; font-size: 13px; line-height: 1.7; }
+.opinion blockquote { background: #fbf6ec; color: #5c4b32; border: 0; }
+.opinion-basis { background: #f6f8fb; color: #3f5568; }
+.opinion-suggestion { background: #f3faf5; color: #245c38; }
 .opinion-basis p, .opinion-suggestion p { margin: 4px 0 0; }
-.location-link { border: 0; background: none; color: #1668a8; padding: 6px 0; cursor: pointer; }
+.opinion-actions { justify-content: flex-end; margin-top: 10px; }
+.act-reject, .act-accept { height: 32px; border-radius: 8px; padding: 0 14px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.act-reject svg, .act-accept svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.act-reject { border: 1px solid #f0c2b8; background: #fff; color: #d4380d; }
+.act-reject:hover { background: #fff5f2; }
+.act-accept { border: 0; background: #1668a8; color: #fff; }
+.act-accept:hover { background: #0d4e83; }
+.location-link { border: 0; background: none; color: #1668a8; padding: 8px 0 2px; cursor: pointer; font-size: 13px; }
+.location-link::before { content: '⌖ '; }
 .sev { font-size: 12px; font-weight: 650; }
 .sev-high { color: #d4380d; }
 .sev-mid { color: #d48806; }
 .sev-low { color: #6d8092; }
 .review-counts { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.review-head { align-items: center; flex-wrap: wrap; gap: 16px; }
+.review-standard { margin: 0; color: #16324a; font-size: 15px; font-weight: 650; }
+.review-tags { margin-left: auto; color: #8a9aaa; font-size: 12.5px; }
+.review-count-bar { align-items: center; padding: 12px 20px; }
+.review-count-bar b { color: #16324a; font-size: 14px; }
+.review-count-bar small { margin-left: auto; color: #8a9daf; font-size: 12px; }
 .dialog-label { margin: 8px 0; color: #5d7388; font-size: 13px; }
 .report-options { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow: auto; }
 .report-options label { display: flex; gap: 8px; align-items: center; border: 1px solid #e3edf5; border-radius: 8px; padding: 8px 10px; }
@@ -574,7 +716,8 @@ onBeforeUnmount(() => clearInterval(progressTimer))
 .preview-note { color: #5d7388; }
 .muted { color: #7d90a3; font-size: 12px; }
 @media (max-width: 1100px) {
-  .form-grid, .material-stats, .material-cards, .template-grid, .material-preview-grid, .review-columns { grid-template-columns: 1fr; }
+  .form-grid, .material-stats, .material-cards, .rb-body, .review-columns { grid-template-columns: 1fr; }
+  .rb-side { border-left: 0; border-top: 1px solid #eef3f8; }
   .review-counts { margin-left: 0; }
 }
 </style>

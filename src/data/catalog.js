@@ -31,7 +31,7 @@ const postTrialPages = {
   'write/knowledge-generate/draft': { type: 'post-trial', stage: 'compose', module: 'M24', desc: '' },
   'write/generation-trace/trace': { type: 'post-trial', stage: 'trace', module: 'M25', desc: '' },
   'review/strategy-review/run': { type: 'report-flow', mode: 'review', module: 'M26 / M27', desc: '' },
-  'review/review-result/issues': { type: 'post-trial', stage: 'review', entry: 'result', module: 'M27', desc: '' },
+  'review/review-result/issues': { type: 'report-flow', mode: 'review-result', module: 'M27', desc: '' },
   'collect/doc-collect/document-type-archive': { type: 'post-trial', stage: 'archive', module: 'M28', desc: '' },
 }
 

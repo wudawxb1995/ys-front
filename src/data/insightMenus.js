@@ -7,6 +7,7 @@ export function insightSystems() {
       name: '试验鉴定技术创新点智能抽取',
       full: '试验鉴定技术创新点智能抽取系统',
       menus: [
+        leaf('mine', '创新点挖掘结果', { type: 'insight-flow' }, 'spark'),
         leaf('home', '首页', home(
           '欢迎使用 试验鉴定技术创新点智能抽取系统',
           '收录试验论文、课题成果和技术鉴定文件，完成长上下文理解、指代消解和创新点结构化抽取，输出标准 JSON。',

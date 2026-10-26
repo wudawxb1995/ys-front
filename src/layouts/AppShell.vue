@@ -80,15 +80,6 @@
           </template>
           <span class="current">{{ sidebarName(menu.name) }}</span>
         </div>
-        <nav v-if="platform.id === 'doc' && chainIndex >= 0" class="demo-chain" aria-label="报告流程">
-          <button
-            v-for="(step, index) in docChain"
-            :key="step.mid"
-            type="button"
-            :class="{ on: chainIndex === index, done: chainIndex > index }"
-            @click="goChain(step)"
-          ><b>{{ index + 1 }}</b>{{ step.label }}</button>
-        </nav>
         <button
           v-if="platform.id === 'train'"
           type="button"
@@ -155,26 +146,11 @@ const crumbParent = computed(() => {
   if (underGroup) return group
   return group !== current ? group : ''
 })
-const docChain = [
-  { label: '报告生成', sid: 'write', mid: 'generate-requirement' },
-  { label: '智能审查', sid: 'review', mid: 'run' },
-  { label: '定稿归集', sid: 'collect', mid: 'document-type-archive' },
-]
 const demoEntry = {
   'knowledge-generate': 'generate-requirement',
   'strategy-review': 'run',
   'doc-collect': 'document-type-archive',
 }
-const chainIndex = computed(() => {
-  const sid = route.params.sid
-  const mid = route.params.mid
-  const index = docChain.findIndex((step) => step.sid === sid && step.mid === mid)
-  if (index >= 0) return index
-  if (sid === 'review' && mid === 'issues') return 1
-  if (sid === 'write' && (mid === 'outline' || mid === 'trace' || mid === 'draft' || mid === 'generate-requirement')) return 0
-  return -1
-})
-
 function expandCurrent() {
   const mid = menu.value?.id
   if (!mid) return
@@ -202,12 +178,11 @@ function toggleMenu(item) {
   }
   open[item.id] = !open[item.id]
 }
-function goChain(step) {
-  router.push({ name: 'app', params: { pid: 'doc', sid: step.sid, mid: step.mid } })
-}
+const docSystemEntry = { write: 'generate-requirement', review: 'run', collect: 'document-type-archive' }
 function openSystem(sys) {
+  const entry = platform.value.id === 'doc' ? docSystemEntry[sys.id] : ''
   const first = sys.menus[0].page ? sys.menus[0] : sys.menus[0].children[0]
-  router.push({ name: 'app', params: { pid: platform.value.id, sid: sys.id, mid: first.id } })
+  router.push({ name: 'app', params: { pid: platform.value.id, sid: sys.id, mid: entry || first.id } })
 }
 function childOn(item) {
   return item.children?.some((c) => c.id === menu.value?.id && (!c.sid || c.sid === system.value?.id))

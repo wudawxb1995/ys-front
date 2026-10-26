@@ -515,7 +515,6 @@
 
     <template v-else-if="stage === 'archive'">
       <section class="sec-frame">
-        <h3><i></i>文档归集 <em>试验报告V2（定稿）已入库</em></h3>
         <div class="filter-row">
           <el-input v-model="archiveSearch" placeholder="搜索文档名称或编号" clearable @keyup.enter="applyArchiveFilter" />
           <el-select v-model="archiveType" style="width: 180px">

@@ -252,7 +252,7 @@
             <article v-for="t in m15FilteredTasks" :key="t.id" class="m15-task">
               <div class="m15-task-main">
                 <b @click="m15Open(t)">{{ t.name }}</b>
-                <p>数据源：{{ t.srcType }} · 计划 {{ t.count }}</p>
+                <p><template v-if="t.indicatorName">指标：{{ t.indicatorName }} · </template>数据源：{{ t.srcType }} · 计划 {{ t.count }}</p>
               </div>
               <div class="m15-task-side">
                 <span>已回传 {{ m15TaskMeta(t).received }} / {{ m15TaskMeta(t).total }} {{ m15TaskMeta(t).unit }}</span>
@@ -282,7 +282,17 @@
           <el-form-item label="任务名称" required>
             <el-input v-model="m15CreateForm.name" maxlength="40" placeholder="精度试验数据对接 (30发)" />
           </el-form-item>
-          <el-form-item label="勾选精度试验数据源" required>
+          <el-form-item label="指标树" required>
+            <el-select v-model="m15CreateForm.treeVer" placeholder="请选择指标树" style="width:100%" @change="m15PickTree">
+              <el-option v-for="tree in m15TreeOptions" :key="tree.value" :label="tree.label" :value="tree.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item v-if="m15CreateForm.treeVer" label="指标" required>
+            <el-select v-model="m15CreateForm.indicatorId" placeholder="请选择指标" filterable style="width:100%" @change="m15PickIndicator">
+              <el-option v-for="row in m15TreeIndicators" :key="row.id" :label="row.name" :value="row.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item v-if="m15CreateForm.indicatorId" label="数据源" required>
             <el-checkbox-group v-model="m15CreateForm.sources" class="m15-src-checks">
               <el-checkbox v-for="item in m15SourceOpts" :key="item" :value="item">{{ item }}</el-checkbox>
             </el-checkbox-group>
