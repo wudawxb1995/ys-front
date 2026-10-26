@@ -17,15 +17,38 @@ import {
 import * as echarts from 'echarts'
 
 let pendingM22ReportId = null
+let m19GenerationTimer = null
 
 export function buildRichPartB({ toast, router, route, props, bag }) {
 // ── M14 探针配置管理 ────────────────────────────────────────────────────
 
+const probeDisplay = {
+  P01: { bindParam: '立靶高低偏差', dataSrc: '弹道测量文件', sampleMode: '逐发触发', alarmLevel: '告警' },
+  P02: { bindParam: '炮口初速', dataSrc: '弹道测量文件', sampleMode: '逐发触发', alarmLevel: '告警' },
+  P03: { bindParam: '飞行姿态角', dataSrc: '弹道测量文件', sampleMode: '逐发触发', alarmLevel: '告警' },
+  P04: { bindParam: '身管温度', dataSrc: '遥测数据流', sampleMode: '定时采集', alarmLevel: '提示' },
+  P05: { bindParam: '定位定向温补', dataSrc: '遥测数据流', sampleMode: '定时采集', alarmLevel: '告警' },
+  P06: { bindParam: '气象修正有效性', dataSrc: '气象保障数据', sampleMode: '逐发触发', alarmLevel: '提示' },
+  P07: { bindParam: '遥测链路', dataSrc: '遥测数据流', sampleMode: '实时模式', alarmLevel: '提示' },
+  P08: { bindParam: '方位定向', dataSrc: '遥测数据流', sampleMode: '逐发触发', alarmLevel: '告警' },
+  P09: { bindParam: '时间同步', dataSrc: '遥测数据流', sampleMode: '逐发触发', alarmLevel: '提示' },
+  P10: { bindParam: '惯导漂移', dataSrc: '遥测数据流', sampleMode: '逐发触发', alarmLevel: '告警' },
+  P11: { bindParam: '弹载供电', dataSrc: '遥测数据流', sampleMode: '定时采集', alarmLevel: '提示' },
+  P12: { bindParam: '弹道CEP', dataSrc: '弹道测量文件', sampleMode: '逐发触发', alarmLevel: '告警' },
+}
 const probeList = ref(probes.map((p) => ({
   ...p,
+  ...(probeDisplay[p.id] || {}),
+  treeVer: '指标树 V1.0',
   enabled: true,
-  lastTrigger: '—', // 待检测：尚无触发
+  lastTrigger: '—',
 })))
+const m14Stats = computed(() => ({
+  total: probeList.value.length,
+  enabled: probeList.value.filter((p) => p.enabled).length,
+  alarming: probeList.value.some((p) => p.id === 'P01' && p.enabled) ? 1 : 0,
+  nodes: 822,
+}))
 const m14Detail = ref(null)   // null=列表页；Object=详情页
 const m14PageNo = ref(1)
 const m14PageSize = 10
@@ -711,6 +734,7 @@ function submitCreateDockTask() {
 
 // ── M19 根因分析工作台 ──────────────────────────────────────────────────
 const m19Detail      = ref(null)
+const m19GenerationStatus = ref('idle')
 const focusShotId    = ref(19)
 const m19ActiveNode  = ref('C6')
 const focusEvidence  = ref(null)
@@ -731,11 +755,20 @@ function goRootCause() {
 }
 
 function doM19ConfirmRootCause() {
+  if (m19GenerationStatus.value !== 'idle') return
+  m19GenerationStatus.value = 'generating'
   const top = candidates.find(c => c.rank === 1) || candidates[0]
   const evt = m19Detail.value || { id: 'EVT-001', name: '第19发超差事件' }
   confirmRootCause(top, evt)
-  pendingM22ReportId = 'RPT-001'
-  router.push({ name: 'app', params: { pid: 'probe', sid: 'probe-interpret', mid: 'report-list' } })
+  m19GenerationTimer = setTimeout(() => {
+    m19GenerationStatus.value = 'complete'
+    m19GenerationTimer = setTimeout(() => {
+      pendingM22ReportId = 'RPT-001'
+      router.push({ name: 'app', params: { pid: 'probe', sid: 'probe-interpret', mid: 'report-list' } })
+      m19GenerationStatus.value = 'idle'
+      m19GenerationTimer = null
+    }, 1000)
+  }, 1400)
 }
 
 function goProjectDup() {
@@ -746,6 +779,8 @@ function goProjectDup() {
 function doM22Archive(report) {
   if (!report) return
   archiveInterpretReport(report)
+  report.statusLabel = '已归档·待试验后引用'
+  report.statusClass = 'archive'
   toast('报告已归档，可在第三部分试验后阶段作为素材引用')
 }
 
@@ -791,9 +826,11 @@ th{background:#f3f8fd}
 <tr><th>总发次</th><td>30 发</td><th>异常发次</th><td>第 19 发</td></tr>
 <tr><th>触发探针</th><td colspan="3">弹着点散布探针 P01</td></tr>
 </table>
+<p>本报告汇集 D-07 批次逐发测量、探针告警、遥测记录和标定资料，分析对象为第 19 发异常。判据引用指标树 V1.0；根因结论仍需复测验证。</p>
 
 <h2>2 异常特征</h2>
-<p>第 19 发立靶高低偏差 <b>+0.42 mil</b>，超出判据阈值 ≤0.30 mil（超出 40%），触发立靶精度探针 P01 告警，判定为异常发次。同批次前 18 发偏差均在 ±0.25 mil 以内，排除弹药批次因素。</p>
+<p>第 19 发立靶高低偏差 <b>+0.42 mil</b>，超出判据阈值 ≤0.30 mil（超出 40%），触发立靶精度探针 P01 告警。前 18 发偏差均在 ±0.25 mil 以内，第 19 发呈孤立突增，降低了批次性因素的优先级，但仍需复测核查。</p>
+<p>同发次初速 818.3 m/s，低于 820 m/s 下限；飞行段 pitch 偏差 +0.38°，TH-03 温度在 T+4.2s 跳变 +2.1℃。这些信号时间接近，支持继续追查定位定向系统，但时间相关性不能单独证明根因。</p>
 <p><b>探针告警记录：</b></p>
 <ul>
 <li>P01 立靶精度告警（2024-10-18 14:32:07）：高低偏差 +0.42 mil，超出判据 ≤0.30 mil，触发一级告警</li>
@@ -808,9 +845,10 @@ th{background:#f3f8fd}
 <thead><tr><th>排名</th><th>候选根因</th><th>置信度</th><th>结论</th></tr></thead>
 <tbody>${candRows}</tbody>
 </table>
+<p>温补失效获得姿态异常、温度跳变和标定偏差支持；火控解算软件异常缺少对应故障记录。历史案例仅作类比，不作为本次故障的直接证据。</p>
 
 <h2>4 结论与处置建议</h2>
-<div class="box"><b>结论：</b>本批次弹道试验共 30 发，第 19 发出现弹着点散布异常（超判据 40%），根因推断为定位定向系统温补系数失效（置信度 0.86），前 18 发均正常，排除弹药批次性因素。</div>
+<div class="box"><b>结论：</b>本批次试验共 30 发，第 19 发立靶高低偏差超出判据 40%。现有证据最支持定位定向系统温补系数失效（候选置信度 0.86），最终结论仍需复测验证。</div>
 <div class="warn"><b>核心建议：</b>建议对定位定向系统执行温补校准后，复测第 19 发工况，以验证温补系数修正效果。</div>
 <p><b>详细处置步骤：</b></p>
 <ol>
@@ -819,6 +857,7 @@ th{background:#f3f8fd}
 <li>下批次试验前完成上述修正后，在相同工况下对第 19 发场景执行复测验证；</li>
 <li>复测结果纳入 D-07 批次试验数据库，更新探针 P01 判据基线。</li>
 </ol>
+<p>完成温补系数复核与修正后，使用相同测量链路复测对应工况；核对高低偏差是否回到 ≤0.30 mil、初速是否回到 ≥820 m/s，并确认 pitch 与 TH-03 温度曲线恢复稳定。若仍异常，应重新评估候选根因排序。</p>
 
 <h2>5 证据清单</h2>
 <table>
@@ -971,12 +1010,12 @@ const activeSection  = ref(1)
 const m22FilterName  = ref('')
 const m22FilterStatus = ref('')
 
-const m22Reports = [
-  { id:'RPT-001', title:'第19发超差事件解读报告', event:'第19发超差事件', statusLabel:'已归档·待试验后引用', statusClass:'archive', batch:'D-07', time:'2024-10-18' },
+const m22Reports = ref([
+  { id:'RPT-001', title:'第19发超差事件解读报告', event:'第19发超差事件', statusLabel:demoStore.reportArchived?.id === 'RPT-001' ? '已归档·待试验后引用' : '待归档', statusClass:demoStore.reportArchived?.id === 'RPT-001' ? 'archive' : 'run', batch:'D-07', time:'2024-10-18' },
   { id:'RPT-002', title:'D-06批次例行报告',        event:'D-06批次例行分析',  statusLabel:'草稿',               statusClass:'hold',    batch:'D-06', time:'2024-10-17' },
-]
+])
 if (pendingM22ReportId) {
-  m22Detail.value = m22Reports.find((r) => r.id === pendingM22ReportId) || m22Reports[0]
+  m22Detail.value = m22Reports.value.find((r) => r.id === pendingM22ReportId) || m22Reports.value[0]
   pendingM22ReportId = null
 }
 
@@ -1833,6 +1872,7 @@ function initM32ResourceChart() {
 }
 
 onBeforeUnmount(() => {
+  if (m19GenerationTimer) clearTimeout(m19GenerationTimer)
   if (typeof window !== 'undefined') window.removeEventListener('resize', resizeM19Charts)
   if (scanTimer) clearInterval(scanTimer)
   if (v0Chart) { v0Chart.dispose(); v0Chart = null }
@@ -1854,6 +1894,7 @@ onBeforeUnmount(() => {
 
   Object.assign(bag, {
     probeList,
+    m14Stats,
     m14Detail,
     m14PageNo,
     m14PageSize,
@@ -1919,6 +1960,7 @@ onBeforeUnmount(() => {
     startScan,
     m15Open,
     m19Detail,
+    m19GenerationStatus,
     focusShotId,
     m19ActiveNode,
     focusEvidence,

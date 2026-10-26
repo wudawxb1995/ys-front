@@ -194,7 +194,7 @@
                 </div>
                 <div class="m19-actions">
                   <button class="btn btn-outline" @click="toast('暂未实现该功能', 'warning')">导入证据</button>
-                  <button class="btn btn-primary" @click="doM19ConfirmRootCause">采纳根因 &amp; 生成报告</button>
+                  <button class="btn btn-primary" :disabled="m19GenerationStatus!=='idle'" @click="doM19ConfirmRootCause">采纳根因 &amp; 生成报告</button>
                 </div>
               </div>
             </div>
@@ -266,6 +266,14 @@
           </div>
         </div>
       </template>
+      <div v-if="m19GenerationStatus!=='idle'" class="m19-generation-overlay" role="status" aria-live="polite">
+        <div class="m19-generation-dialog">
+          <span v-if="m19GenerationStatus==='generating'" class="m19-generation-spinner" aria-hidden="true"></span>
+          <span v-else class="m19-generation-check" aria-hidden="true">✓</span>
+          <strong>{{ m19GenerationStatus==='generating' ? '正在生成异常分析报告…' : '异常分析报告生成成功' }}</strong>
+          <p>{{ m19GenerationStatus==='generating' ? '正在汇总异常特征、推理链与证据记录' : '正在打开报告详情…' }}</p>
+        </div>
+      </div>
   </div>
 </template>
 
@@ -283,6 +291,13 @@ export default {
 </script>
 
 <style scoped>
+.m19-generation-overlay { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; background: rgba(14, 38, 61, .32); }
+.m19-generation-dialog { width: min(360px, calc(100vw - 40px)); padding: 32px 28px; border-radius: 12px; background: #fff; box-shadow: 0 18px 50px rgba(15, 55, 95, .2); display: flex; flex-direction: column; align-items: center; text-align: center; }
+.m19-generation-dialog strong { color: #123c5f; font-size: 17px; margin-top: 18px; }
+.m19-generation-dialog p { color: #6d8092; font-size: 13px; margin: 8px 0 0; }
+.m19-generation-spinner { width: 36px; height: 36px; border: 3px solid #dceaf4; border-top-color: #1668a8; border-radius: 50%; animation: m19-spin .8s linear infinite; }
+.m19-generation-check { width: 40px; height: 40px; border-radius: 50%; background: #e4f7eb; color: #1c9a52; font-size: 27px; line-height: 40px; }
+@keyframes m19-spin { to { transform: rotate(360deg); } }
 .m19-board {
   display: flex;
   flex-direction: column;

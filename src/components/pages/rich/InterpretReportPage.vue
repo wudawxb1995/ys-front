@@ -31,7 +31,7 @@
         </div>
 
         <!-- 状态横幅 -->
-        <div class="m22-banner">
+        <div v-if="demoStore.reportArchived?.id === m22Detail?.id" class="m22-banner">
           <svg viewBox="0 0 24 24" fill="none" stroke="#d0ab68" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           <div>
             <span class="m22-banner-lab">已归档 · 待试验后引用</span>
@@ -48,7 +48,7 @@
             <div v-for="sec in m22Sections" :key="sec.no"
               class="m22-nav-item"
               :class="{ on: activeSection===sec.no }"
-              @click="activeSection=sec.no"
+              @click="jumpToSection(sec.no)"
             >
               <span class="m22-nav-no">{{ sec.no }}</span>
               {{ sec.title }}
@@ -56,10 +56,10 @@
           </div>
 
           <!-- 正文 -->
-          <div class="panel m22-pane m22-body">
+          <div ref="m22BodyEl" class="panel m22-pane m22-body">
 
             <!-- 第1节 -->
-            <div v-show="activeSection===1">
+            <section data-section="1" class="m22-section">
               <h3 style="margin-bottom:14px"><i></i>1 事件概述</h3>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;background:#f4f8fc;border-radius:6px;padding:14px;font-size:13px">
                 <div><span style="color:#8a99a8">型号：</span><span style="font-weight:500">某型精度武器系统</span></div>
@@ -70,14 +70,22 @@
                 <div><span style="color:#8a99a8">异常发次：</span><span style="color:#d4380d;font-weight:600">第 19 发</span></div>
                 <div><span style="color:#8a99a8">触发探针：</span><span>弹着点散布探针 P01</span></div>
               </div>
-            </div>
+              <p class="m22-paragraph">本报告汇集 D-07 批次逐发测量、探针告警、遥测记录和标定资料，分析对象为第 19 发异常。判据引用指标树 V1.0；报告中的根因结论为当前证据支持的推断，后续复测结果应继续回填。</p>
+              <div class="m22-fact-grid">
+                <div><span>立靶高低偏差</span><strong>+0.42 mil</strong><small>判据 ≤0.30 mil，超出 40%</small></div>
+                <div><span>炮口初速</span><strong>818.3 m/s</strong><small>低于下限 820 m/s</small></div>
+                <div><span>飞行段 pitch</span><strong>+0.38°</strong><small>超出 ±0.20° 阈值</small></div>
+                <div><span>温度测点 TH-03</span><strong>+2.1 ℃</strong><small>在 T+4.2s 出现跳变</small></div>
+              </div>
+            </section>
 
             <!-- 第2节 -->
-            <div v-show="activeSection===2">
+            <section data-section="2" class="m22-section">
               <h3 style="margin-bottom:12px"><i></i>2 异常特征</h3>
               <p style="font-size:13.5px;color:#333;margin-bottom:14px;line-height:1.8">
-                第 19 发立靶高低偏差 <b style="color:#d4380d">+0.42 mil</b>，超出判据阈值 ≤0.30 mil（超出 40%），触发立靶精度探针 P01 告警，判定为异常发次。同批次前 18 发偏差均在 ±0.25 mil 以内，排除弹药批次因素。
+                第 19 发立靶高低偏差 <b style="color:#d4380d">+0.42 mil</b>，超出判据阈值 ≤0.30 mil（超出 40%），触发立靶精度探针 P01 告警，判定为异常发次。前 18 发高低偏差绝对值最大为 {{ reportBaseline.maxDeviation }} mil，第 19 发呈孤立突增；这一对比降低了批次性因素的优先级，但仍需结合复测核查。
               </p>
+              <div class="m22-analysis-note"><b>同发次关联：</b>第 19 发初速为 818.3 m/s，低于 820 m/s 下限；飞行段 pitch 偏差和 TH-03 温度跳变也在同一异常发次出现。三项信号时间接近，支持继续追查定位定向系统，但时间相关性本身不能单独证明根因。</div>
               <!-- 散布图 + 告警记录 并排 -->
               <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start">
                 <!-- 散布图 -->
@@ -154,10 +162,10 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </section>
 
             <!-- 第3节 -->
-            <div v-show="activeSection===3">
+            <section data-section="3" class="m22-section">
               <h3 style="margin-bottom:12px"><i></i>3 根因分析过程</h3>
               <!-- 思维链缩略 -->
               <div style="border:1px solid #e8f2fb;border-radius:8px;padding:14px;margin-bottom:16px;background:#fafcff">
@@ -195,17 +203,19 @@
                   </tbody>
                 </table>
               </div>
-            </div>
+              <div class="m22-analysis-note"><b>排序依据：</b>温补失效同时获得 E1 姿态异常、E2 温度跳变和 E3 标定偏差支持；火控解算软件异常缺少对应的软件故障记录；气象修正误差与前 18 发稳定表现不吻合。历史案例 E4 仅作类比，不作为本次故障的直接证据。</div>
+            </section>
 
             <!-- 第4节 -->
-            <div v-show="activeSection===4">
+            <section data-section="4" class="m22-section">
               <h3 style="margin-bottom:12px"><i></i>4 结论与处置建议</h3>
               <div style="background:#f4f8fc;border-radius:6px;padding:14px;margin-bottom:16px;font-size:13.5px;color:#1a2b3c;line-height:1.8">
-                <b>结论：</b>本批次弹道试验共 30 发，第 19 发出现弹着点散布异常（超判据 40%），根因推断为定位定向系统温补系数失效（置信度 0.86），前 18 发均正常，排除弹药批次性因素。
+                <b>结论：</b>本批次试验共 30 发，第 19 发立靶高低偏差超出判据 40%。现有证据最支持定位定向系统温补系数失效（候选置信度 0.86）；前 18 发稳定表现降低了批次性因素的优先级，最终结论仍需复测验证。
               </div>
               <div style="background:#fff8e6;border-left:4px solid #d0ab68;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:16px;font-size:13.5px;color:#7a5a10;line-height:1.8">
                 <b style="color:#1a2b3c">核心建议：</b>建议对定位定向系统执行温补校准后，复测第 19 发工况，以验证温补系数修正效果。
               </div>
+              <div class="m22-analysis-note"><b>验证闭环：</b>完成温补系数复核与修正后，使用相同测量链路复测对应工况；核对高低偏差是否回到 ≤0.30 mil、初速是否回到 ≥820 m/s，并确认 pitch 与 TH-03 温度曲线恢复稳定。若仍异常，应重新评估候选根因排序。</div>
               <div style="font-size:13.5px;color:#1a2b3c;line-height:1.8">
                 <b>详细处置步骤：</b>
                 <ol style="margin:10px 0 0 20px;display:flex;flex-direction:column;gap:8px">
@@ -215,10 +225,10 @@
                   <li>复测结果纳入 D-07 批次试验数据库，更新探针 P01 判据基线。</li>
                 </ol>
               </div>
-            </div>
+            </section>
 
             <!-- 第5节 -->
-            <div v-show="activeSection===5">
+            <section data-section="5" class="m22-section">
               <h3 style="margin-bottom:12px"><i></i>5 证据清单</h3>
               <div class="table-wrap">
                 <table>
@@ -230,25 +240,16 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td style="font-family:monospace;color:#5a6978;font-weight:600">E1</td>
-                      <td style="font-size:13px">第19发飞行段 pitch 角偏差 0.38°，超出阈值 0.20°</td>
-                      <td><span style="font-size:12px;color:#5a6978">遥测数据 D-07</span></td>
-                    </tr>
-                    <tr>
-                      <td style="font-family:monospace;color:#5a6978;font-weight:600">E2</td>
-                      <td style="font-size:13px">温度传感器 TH-03 在第 4.2s 出现 2.1℃ 跳变</td>
-                      <td><span style="font-size:12px;color:#5a6978">监控仪</span></td>
-                    </tr>
-                    <tr>
-                      <td style="font-family:monospace;color:#5a6978;font-weight:600">E3</td>
-                      <td style="font-size:13px">2019年同型某次试验出现相同温补失效案例，处置后复测达标</td>
-                      <td><span style="font-size:12px;color:#1668a8;font-weight:500">历史案例库 D-06 · 某型装甲车A精度试验2019</span></td>
+                    <tr v-for="item in evidence" :key="item.id">
+                      <td style="font-family:monospace;color:#5a6978;font-weight:600">{{ item.id }}</td>
+                      <td style="font-size:13px">{{ item.text }}</td>
+                      <td><span style="font-size:12px;color:#5a6978">{{ item.source }}</span></td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-            </div>
+              <p class="m22-paragraph">证据 E1–E3 来自本次遥测和标定资料，E4 为历史案例。报告保留证据来源，便于复核分析结论与后续复测结果。</p>
+            </section>
 
           </div>
         </div>
@@ -323,14 +324,25 @@
 </template>
 
 <script>
+import { ref } from 'vue'
 import { useRichPage } from '@/composables/rich/useRichPage'
+import { shots30 } from '@/data/mock'
 import SelectField from '@/components/SelectField.vue'
 
 export default {
   components: { SelectField },
   props: { page: Object, title: String },
   setup(props) {
-    return useRichPage(props)
+    const rich = useRichPage(props)
+    const m22BodyEl = ref(null)
+    const reportBaseline = {
+      maxDeviation: Math.max(...shots30.slice(0, 18).map((shot) => Math.abs(shot.dH))).toFixed(2),
+    }
+    function jumpToSection(no) {
+      rich.activeSection.value = no
+      m22BodyEl.value?.querySelector(`[data-section="${no}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    return { ...rich, m22BodyEl, reportBaseline, jumpToSection }
   },
 }
 </script>
@@ -340,8 +352,6 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  /* 顶栏 + 面包屑 + 页边距约 148；本页顶栏+横幅由 flex 占位，双栏吃满剩余视口 */
-  min-height: calc(100vh - 148px);
 }
 .m22-topbar {
   display: flex;
@@ -378,24 +388,16 @@ export default {
 .m22-banner-txt { font-size: 13px; color: #9a7a30; }
 
 .m22-split {
-  flex: 1 1 auto;
-  min-height: 0;
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);
   gap: 16px;
-  align-items: stretch;
-  /* 满屏剩余高度：视口 − 顶栏/面包屑 − 本页顶栏与横幅 */
-  height: calc(100vh - 260px);
-  max-height: calc(100vh - 260px);
+  align-items: start;
 }
 .m22-pane {
   min-height: 0;
-  height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
   box-sizing: border-box;
 }
-.m22-nav { padding: 14px 12px; }
+.m22-nav { padding: 14px 12px; position: sticky; top: 16px; }
 .m22-nav-lab {
   font-size: 12px;
   color: #8a99a8;
@@ -436,4 +438,14 @@ export default {
   color: #fff;
 }
 .m22-body { line-height: 1.8; }
+.m22-section { padding: 4px 0 26px; scroll-margin-top: 16px; }
+.m22-section + .m22-section { border-top: 1px solid #e8eef4; padding-top: 24px; }
+.m22-paragraph { color: #40556a; font-size: 13.5px; line-height: 1.85; margin: 14px 0 0; }
+.m22-analysis-note { background: #f4f8fc; border-left: 3px solid #9cc5e3; padding: 12px 14px; border-radius: 4px; color: #40556a; line-height: 1.8; font-size: 13px; margin: 14px 0; }
+.m22-fact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.m22-fact-grid > div { padding: 12px; border: 1px solid #dceaf4; border-radius: 7px; }
+.m22-fact-grid span, .m22-fact-grid small { display: block; color: #7890a5; font-size: 11px; }
+.m22-fact-grid strong { display: block; color: #d4380d; font-size: 16px; margin: 3px 0; }
+@media (max-width: 980px) { .m22-fact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .m22-split { grid-template-columns: 1fr; } .m22-nav { position: static; } }
 </style>

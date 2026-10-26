@@ -260,21 +260,26 @@
 
     <!-- ═══ 第一级：探针列表 ═══ -->
     <div v-else class="crud-body m14-list-card">
-      <div class="toolbar m14-toolbar">
+      <div class="m14-list-head">
+        <div class="m14-kpis">
+          <span>探针总数 <b>{{ m14Stats.total }}</b></span>
+          <span>已启用 <b>{{ m14Stats.enabled }}</b></span>
+          <span>告警中 <b class="warn">{{ m14Stats.alarming }}</b></span>
+          <span>推理图谱节点 <b>{{ m14Stats.nodes }}</b></span>
+        </div>
+      </div>
+      <div class="m14-list-tools">
         <el-button type="primary" @click="openCreateProbe">＋ 新建探针</el-button>
         <el-button :disabled="!m14CheckedIds.length" @click="enableSelectedProbes">批量启用</el-button>
         <el-button :disabled="!m14CheckedIds.length" @click="disableSelectedProbes">批量停用</el-button>
-        <div class="m14-search">
-          <el-input
-            v-model="m14Search"
-            clearable
-            placeholder="搜索探针名称…"
-            style="width: 220px"
-            @keyup.enter="applyM14Search"
-            @clear="applyM14Search"
-          />
-          <el-button type="primary" @click="applyM14Search">查询</el-button>
-        </div>
+        <el-input
+          v-model="m14Search"
+          class="m14-search-input"
+          clearable
+          placeholder="搜索探针名称…"
+          @keyup.enter="applyM14Search"
+        />
+        <el-button type="primary" @click="applyM14Search">查询</el-button>
       </div>
 
       <div class="table-inner m14-table-inner">
@@ -290,56 +295,46 @@
               </th>
               <th class="col-idx">序号</th>
               <th>探针名称</th>
-              <th style="width:130px">监测对象</th>
-              <th style="width:220px">判据阈值</th>
-              <th style="width:130px">状态</th>
-              <th style="width:150px">判据来源</th>
-              <th style="width:120px">最近触发时间</th>
-              <th style="width:110px;text-align:center">操作</th>
+              <th>监测参数</th>
+              <th>数据来源</th>
+              <th>采样方式</th>
+              <th>判据</th>
+              <th style="width:88px">告警级别</th>
+              <th style="width:88px">状态</th>
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="(p, i) in pageRows"
-              :key="p.id"
-            >
+            <tr v-for="(p, i) in pageRows" :key="p.id">
               <td class="col-check">
                 <el-checkbox
                   :model-value="m14IsChecked(p.id)"
-                  @change="(v) => m14ToggleOne(p.id, v)"
+                  @change="(on) => m14ToggleOne(p.id, on)"
                 />
               </td>
               <td class="col-idx">{{ String((m14PageNo - 1) * m14PageSize + i + 1).padStart(2, '0') }}</td>
               <td>
                 <button type="button" class="m14-name-link" @click="m14Detail = p">{{ p.name }}</button>
               </td>
-              <td>{{ p.obj }}</td>
-              <td class="mono">{{ p.criteria }}</td>
+              <td>{{ p.bindParam || p.obj }}</td>
+              <td>{{ p.dataSrc || '弹道测量文件' }}</td>
+              <td>{{ p.sampleMode || '逐发触发' }}</td>
               <td>
-                <span class="badge" :class="p.enabled ? 'run' : 'hold'">
-                  <i></i>{{ p.enabled ? '已启用，待检测' : '已停用' }}
-                </span>
-              </td>
-              <td>
-                <span class="m14-cite-sm">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                  引自{{ p.treeVer || '指标树 V1.0' }}
-                </span>
-              </td>
-              <td class="time">{{ p.lastTrigger || '—' }}</td>
-              <td style="text-align:center">
-                <div class="ops" style="justify-content:center">
-                  <button type="button" @click="openEditProbe(p)">配置</button>
-                  <button type="button" @click="toggleProbe(p)">{{ p.enabled ? '停用' : '启用' }}</button>
+                <div class="m14-crit">
+                  <span>{{ p.criteria }}</span>
+                  <button type="button" class="m14-cite-sm" @click="previewProbeCite(p.srcNode)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    引自{{ p.treeVer || '指标树 V1.0' }}
+                  </button>
                 </div>
               </td>
-            </tr>
-            <tr
-              v-for="n in emptyPad"
-              :key="'e' + n"
-              class="empty-row"
-            >
-              <td colspan="9"></td>
+              <td>
+                <span class="m14-lv" :class="'lv-' + (p.alarmLevel || '告警')">{{ p.alarmLevel || '告警' }}</span>
+              </td>
+              <td>
+                <span class="badge" :class="p.enabled ? 'on' : 'hold'">
+                  <i></i>{{ p.enabled ? '启用' : '停用' }}
+                </span>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -770,13 +765,42 @@ export default {
 .m14-graph-grid .val { font-size: 13.5px; color: #1a2b3c; }
 .m14-graph-grid .val.strong { font-weight: 600; }
 
-/* 列表：工具栏与表格间距减半；搜索靠左 + 查询 */
-.m14-list-card :deep(.m14-toolbar) {
-  padding: 16px 16px 8px;
+.m14-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px 4px;
 }
-.m14-list-card :deep(.m14-table-inner) {
-  padding-top: 7px;
+.m14-kpis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  color: #5c7084;
+  font-size: 13px;
 }
+.m14-kpis b {
+  margin-left: 4px;
+  color: #1f3d5a;
+  font-size: 15px;
+  font-weight: 700;
+}
+.m14-kpis b.warn { color: #d48806; }
+.m14-list-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 0;
+}
+.m14-list-tools :deep(.el-button + .el-button) { margin-left: 0; }
+.m14-search-input { width: 220px; margin-left: 8px; }
+.col-idx { width: 56px; color: #5c7084; }
+.m14-list-card :deep(.m14-table-inner) { padding-top: 8px; }
+.m14-crit { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.m14-lv { font-size: 13px; font-weight: 600; }
+.m14-lv.lv-严重 { color: #d4380d; }
+.m14-lv.lv-告警 { color: #d48806; }
+.m14-lv.lv-提示 { color: #8a99a8; }
 .m14-search {
   display: inline-flex;
   align-items: center;
@@ -823,6 +847,9 @@ export default {
   padding: 2px 7px;
   border-radius: 8px;
   white-space: nowrap;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.4;
 }
 .m14-cite-sm svg { width: 10px; height: 10px; flex-shrink: 0; }
 
