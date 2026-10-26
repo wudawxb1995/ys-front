@@ -54,7 +54,8 @@
             </el-radio-group>
           </div>
           <el-button :disabled="!checkedNames.size" @click="batchDelete">批量删除</el-button>
-          <el-button type="primary" @click="goResAdd">导入资料</el-button>
+          <el-button type="primary" @click="pickImport">导入资料</el-button>
+          <input ref="fileInput" class="file-input" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.txt" @change="onImport" />
         </div>
         <p v-if="checkedNames.size" class="sel-hint">已选 {{ checkedNames.size }} 条</p>
 
@@ -77,7 +78,7 @@
               <tr v-if="!filtered.length">
                 <td colspan="7" class="empty">没有符合条件的资料，可调整分类或搜索关键词</td>
               </tr>
-              <tr v-for="row in filtered" :key="row.name" :class="{ checked: checkedNames.has(row.name) }">
+              <tr v-for="row in pageRows" :key="row.name" :class="{ checked: checkedNames.has(row.name), fresh: row.fresh }">
                 <td class="col-cb" @click.stop>
                   <el-checkbox :model-value="checkedNames.has(row.name)" @change="(v) => toggleRow(row.name, v)" />
                 </td>
@@ -85,6 +86,7 @@
                   <div class="file-cell" @click="openDetail(row)">
                     <span class="file-ico" :class="iconKind(row.fmt)">{{ iconText(row.fmt) }}</span>
                     <span class="file-name">{{ row.name }}</span>
+                    <em v-if="row.fresh" class="fresh-tag">刚刚导入</em>
                   </div>
                 </td>
                 <td>{{ catLabelOf(row.cat) }}</td>
@@ -109,6 +111,7 @@
         <div class="res-foot">
           共 {{ filtered.length }} 条资料
           <span v-if="activeCat !== 'all'">（{{ catTree.find(c => c.key === activeCat)?.label }}）</span>
+          <el-pagination v-if="filtered.length > pageSize" v-model:current-page="currentPage" :page-size="pageSize" :total="filtered.length" layout="prev, pager, next" small background />
         </div>
       </div>
     </div>
@@ -116,31 +119,27 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
-import { useRoute, useRouter } from 'vue-router'
 import { useUi } from '@/composables/ui'
+import { registerResourceDetail } from '@/composables/resourceRegistry'
 import { useRows } from '@/composables/tables'
+import { resourceCategories } from '@/data/resourceCorpus'
 
 const props = defineProps({ page: Object, title: String })
 const emit = defineEmits(['open-detail'])
 const { toast, confirm } = useUi()
-const route = useRoute()
-const router = useRouter()
 
 const rows = useRows('resources')
+const fileInput = ref(null)
 const keyword = ref('')
 const activeCat = ref('all')
 const activeStatus = ref('all')
 const checkedNames = ref(new Set())
+const currentPage = ref(1)
+const pageSize = 15
 
-const CAT_TABS = [
-  { key: 'all', label: '全部资料' },
-  { key: '定型资料', label: '定型资料' },
-  { key: '历史试验数据', label: '历史试验数据' },
-  { key: '标准规范', label: '标准规范' },
-  { key: '专业文献', label: '专业文献' },
-]
+const CAT_TABS = [{ key: 'all', label: '全部资料' }, ...resourceCategories.map(name => ({ key: name, label: name }))]
 
 const statusOptions = [
   { key: 'all', label: '全部' },
@@ -165,6 +164,8 @@ const filtered = computed(() => rows.filter((r) => {
   const matchKey = !keyword.value || r.name.includes(keyword.value)
   return matchCat && matchStatus && matchKey
 }))
+const pageRows = computed(() => filtered.value.slice((currentPage.value - 1) * pageSize, currentPage.value * pageSize))
+watch([activeCat, activeStatus, keyword], () => { currentPage.value = 1 })
 
 const stats = computed(() => [
   { key: 'all', label: '全部资料', tone: 'all', value: rows.length },
@@ -174,11 +175,11 @@ const stats = computed(() => [
 ])
 
 const isAllChecked = computed(
-  () => filtered.value.length > 0 && filtered.value.every((r) => checkedNames.value.has(r.name)),
+  () => pageRows.value.length > 0 && pageRows.value.every((r) => checkedNames.value.has(r.name)),
 )
 const isSomeChecked = computed(() => {
-  const n = filtered.value.filter((r) => checkedNames.value.has(r.name)).length
-  return n > 0 && n < filtered.value.length
+  const n = pageRows.value.filter((r) => checkedNames.value.has(r.name)).length
+  return n > 0 && n < pageRows.value.length
 })
 
 function toggleRow(name, val) {
@@ -190,8 +191,8 @@ function toggleRow(name, val) {
 
 function toggleAll(val) {
   const s = new Set(checkedNames.value)
-  if (val) filtered.value.forEach((r) => s.add(r.name))
-  else filtered.value.forEach((r) => s.delete(r.name))
+  if (val) pageRows.value.forEach((r) => s.add(r.name))
+  else pageRows.value.forEach((r) => s.delete(r.name))
   checkedNames.value = s
 }
 
@@ -243,8 +244,100 @@ function openDetail(row) {
   emit('open-detail', row)
 }
 
-function goResAdd() {
-  router.push({ name: 'app', params: { pid: route.params.pid, sid: route.params.sid, mid: 'res-add' } })
+function pickImport() {
+  fileInput.value?.click()
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '—'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+function fmtOf(name) {
+  const ext = (name.split('.').pop() || '').toUpperCase()
+  if (ext === 'JPEG') return 'JPG'
+  return ext || 'FILE'
+}
+
+function modalOf(fmt) {
+  if (/XLS|CSV/.test(fmt)) return '表格'
+  if (/PNG|JPE?G|TIF|BMP/.test(fmt)) return '图像'
+  return '文本'
+}
+
+function uniqueName(name) {
+  if (!rows.some((r) => r.name === name)) return name
+  const dot = name.lastIndexOf('.')
+  const base = dot > 0 ? name.slice(0, dot) : name
+  const ext = dot > 0 ? name.slice(dot) : ''
+  let n = 2
+  while (rows.some((r) => r.name === `${base}（${n}）${ext}`)) n += 1
+  return `${base}（${n}）${ext}`
+}
+
+function nowText() {
+  const d = new Date()
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
+function onImport(e) {
+  const files = [...(e.target.files || [])]
+  e.target.value = ''
+  if (!files.length) return
+  rows.forEach((r) => { if (r.fresh) r.fresh = false })
+  const cat = activeCat.value !== 'all' ? activeCat.value : '试验鉴定'
+  const time = nowText()
+  files.reverse().forEach((file) => {
+    const fmt = fmtOf(file.name)
+    const name = uniqueName(file.name)
+    const record = {
+      name,
+      cat,
+      fmt,
+      modal: modalOf(fmt),
+      size: formatSize(file.size),
+      pages: /PDF|DOC/.test(fmt) ? String(Math.max(8, Math.min(48, Math.round(file.size / 80000) || 12))) : '—',
+      status: '已解析',
+      by: '管理员',
+      time,
+      fileUrl: URL.createObjectURL(file),
+      fresh: true,
+    }
+    rows.unshift(record)
+    registerResourceDetail(name, {
+      name,
+      fmt,
+      size: record.size,
+      pages: record.pages,
+      parsedAt: time,
+      tableCount: record.modal === '表格' ? 4 : 2,
+      imageCount: record.modal === '图像' ? 1 : 0,
+      paraCount: 24,
+      indexStatus: '已建立',
+      indexName: `idx-${Date.now()}`,
+      indexAt: time,
+      fileUrl: record.fileUrl,
+      chapters: [
+        { id: 'c1', title: '1 概述', level: 1 },
+        { id: 'c2', title: '2 主体内容', level: 1 },
+        { id: 'c3', title: '3 结论', level: 1 },
+      ],
+    })
+  })
+  activeCat.value = 'all'
+  activeStatus.value = 'all'
+  keyword.value = ''
+  currentPage.value = 1
+  const added = files.length
+  const all = rows.length
+  const done = rows.filter((r) => r.status === '已解析').length
+  toast(added === 1
+    ? `已导入并完成解析：${files[0].name}。全部资料 ${all} 项，已解析 ${done} 项`
+    : `已导入并完成解析 ${added} 份资料。全部资料 ${all} 项，已解析 ${done} 项`,
+  'success')
 }
 </script>
 
@@ -417,6 +510,19 @@ function goResAdd() {
   white-space: nowrap;
 }
 .file-name:hover { color: #1668a8; text-decoration: underline; }
+.fresh-tag {
+  flex: 0 0 auto;
+  margin-left: 2px;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: #e7f6ec;
+  color: #1a8a45;
+  font-size: 12px;
+  font-style: normal;
+  line-height: 18px;
+}
+tr.fresh td { background: #f3faf6; }
+.file-input { display: none; }
 .file-ico {
   width: 26px; height: 26px; border-radius: 4px;
   display: grid; place-items: center;
@@ -437,5 +543,5 @@ function goResAdd() {
 .dot-status.fail { color: #d4380d; } .dot-status.fail i { background: #f5222d; }
 
 .list-frame .ops { gap: 8px; }
-.res-foot { font-size: 13.5px; color: #7c8fa2; padding: 10px 2px 0; }
+.res-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13.5px; color: #7c8fa2; padding: 10px 2px 0; }
 </style>

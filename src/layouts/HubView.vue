@@ -52,11 +52,13 @@ const router = useRouter()
 const infras = infraPlatforms().filter((item) => item.id !== 'cockpit')
 function enter(app) {
   if (app.id === 'train') {
-    router.push({ name: 'train-board' })
+    router.push({ name: 'app', params: { pid: 'train', sid: 'pretrain', mid: 'home' } })
     return
   }
   if (app.id === 'agent') {
-    router.push({ name: 'agent-studio' })
+    const system = app.systems[0]
+    const leaf = firstLeaf(system)
+    router.push({ name: 'app', params: { pid: 'agent', sid: system.id, mid: leaf.id } })
     return
   }
   if (app.id === 'resource') {

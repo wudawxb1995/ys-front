@@ -248,39 +248,21 @@
             <span class="spacer"></span>
             <button class="btn btn-primary" style="align-self:flex-end" @click="openCreateDockTask">＋ 新建对接任务</button>
           </div>
-          <div class="table-inner">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:220px">任务名称</th>
-                  <th style="width:180px">数据源类型</th>
-                  <th style="width:80px">数据量</th>
-                  <th style="width:80px">状态</th>
-                  <th style="width:160px">执行时间</th>
-                  <th style="width:100px;text-align:center">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="t in m15FilteredTasks" :key="t.id">
-                  <td>
-                    <span style="color:#1668a8;cursor:pointer;font-weight:500" @click="m15Open(t)">{{ t.name }}</span>
-                  </td>
-                  <td>{{ t.srcType }}</td>
-                  <td>{{ t.count }}</td>
-                  <td>
-                    <span class="badge" :class="t.status === '成功' ? 'on' : t.status === '进行中' ? 'run' : 'hold'">
-                      <i></i>{{ t.status }}
-                    </span>
-                  </td>
-                  <td style="color:#8a99a8">{{ t.time }}</td>
-                  <td style="text-align:center">
-                    <div class="ops" style="justify-content:center">
-                      <button @click="m15Open(t)">查看详情</button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="m15-task-list">
+            <article v-for="t in m15FilteredTasks" :key="t.id" class="m15-task">
+              <div class="m15-task-main">
+                <b @click="m15Open(t)">{{ t.name }}</b>
+                <p>数据源：{{ t.srcType }} · 计划 {{ t.count }}</p>
+              </div>
+              <div class="m15-task-side">
+                <span>已回传 {{ m15TaskMeta(t).received }} / {{ m15TaskMeta(t).total }} {{ m15TaskMeta(t).unit }}</span>
+                <span class="badge" :class="t.status === '成功' ? 'on' : t.status === '暂存' ? 'hold' : 'run'">
+                  <i></i>{{ m15TaskMeta(t).label }}
+                </span>
+                <el-button v-if="t.status === '暂存'" type="primary" @click="startDockReturn(t)">启动回传</el-button>
+                <el-button v-else @click="m15Open(t)">融合监测视图</el-button>
+              </div>
+            </article>
           </div>
           <div class="pager">
             <span>共 <b>{{ m15FilteredTasks.length }}</b> 条记录</span>
@@ -296,43 +278,20 @@
         destroy-on-close
         :close-on-click-modal="false"
       >
-        <el-form label-width="7.5em" require-asterisk-position="right" class="m15-create-form">
+        <el-form label-position="top" class="m15-create-form">
           <el-form-item label="任务名称" required>
-            <el-input v-model="m15CreateForm.name" maxlength="40" placeholder="如 精度试验数据回传接入" />
+            <el-input v-model="m15CreateForm.name" maxlength="40" placeholder="精度试验数据对接 (30发)" />
           </el-form-item>
-          <el-form-item label="数据源类型" required>
-            <el-select
-              v-model="m15CreateForm.srcType"
-              filterable
-              allow-create
-              default-first-option
-              style="width:100%"
-              placeholder="请选择或输入"
-            >
-              <el-option v-for="o in m15SrcTypeOpts" :key="o" :label="o" :value="o" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="数据量" required>
-            <el-input v-model="m15CreateForm.count" maxlength="20" placeholder="如 30发 / 12项" />
-          </el-form-item>
-          <el-form-item label="关联批次">
-            <el-select v-model="m15CreateForm.batch" style="width:100%" placeholder="请选择批次">
-              <el-option label="D-07" value="D-07" />
-              <el-option label="D-06" value="D-06" />
-              <el-option label="D-08" value="D-08" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="初始状态">
-            <el-radio-group v-model="m15CreateForm.status">
-              <el-radio value="成功">成功</el-radio>
-              <el-radio value="进行中">进行中</el-radio>
-            </el-radio-group>
+          <el-form-item label="勾选精度试验数据源" required>
+            <el-checkbox-group v-model="m15CreateForm.sources" class="m15-src-checks">
+              <el-checkbox v-for="item in m15SourceOpts" :key="item" :value="item">{{ item }}</el-checkbox>
+            </el-checkbox-group>
           </el-form-item>
         </el-form>
         <template #footer>
           <div class="m15-dlg-foot">
             <el-button @click="m15CreateVisible = false">取消</el-button>
-            <el-button type="primary" @click="submitCreateDockTask">创建</el-button>
+            <el-button type="primary" @click="submitCreateDockTask">创建任务</el-button>
           </div>
         </template>
       </el-dialog>
@@ -457,6 +416,27 @@ export default {
   gap: 8px;
 }
 .m15-dlg-foot :deep(.el-button + .el-button) { margin-left: 0; }
-.m15-dlg-foot :deep(.el-button--primary),
-.m15-dlg-foot :deep(.el-button--primary > span) { color: #fff !important; }
+.m15-task-list { display: flex; flex-direction: column; gap: 10px; }
+.m15-task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #e3edf6;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.m15-task-main b { color: #1668a8; cursor: pointer; font-size: 14px; }
+.m15-task-main p { margin: 4px 0 0; font-size: 12px; color: #8a99a8; }
+.m15-task-side { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; color: #5c7084; font-size: 13px; }
+.m15-src-checks { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; }
+.m15-src-checks :deep(.el-checkbox) {
+  margin-right: 0;
+  height: auto;
+  padding: 8px 10px;
+  border: 1px solid #e3edf6;
+  border-radius: 8px;
+  background: #fff;
+}
 </style>

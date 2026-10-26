@@ -1,5 +1,5 @@
 <template>
-  <div class="board">
+  <div class="board" :class="{ embedded }">
     <header class="top">
       <div class="brand" @click="router.push('/hub')">
         <div class="logo"><Mark /></div>
@@ -16,7 +16,7 @@
       <div class="top-actions">
         <span class="clock">{{ clock }}</span>
         <button @click="running = !running">{{ running ? '暂停刷新' : '继续刷新' }}</button>
-        <button class="ghost" @click="router.push('/hub')">返回</button>
+        <button class="ghost" @click="embedded ? router.push({ name: 'train-board' }) : router.push({ name: 'app', params: { pid: 'train', sid: 'pretrain', mid: 'home' } })">{{ embedded ? '全屏展示 ↗' : '退出全屏' }}</button>
       </div>
     </header>
 
@@ -147,6 +147,7 @@ import * as echarts from 'echarts'
 import Mark from '@/components/Mark.vue'
 
 const router = useRouter()
+defineProps({ embedded: { type: Boolean, default: false } })
 const running = ref(true)
 const clock = ref('')
 const step = ref(18420)
@@ -409,6 +410,9 @@ onBeforeUnmount(() => {
     linear-gradient(180deg, #071422 0%, #06101a 100%);
   overflow: hidden;
 }
+.board.embedded { position: relative; height: min(760px, calc(100vh - 190px)); min-height: 590px; border-radius: 12px; }
+.board.embedded::before, .board.embedded::after { position: absolute; }
+.board.embedded .brand { min-width: 260px; }
 .board::before {
   content: "";
   position: fixed;

@@ -10,7 +10,6 @@
         <span class="m02-sep">|</span>
         <span class="m02-title">{{ detail.name }}</span>
         <span class="badge on"><i></i>抽取完成</span>
-        <el-button type="primary" class="m02-submit" @click="toast('已提交审核，进入人工核验队列')">提交审核</el-button>
       </div>
 
       <!-- 文档概览 -->
@@ -25,112 +24,63 @@
         </div>
       </div>
 
-      <!-- 性能域筛选 + 统计 -->
-      <div class="m02-dash">
-        <h3 class="m02-dash-title"><i></i>性能域筛选</h3>
-        <div class="m02-domain-row">
-          <button
-            v-for="d in domains"
-            :key="d"
-            type="button"
-            class="m02-domain-tag"
-            :class="{ on: activeDomains.has(d) }"
-            @click="toggleDomain(d)"
-          >{{ d }}</button>
-          <span class="m02-domain-split" aria-hidden="true" />
-          <button type="button" class="m02-act-btn primary" @click="activeDomains = new Set(domains)">全选</button>
-          <button type="button" class="m02-act-btn ghost" @click="activeDomains = new Set()">清空</button>
-        </div>
-        <div class="m02-stat-row">
-          <div class="m02-stat">
-            <div class="m02-stat-n">{{ visibleRows.length }}</div>
-            <div class="m02-stat-u">项指标</div>
+      <div class="m02-dash m02-table-panel">
+        <div class="m02-sumbar">
+          <div class="m02-sum">
+            <span>共 <b>{{ resultRows.length }}</b> 项指标</span>
+            <span class="gold">标黄待审定 <b>{{ goldPending }}</b> 项</span>
+            <span>待审定 <b>{{ pendingCount }}</b> 项</span>
           </div>
-          <div class="m02-stat">
-            <div class="m02-stat-n">{{ activeDomains.size }}</div>
-            <div class="m02-stat-u">个性能域</div>
-          </div>
-          <div class="m02-stat">
-            <div class="m02-stat-n gold">{{ pendingCount }}</div>
-            <div class="m02-stat-u">项待人工审核</div>
-          </div>
-          <div class="m02-stat-legend">
-            <span class="lab">置信度</span>
-            <span class="lg b1" /><span>≥0.90</span>
-            <span class="lg b2" /><span>0.80–0.90</span>
-            <span class="lg b3" /><span>&lt;0.80</span>
+          <div class="m02-sum-actions">
+            <el-button type="primary" @click="confirmAudit">审核</el-button>
+            <el-button :loading="treeLoading" @click="goMetricTree">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v6M8 21h8M12 9l-4 4M12 9l4 4M8 13v8M16 13v8"/></svg>
+              生成指标树
+            </el-button>
           </div>
         </div>
-      </div>
-
-      <!-- 抽取结果 + 原文溯源 -->
-      <div class="m02-result-layout" :class="{ split: !!selected }">
-        <div class="m02-dash m02-table-panel">
-          <h3 class="m02-dash-title">
-            <i></i>抽取结果
-            <span class="m02-hint">共 <b>{{ visibleRows.length }}</b> 项</span>
-          </h3>
-          <div class="m02-table-scroll">
-            <table class="m02-table">
-              <thead>
-                <tr>
-                  <th class="col-idx">序号</th>
-                  <th>指标名称</th>
-                  <th>指标值</th>
-                  <th>单位</th>
-                  <th>判据</th>
-                  <th>所属性能域</th>
-                  <th>置信度</th>
-                  <th>状态</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(row, idx) in visibleRows"
-                  :key="row.id"
-                  :class="{ 'm02-gold-row': row.conf < 0.80, selected: selected?.id === row.id }"
-                  @click="openSource(row)"
-                >
-                  <td class="col-idx muted">{{ idx + 1 }}</td>
-                  <td class="name">{{ row.name }}</td>
-                  <td class="mono">{{ row.value }}</td>
-                  <td class="nowrap muted2">{{ row.unit }}</td>
-                  <td class="ellipsis" :title="row.criteria">{{ row.criteria }}</td>
-                  <td class="center"><span class="m02-domain-pill">{{ row.domain }}</span></td>
-                  <td>
-                    <div class="conf">
-                      <div class="conf-bar"><div :style="{ width: (row.conf * 100).toFixed(0) + '%', background: confColor(row.conf) }" /></div>
-                      <span :style="{ color: confText(row.conf) }">{{ (row.conf * 100).toFixed(0) }}%</span>
-                    </div>
-                  </td>
-                  <td class="center">
-                    <span class="badge" :class="row.status === '已确认' ? 'on' : row.status === '待审核' ? 'warn' : 'hold'"><i></i>{{ row.status }}</span>
-                  </td>
-                </tr>
-                <tr v-if="!visibleRows.length" class="empty-row">
-                  <td colspan="8" class="empty">当前性能域筛选下无数据</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="m02-table-scroll">
+          <table class="m02-table">
+            <thead>
+              <tr>
+                <th class="col-idx">#</th>
+                <th>性能域/指标类</th>
+                <th>指标名称</th>
+                <th>判据</th>
+                <th class="center">置信度</th>
+                <th class="center">出处</th>
+                <th class="center">审定状态</th>
+                <th class="center">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(row, idx) in resultRows"
+                :key="row.id"
+                :class="{ 'm02-gold-row': row.conf < 0.8 && row.status === '待审核' }"
+              >
+                <td class="col-idx muted">{{ idx + 1 }}</td>
+                <td class="klass">{{ row.klass }}</td>
+                <td class="name">{{ row.name }}</td>
+                <td class="mono">{{ row.criteria }}</td>
+                <td class="center" :class="{ 'conf-low': row.conf < 0.8 }">{{ row.conf.toFixed(2) }}</td>
+                <td class="center muted">P{{ row.srcPage }}</td>
+                <td class="center">
+                  <span class="badge" :class="row.status === '已确认' ? 'on' : 'warn'"><i></i>{{ row.status }}</span>
+                </td>
+                <td class="center">
+                  <div class="ops">
+                    <a @click="openEdit(row)">修改</a>
+                    <a @click="openTrace(row)">一键溯源</a>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="!resultRows.length" class="empty-row">
+                <td colspan="8" class="empty">当前来源文档暂无抽取结果</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-
-        <aside v-if="selected" class="m02-dash m02-source-panel">
-          <h3 class="m02-dash-title">
-            <i></i>原文溯源
-            <button type="button" class="m02-close" @click="selected = null">×</button>
-          </h3>
-          <div class="m02-source-sub">{{ selected.srcDoc }} · 第 {{ selected.srcPage }} 页</div>
-          <div class="m02-source-ind">
-            <div class="ind-name">{{ selected.name }}</div>
-            <div class="ind-val">{{ selected.value }}{{ selected.unit ? ' ' + selected.unit : '' }}</div>
-          </div>
-          <div class="m02-source-body">
-            <div class="page-tag">第 {{ selected.srcPage }} 页</div>
-            <p class="src-text" v-html="highlightedHtml" />
-          </div>
-          <div class="m02-source-foot">点击表格其他行可切换溯源位置 · 高亮句为抽取依据</div>
-        </aside>
       </div>
     </div>
 
@@ -253,26 +203,95 @@
         <el-button type="primary" @click="submitCreate">开始抽取</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="editVisible"
+      title="编辑指标属性"
+      width="520px"
+      align-center
+      destroy-on-close
+      :close-on-click-modal="false"
+    >
+      <el-form label-width="7.2em" require-asterisk-position="right" class="m02-create-form">
+        <el-form-item label="指标名称" required>
+          <el-input v-model="editForm.name" maxlength="40" />
+        </el-form-item>
+        <el-form-item label="判据" required>
+          <el-input v-model="editForm.criteria" maxlength="60" placeholder="如 ≤0.30 mil" />
+        </el-form-item>
+        <el-form-item label="判据类型" required>
+          <el-select v-model="editForm.criteriaType" style="width:100%">
+            <el-option v-for="op in criteriaOptions" :key="op" :label="op" :value="op" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="考核方式" required>
+          <el-select v-model="editForm.examMethod" style="width:100%">
+            <el-option v-for="op in examOptions" :key="op" :label="op" :value="op" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="来源章节">
+          <el-input v-model="editForm.srcSection" maxlength="80" />
+        </el-form-item>
+        <el-form-item label="原文页码">
+          <el-input-number v-model="editForm.srcPage" :min="1" :max="999" controls-position="right" style="width:100%" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveEdit">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="traceVisible"
+      title="一键溯源"
+      width="560px"
+      align-center
+      destroy-on-close
+    >
+      <div v-if="traceRow" class="m02-trace">
+        <div class="m02-trace-head">
+          <div>
+            <div class="m02-trace-name">{{ traceRow.name }}</div>
+            <div class="m02-trace-sub">{{ traceRow.srcDoc }} · 第 {{ traceRow.srcPage }} 页 · {{ traceRow.klass }}</div>
+          </div>
+          <div class="m02-trace-val">{{ traceRow.criteria }}</div>
+        </div>
+        <div class="m02-trace-body">
+          <span class="page-tag">第 {{ traceRow.srcPage }} 页</span>
+          <p class="src-text" v-html="traceHtml" />
+        </div>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="traceVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElLoading } from 'element-plus'
 import { useUi } from '@/composables/ui'
 import { useRows } from '@/composables/tables'
 import { useDemoStore } from '@/composables/demo-store'
 import { m02Domains, getM02RowsForDoc, getM02CountForDoc } from '@/data/m02-indicators'
 
 defineProps({ page: Object, title: String })
-const { toast } = useUi()
+const { toast, confirm } = useUi()
+const route = useRoute()
+const router = useRouter()
 const demoStore = useDemoStore()
 
 const resources = useRows('resources')
 const filterDoc = ref('')
 const detail = ref(null)
-const selected = ref(null)
+const resultRows = ref([])
 const domains = m02Domains
-const activeDomains = ref(new Set(domains))
+const criteriaOptions = ['定量', '定性', '阈值', '阈值+定量']
+const examOptions = ['实测', '试验', '检验', '测试', '统计', '仿真', '查验']
+const treeLoading = ref(false)
 
 /** 本页新建的抽取任务（覆盖同源文档的资源派生行） */
 const localTasks = ref([])
@@ -365,52 +384,110 @@ const filteredTasks = computed(() =>
   tasks.value.filter((t) => !filterDoc.value || t.doc.includes(filterDoc.value) || t.name.includes(filterDoc.value)),
 )
 
-const detailRows = computed(() => {
-  if (!detail.value) return []
-  const rows = getM02RowsForDoc(detail.value.doc || detail.value.name)
-  const domainSet = detail.value.domains?.length ? new Set(detail.value.domains) : null
-  if (!domainSet) return rows
-  return rows.filter((r) => domainSet.has(r.domain))
-})
-const visibleRows = computed(() => detailRows.value.filter((r) => activeDomains.value.has(r.domain)))
-const pendingCount = computed(() => visibleRows.value.filter((r) => r.status === '待审核').length)
+const pendingCount = computed(() => resultRows.value.filter((r) => r.status === '待审核').length)
+const goldPending = computed(() => resultRows.value.filter((r) => r.status === '待审核' && r.conf < 0.8).length)
 
-const highlightedHtml = computed(() => {
-  if (!selected.value?.srcText) return ''
-  const phrase = selected.value.highlight || ''
-  const escaped = selected.value.srcText
+const editVisible = ref(false)
+const editingId = ref('')
+const editForm = reactive({
+  name: '',
+  criteria: '',
+  criteriaType: '定量',
+  examMethod: '实测',
+  srcSection: '',
+  srcPage: 12,
+})
+const traceVisible = ref(false)
+const traceRow = ref(null)
+const traceHtml = computed(() => {
+  const row = traceRow.value
+  if (!row?.srcText) return ''
+  const phrase = row.highlight || row.criteria || ''
+  const escaped = String(row.srcText)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/\n/g, '<br/>')
   if (!phrase) return escaped
-  const safe = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const safe = String(phrase).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   return escaped.replace(new RegExp(safe, 'g'), `<mark class="hl">${phrase}</mark>`)
 })
 
-function confColor(c) {
-  return c >= 0.90 ? '#1668a8' : c >= 0.80 ? '#a8c8e8' : '#d0ab68'
-}
-function confText(c) {
-  return c >= 0.90 ? '#1668a8' : c >= 0.80 ? '#4a7fa8' : '#c8902a'
-}
-function toggleDomain(d) {
-  const s = new Set(activeDomains.value)
-  s.has(d) ? s.delete(d) : s.add(d)
-  activeDomains.value = s
-}
 function openDetail(task) {
   detail.value = task
-  selected.value = null
-  const ds = task.domains?.length ? task.domains : domains
-  activeDomains.value = new Set(ds)
+  const rows = getM02RowsForDoc(task.doc || task.name)
+  const domainSet = task.domains?.length ? new Set(task.domains) : null
+  const list = domainSet ? rows.filter((r) => domainSet.has(r.domain)) : rows
+  resultRows.value = list.map((r) => ({ ...r, status: '待审核' }))
   demoStore.lastM02Task = task.doc || task.name
 }
 function closeDetail() {
   detail.value = null
-  selected.value = null
+  resultRows.value = []
 }
-function openSource(row) {
-  selected.value = row
+function confirmAudit() {
+  if (!resultRows.value.length) {
+    toast('暂无指标可审核', 'warning')
+    return
+  }
+  confirm('是否确认全部指标项？确认后，审定状态将全部改为「已确认」。', () => {
+    resultRows.value.forEach((row) => { row.status = '已确认' })
+    toast('已确认全部指标项', 'success')
+  }, false)
+}
+function goMetricTree() {
+  if (treeLoading.value) return
+  treeLoading.value = true
+  const loading = ElLoading.service({
+    lock: true,
+    text: '正在生成指标树…',
+    background: 'rgba(255, 255, 255, 0.72)',
+  })
+  window.setTimeout(() => {
+    loading.close()
+    treeLoading.value = false
+    router.push({
+      name: 'app',
+      params: { pid: route.params.pid, sid: route.params.sid, mid: 'models' },
+      query: { published: '1' },
+    })
+  }, 1600)
+}
+function openEdit(row) {
+  editingId.value = row.id
+  editForm.name = row.name
+  editForm.criteria = row.criteria
+  editForm.criteriaType = row.criteriaType || '定量'
+  editForm.examMethod = row.examMethod || '实测'
+  editForm.srcSection = row.srcSection || row.klass || ''
+  editForm.srcPage = row.srcPage || 12
+  editVisible.value = true
+}
+function saveEdit() {
+  const row = resultRows.value.find((item) => item.id === editingId.value)
+  if (!row) return
+  if (!editForm.name?.trim()) {
+    toast('指标名称不能为空', 'error')
+    return
+  }
+  if (!editForm.criteria?.trim()) {
+    toast('判据不能为空', 'error')
+    return
+  }
+  row.name = editForm.name.trim()
+  row.criteria = editForm.criteria.trim()
+  row.value = row.criteria
+  row.criteriaType = editForm.criteriaType
+  row.examMethod = editForm.examMethod
+  row.srcSection = editForm.srcSection?.trim() || row.srcSection
+  row.srcPage = Number(editForm.srcPage) || row.srcPage || 12
+  row.highlight = row.criteria
+  row.srcText = `${row.klass}\n「${row.name}」判据为 ${row.criteria}。`
+  editVisible.value = false
+  toast('指标属性已更新', 'success')
+}
+function openTrace(row) {
+  traceRow.value = row
   demoStore.lastM02IndicatorId = row.id
+  traceVisible.value = true
 }
 
 function openCreate() {
@@ -531,7 +608,52 @@ function submitCreate() {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.m02-submit { margin-left: auto; height: 32px; }
+.m02-sumbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.m02-sum {
+  display: flex;
+  align-items: baseline;
+  gap: 22px;
+  font-size: 13.5px;
+  color: #5c7084;
+}
+.m02-sum b { font-size: 18px; color: #0d4e83; margin: 0 2px; }
+.m02-sum .gold, .m02-sum .gold b { color: #c8902a; }
+.m02-sum-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.m02-sum-actions svg { width: 14px; height: 14px; margin-right: 4px; vertical-align: -2px; }
+.klass { color: #5c7084; white-space: nowrap; }
+.conf-low { color: #c8902a; font-weight: 700; }
+.m02-table .ops { display: inline-flex; gap: 10px; justify-content: center; }
+.m02-table .ops a { color: #1668a8; cursor: pointer; }
+.m02-table .ops a:hover { text-decoration: underline; }
+.m02-table tbody tr { cursor: default; }
+.m02-trace-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.m02-trace-name { font-size: 16px; font-weight: 700; color: #1f3d5a; }
+.m02-trace-sub { margin-top: 4px; font-size: 12.5px; color: #8a99a8; }
+.m02-trace-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0d4e83;
+  white-space: nowrap;
+}
+.m02-trace-body {
+  border: 1px solid #e8eef5;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fafcfe;
+  min-height: 140px;
+}
 
 /* 虚线分段面板 */
 .m02-dash {

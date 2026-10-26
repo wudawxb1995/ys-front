@@ -1,9 +1,50 @@
 <template>
   <div class="rich-type-m03">
+      <div v-if="published" class="pub">
+        <div class="pub-banner">
+          <div class="pub-banner-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v6M8 21h8M12 9l-4 4M12 9l4 4M8 13v8M16 13v8"/></svg>
+          </div>
+          <div>
+            <h2>标准化数据建模 · 指标树</h2>
+            <p>审定通过的指标自动组织为「性能域 → 指标类 → 指标」三级指标树并发布版本，后续判据配置、符合性判定全程同源引用。</p>
+          </div>
+        </div>
 
+        <div class="pub-card">
+          <div class="pub-ver">
+            <span class="pub-ok">✓</span>
+            <b>指标树 V1.0</b>
+            <span class="badge on"><i></i>已发布</span>
+            <span class="pub-meta">发布时间：{{ publishedAt }}　来源：D-01《某型研制总要求》</span>
+          </div>
+          <div class="pub-stats">
+            <div><b>{{ pubStats.domains }}</b><span>性能域</span></div>
+            <div><b>{{ pubStats.classes }}</b><span>指标类</span></div>
+            <div><b>{{ pubStats.items }}</b><span>项指标</span></div>
+          </div>
+        </div>
+
+        <div v-for="domain in pubTree" :key="domain.name" class="pub-domain">
+          <button type="button" class="pub-domain-h" @click="togglePub(domain.name)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ open: pubOpen[domain.name] }"><path d="M9 6l6 6-6 6"/></svg>
+            {{ domain.name }}
+            <em>{{ domain.classes.length }} 类 · {{ domain.count }} 项</em>
+          </button>
+          <div v-show="pubOpen[domain.name]" class="pub-body">
+            <div v-for="klass in domain.classes" :key="klass.name" class="pub-class">
+              <div class="pub-class-name">{{ klass.name }}</div>
+              <div v-for="item in klass.items" :key="item.id" class="pub-item">
+                <span>{{ item.name }}</span>
+                <em>{{ item.criteria }} <small>P{{ item.srcPage }}</small></em>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- ═══ 第二级：指标树详情页（白底整卡，内容虚线框分段） ═══ -->
-      <div v-if="m03DetailOpen" class="m03-detail-shell">
+      <div v-if="!published && m03DetailOpen" class="m03-detail-shell">
         <div class="m03-topbar">
           <button type="button" class="m03-back" @click="m03DetailOpen = false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -91,7 +132,7 @@
       </div>
 
       <!-- ═══ 第一级：指标树列表页 ═══ -->
-      <template v-else>
+      <template v-else-if="!published">
         <div class="crud-body">
           <div class="toolbar">
             <el-button type="primary" class="m03-create-btn" @click="m03OpenCreate">
@@ -288,20 +329,116 @@
 </template>
 
 <script>
+import { computed, onMounted, reactive } from 'vue'
+import { useRoute } from 'vue-router'
 import { useRichPage } from '@/composables/rich/useRichPage'
+import { useUi } from '@/composables/ui'
+import { m02IndRows } from '@/data/m02-indicators'
 import MetricTreeNode from '@/components/MetricTreeNode.vue'
 import TextAreaField from '@/components/TextAreaField.vue'
+
+function buildPublishedTree(rows) {
+  const domains = []
+  rows.forEach((row) => {
+    const [domainName, className] = String(row.klass || '').split(' / ')
+    let domain = domains.find((item) => item.name === domainName)
+    if (!domain) {
+      domain = { name: domainName, classes: [], count: 0 }
+      domains.push(domain)
+    }
+    let klass = domain.classes.find((item) => item.name === className)
+    if (!klass) {
+      klass = { name: className, items: [] }
+      domain.classes.push(klass)
+    }
+    klass.items.push(row)
+    domain.count += 1
+  })
+  return domains
+}
 
 export default {
   components: { MetricTreeNode, TextAreaField },
   props: { page: Object, title: String },
   setup(props) {
-    return useRichPage(props)
+    const route = useRoute()
+    const { toast } = useUi()
+    const published = computed(() => route.query.published === '1')
+    const pubTree = buildPublishedTree(m02IndRows)
+    const pubStats = {
+      domains: pubTree.length,
+      classes: pubTree.reduce((n, domain) => n + domain.classes.length, 0),
+      items: pubTree.reduce((n, domain) => n + domain.count, 0),
+    }
+    const pubOpen = reactive(Object.fromEntries(pubTree.map((domain) => [domain.name, true])))
+    const publishedAt = '2026-10-26 16:21:51'
+    function togglePub(name) {
+      pubOpen[name] = !pubOpen[name]
+    }
+    onMounted(() => {
+      if (!published.value) return
+      toast(`指标树 V1.0 已发布：${pubStats.domains} 个性能域 / ${pubStats.classes} 个指标类 / ${pubStats.items} 项指标`, 'success')
+    })
+    return {
+      ...useRichPage(props),
+      published,
+      pubTree,
+      pubStats,
+      pubOpen,
+      publishedAt,
+      togglePub,
+    }
   },
 }
 </script>
 
 <style scoped>
+.pub { display: flex; flex-direction: column; gap: 14px; }
+.pub-banner {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid #e6eef6;
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.pub-banner-ico {
+  width: 36px; height: 36px; border-radius: 8px; flex: 0 0 auto;
+  display: grid; place-items: center; background: #e8f3fb; color: #1668a8;
+}
+.pub-banner-ico svg { width: 18px; height: 18px; }
+.pub-banner h2 { margin: 0; font-size: 18px; color: #153b62; }
+.pub-banner p { margin: 6px 0 0; color: #7c8fa2; font-size: 13px; line-height: 1.6; }
+.pub-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: #fff; border: 1px solid #e6eef6; border-radius: 12px; padding: 16px 20px;
+}
+.pub-ver { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.pub-ok {
+  width: 22px; height: 22px; border-radius: 50%; background: #e7f6ec; color: #1a8a45;
+  display: grid; place-items: center; font-size: 13px; font-weight: 700;
+}
+.pub-ver b { color: #1f3d5a; font-size: 15px; }
+.pub-meta { color: #8a99a8; font-size: 13px; }
+.pub-stats { display: flex; gap: 28px; flex: 0 0 auto; }
+.pub-stats div { text-align: center; }
+.pub-stats b { display: block; font-size: 22px; color: #0d4e83; line-height: 1.1; }
+.pub-stats span { color: #8a99a8; font-size: 12px; }
+.pub-domain { background: #fff; border: 1px solid #e6eef6; border-radius: 12px; overflow: hidden; }
+.pub-domain-h {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  border: 0; background: #fff; padding: 14px 16px; cursor: pointer;
+  color: #1f3d5a; font-size: 15px; font-weight: 700; text-align: left;
+}
+.pub-domain-h svg { width: 14px; height: 14px; color: #8a99a8; transition: transform .15s; }
+.pub-domain-h svg.open { transform: rotate(90deg); }
+.pub-domain-h em { margin-left: 8px; font-style: normal; font-weight: 500; color: #8a99a8; font-size: 12.5px; }
+.pub-body { padding: 0 18px 12px 38px; }
+.pub-class-name { color: #1668a8; font-size: 13.5px; font-weight: 600; margin: 8px 0 4px; }
+.pub-item { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; font-size: 13.5px; color: #3f5062; }
+.pub-item em { font-style: normal; color: #1668a8; font-weight: 600; white-space: nowrap; }
+.pub-item small { margin-left: 8px; color: #8a99a8; font-weight: 500; }
 .m03-detail-shell {
   display: flex;
   flex-direction: column;

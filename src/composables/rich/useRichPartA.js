@@ -5,6 +5,7 @@ import { computed, reactive, ref, toRaw, watch } from 'vue'
 import { useRows } from '@/composables/tables'
 import { nowText } from '@/utils/format'
 import { resourceDetails } from '@/data/mock'
+import { resourceCategories } from '@/data/resourceCorpus'
 import {
   updateMetricTree,
   getPersistedM03List,
@@ -16,6 +17,8 @@ import {
 } from '@/composables/demo-store'
 import { m03TreeData } from '@/data/m03-tree'
 import { m02Domains, getM02RowsForDoc, getM02CountForDoc } from '@/data/m02-indicators'
+import { schemeDocToc, schemeDocChapters, schemeDocRounds, schemeDocVersions } from '@/data/schemeFullDoc'
+import { recommendForIndicator } from '@/data/resourceRecommend'
 
 export function buildRichPartA({ toast, router, route, props, bag }) {
 /** 深拷贝：兼容 Vue Proxy（structuredClone 对响应式对象会抛错） */
@@ -93,8 +96,8 @@ const fieldMap = {
   ],
 }
 const defaultFields = [
-  { key: 'name', label: '资源名称', required: true, placeholder: '如：东方红-LF2204轮式拖拉机定型试验报告' },
-  { key: 'cat', label: '资源类别', required: true, options: ['定型资料', '历史试验数据', '标准规范', '专业文献'] },
+  { key: 'name', label: '资源名称', required: true, placeholder: '如：某型装备性能鉴定试验报告V2' },
+  { key: 'cat', label: '资源类别', required: true, options: resourceCategories },
   { key: 'fmt', label: '文件格式', required: true, options: ['DOCX', 'PDF', 'TXT', 'XLSX', 'JPG', 'PNG', 'MP4', 'MP3', 'CSV'] },
   { key: 'modal', label: '数据模态', options: ['文本', '图像', '表格', '音视频'] },
   { key: 'size', label: '文件大小（MB）', placeholder: '如：36.5' },
@@ -115,7 +118,7 @@ function addToList() {
   if (fields.value.some((f) => f.required && !form[f.key])) { toast('请填写必填项'); return }
   importList.value.push({
     name: form.name,
-    cat: form.cat || '定型资料',
+    cat: form.cat || '试验鉴定',
     fmt: form.fmt || 'PDF',
     modal: form.modal || '文本',
     size: form.size || '—',
@@ -171,7 +174,7 @@ function submitEntry() {
   if (fields.value.some((f) => f.required && !form[f.key])) { toast('请填写必填项'); return }
   if (props.page.dataset) {
     const rows = useRows(props.page.dataset)
-    rows.unshift({ name: form.name || '新建记录', cat: form.cat || '定型资料', fmt: form.fmt || 'PDF', modal: form.modal || '文本', size: (form.size || '10') + (String(form.size || '').includes('MB') ? '' : ' MB'), pages: form.pages || '—', status: form.mode === '暂存' ? '暂存' : '解析中', by: 'Mona', time: nowText(), value: '—', unit: '—', machine: '东方红-LF2204', source: '新录入', page: '—', score: '—', stage: '性能试验鉴定', docs: '新归集', state: '待整理', updated: nowText() })
+    rows.unshift({ name: form.name || '新建记录', cat: form.cat || '试验鉴定', fmt: form.fmt || 'PDF', modal: form.modal || '文本', size: (form.size || '10') + (String(form.size || '').includes('MB') ? '' : ' MB'), pages: form.pages || '—', status: form.mode === '暂存' ? '暂存' : '解析中', by: 'Mona', time: nowText(), value: '—', unit: '—', machine: '某型装备', source: '新录入', page: '—', score: '—', stage: '性能试验鉴定', docs: '新归集', state: '待整理', updated: nowText() })
   }
   toast('已提交，可在目录中查看')
   resetForm()
@@ -613,10 +616,10 @@ const statMax = computed(() => Math.max(...statChart.value.data.map((d) => d[1])
 
 const m01Resources = useRows('resources')
 
-// 左侧分类目录树（4类+计数）
+// 左侧分类目录树与数据资源管理共用八类口径
 const m01Cats = computed(() => {
   const all = m01Resources
-  const cats = ['定型资料', '历史试验数据', '标准规范', '专业文献']
+  const cats = resourceCategories
   const list = [{ key: 'all', label: '全部资料', count: all.length }]
   cats.forEach((c) => list.push({ key: c, label: c, count: all.filter((r) => r.cat === c).length }))
   return list
@@ -624,6 +627,8 @@ const m01Cats = computed(() => {
 
 const m01ActiveCat = ref('all')
 const m01Search = ref('')
+const m01Page = ref(1)
+const m01PageSize = 15
 
 const m01FilteredRows = computed(() => {
   let rows = m01Resources
@@ -631,10 +636,12 @@ const m01FilteredRows = computed(() => {
   if (m01Search.value.trim()) rows = rows.filter((r) => r.name.includes(m01Search.value.trim()))
   return rows
 })
+const m01VisibleRows = computed(() => m01FilteredRows.value.slice((m01Page.value - 1) * m01PageSize, m01Page.value * m01PageSize))
+watch([m01ActiveCat, m01Search], () => { m01Page.value = 1 })
 
 // 密级 mock（按类别默认）
 function m01Secret(cat) {
-  return { '定型资料': '秘密', '历史试验数据': '内部', '标准规范': '公开', '专业文献': '内部' }[cat] || '内部'
+  return { '论证立项': '秘密', '方案设计': '秘密', '工程研制': '秘密', '试验鉴定': '内部', '定型与验收': '内部', '批产与保障': '内部', '成果与知识产权': '内部', '过程管理': '内部' }[cat] || '内部'
 }
 
 // 第二级：处理结果详情
@@ -766,8 +773,8 @@ function m03SaveToStore() {
   const leafCount = m03FlatNodes(m03Tree.value).filter((n) => n.level === 3).length
   const count = leafCount || row?.count || 28
   row.count = count
-  row.status = '已发布'
-  row.publishedAt = nowText()
+    row.status = '已发布'
+    row.publishedAt = nowText()
   m03CurrentRow.value = row
   updateMetricTree(version, count)
   toast(`已同步指标树 ${version}（${count} 项），发布时间 ${row.publishedAt}`, 'success')
@@ -1364,16 +1371,44 @@ const m08CreateForm = reactive({
   name: '',
   ver: 'V1',
   treeVer: '',
-  template: '性能鉴定试验大纲模板',
+  template: '',
   status: '草稿',
   remark: '',
   openAfter: true,
 })
+const m08PickedIds = ref([])
+const m08Generating = ref(false)
+const m08GenProgress = ref(0)
+let m08GenTimer = null
+
+const m08IndicatorRows = computed(() => {
+  if (!m08CreateForm.treeVer) return []
+  const all = getM02RowsForDoc('某型装备研制总要求')
+  return String(m08CreateForm.treeVer).includes('0.9') ? all.slice(0, 24) : all
+})
 
 const m08TemplateOptions = [
-  '性能鉴定试验大纲模板',
-  '可靠性鉴定试验大纲模板',
+  '精度试验大纲模板',
+  '机动性能试验大纲模板',
   '环境适应性试验大纲模板',
+  '火力性能试验大纲模板',
+  '防护与三防试验大纲模板',
+  '可靠性与维修性试验大纲模板',
+  '探测与通信性能试验大纲模板',
+  '电磁兼容试验大纲模板',
+  '综合性能鉴定试验大纲模板',
+]
+
+const m08TemplateCards = [
+  { name: '精度试验大纲模板', brief: '适用于射击精度类考核，含试验条件、项目、方法、判据五章结构。' },
+  { name: '机动性能试验大纲模板', brief: '适用于行驶、通过性考核，含因子分配与路面工况设置。' },
+  { name: '环境适应性试验大纲模板', brief: '覆盖高低温、湿热、砂尘等环境科目大纲结构。' },
+  { name: '火力性能试验大纲模板', brief: '覆盖射速、射程、初速与膛压，判据回链指标树。' },
+  { name: '防护与三防试验大纲模板', brief: '适用于装甲抗弹与三防密封性考核。' },
+  { name: '可靠性与维修性试验大纲模板', brief: '适用于任务可靠度、故障间隔与平均修复时间考核。' },
+  { name: '探测与通信性能试验大纲模板', brief: '适用于昼夜发现距离、激光测距与电台通信考核。' },
+  { name: '电磁兼容试验大纲模板', brief: '按 GJB 151B / 181A 组织电磁兼容与电源瞬态科目。' },
+  { name: '综合性能鉴定试验大纲模板', brief: '覆盖七个性能域的综合鉴定大纲，适合全指标考核。' },
 ]
 
 const m08CaseOptions = [
@@ -1440,16 +1475,251 @@ const m08TreeOptions = computed(() => {
 })
 
 function m08OpenCreate() {
-  const prefer = m08TreeOptions.value.find((o) => o.status === '已发布') || m08TreeOptions.value[0]
-  m08CreateForm.name = '某型装备性能鉴定试验大纲'
+  m08CreateForm.name = '某型装备性能鉴定试验方案'
   m08CreateForm.ver = 'V1'
-  m08CreateForm.treeVer = prefer?.value || '指标树 V1.0'
-  m08CreateForm.template = m08TemplateOptions[0]
+  m08CreateForm.treeVer = ''
+  m08CreateForm.template = ''
   m08CreateForm.status = '草稿'
   m08CreateForm.remark = ''
   m08CreateForm.openAfter = true
+  m08PickedIds.value = []
   m08CreateVisible.value = true
 }
+
+const m08PublishedTrees = computed(() => m08TreeOptions.value
+  .filter((item) => item.status === '已发布')
+  .map((item) => ({
+    ...item,
+    label: item.count >= 28
+      ? `${item.value}（7 个性能域 / 11 个指标类 / ${item.count} 项指标）`
+      : `${item.value}（${item.count || 0} 项指标）`,
+  })))
+
+const m08WizardFactors = [
+  { name: '目标类型', levels: '固定靶 / 运动靶', cat: '火力' },
+  { name: '目标距离', levels: '1000 m / 1500 m / 2000 m', cat: '火力' },
+  { name: '弹种', levels: '杀伤爆破弹 / 破甲弹', cat: '火力' },
+  { name: '装药号', levels: '全装药 / 二号装药', cat: '火力' },
+  { name: '射击方式', levels: '单发 / 连发', cat: '火力' },
+  { name: '射向方式', levels: '首发 / 齐射', cat: '火力' },
+  { name: '海拔高度', levels: '平原 / 高原', cat: '环境' },
+  { name: '能见度', levels: '良好 / 一般', cat: '环境' },
+  { name: '温度', levels: '常温 / 高温 / 低温', cat: '环境' },
+  { name: '风速', levels: '静风 / 3～5 级 / 5 级以上', cat: '环境' },
+  { name: '气压', levels: '标准 / 低压', cat: '环境' },
+  { name: '操作人员', levels: '基准班组 / 加强班组', cat: '保障' },
+  { name: '弹药批次', levels: '批次 A / 批次 B', cat: '火力' },
+  { name: '姿势状态', levels: '立姿 / 卧姿', cat: '火力' },
+  { name: '供电方式', levels: '车载电源 / 外接电源', cat: '保障' },
+  { name: '通信工况', levels: '开机 / 关机', cat: '信息' },
+  { name: '振动工况', levels: '静止 / 行驶后', cat: '环境' },
+  { name: '贮存经历', levels: '新研装备 / 列装装备', cat: '保障' },
+]
+
+const m08QuickFactors = [
+  { name: '路面', levels: '硬路面 / 砂石 / 泥泞', cat: '环境' },
+  { name: '目标运动速度', levels: '静止 / 15 km/h / 30 km/h', cat: '火力' },
+  { name: '电磁环境', levels: '满足 GJB 151B / GJB 181A', cat: '电磁' },
+  { name: '低温工作', levels: '−41℃正常启动', cat: '环境' },
+]
+
+const m08Wizard = ref(false)
+const m08FactorName = ref('')
+
+function m08ToggleIndicator(id) {
+  const list = m08PickedIds.value
+  const index = list.indexOf(id)
+  if (index >= 0) list.splice(index, 1)
+  else list.push(id)
+}
+
+function m08ToggleAllIndicators() {
+  const rows = m08IndicatorRows.value
+  m08PickedIds.value = m08PickedIds.value.length === rows.length ? [] : rows.map((row) => row.id)
+}
+
+function m08SyncFactors(factors) {
+  m08Snap.value.factors = factors.map((item) => ({ ...item }))
+  m08Snap.value.factorOk = factors.length >= 20
+  const row = m08CurrentRow.value
+  if (row) {
+    row.factors = factors.map((item) => ({ ...item }))
+    row.updatedAt = nowText()
+  }
+}
+
+function m08GoFactorStep() {
+  if (!m08CreateForm.name?.trim()) {
+    toast('请填写方案名称', 'warning')
+    return
+  }
+  if (!m08CreateForm.treeVer) {
+    toast('请选择已发布的指标树', 'warning')
+    return
+  }
+  if (!m08PickedIds.value.length) {
+    toast('请勾选本次考核指标', 'warning')
+    return
+  }
+  const picked = m08IndicatorRows.value.filter((row) => m08PickedIds.value.includes(row.id))
+  const factors = m08WizardFactors.map((item) => ({ ...item }))
+  const row = {
+    id: `m-${Date.now()}`,
+    name: m08CreateForm.name.trim(),
+    ver: 'V1',
+    treeVer: m08CreateForm.treeVer,
+    template: '',
+    caseName: '',
+    status: '草稿',
+    updatedAt: nowText(),
+    remark: `考核指标 ${picked.length} 项`,
+    doneSteps: 1,
+    wizard: true,
+    factors,
+    picked: picked.map((item) => ({ id: item.id, name: item.name, criteria: item.criteria })),
+    domains: [...new Set(picked.map((item) => item.domain).filter(Boolean))],
+    chapters: [],
+    rounds: [],
+    versions: [{ ver: 'V1', label: '初稿', time: nowText().slice(5), final: true }],
+  }
+  m08List.value.unshift(row)
+  m08CreateVisible.value = false
+  m08Wizard.value = true
+  m08OpenDetail(row)
+  m08FocusStep.value = 1
+}
+
+function m08QuickAddFactor(item) {
+  const factors = m08Snap.value.factors || []
+  if (factors.some((factor) => factor.name === item.name)) {
+    toast(`「${item.name}」已在因子列表中`, 'warning')
+    return
+  }
+  m08SyncFactors([...factors, { ...item }])
+}
+
+function m08AddFactorLine() {
+  const name = m08FactorName.value.trim()
+  if (!name) {
+    toast('请输入因子名', 'warning')
+    return
+  }
+  m08QuickAddFactor({ name, levels: '待配置', cat: '自定义' })
+  m08FactorName.value = ''
+}
+
+function m08WizardNextFactors() {
+  const count = m08Snap.value.factors?.length || 0
+  if (count < 1) {
+    toast('请至少配置一个试验因子', 'warning')
+    return
+  }
+  m08Snap.value.doneSteps = 2
+  if (m08CurrentRow.value) m08CurrentRow.value.doneSteps = 2
+  m08FocusStep.value = 2
+}
+
+function m08PickTemplate(name) {
+  m08TplForm.template = name
+  if (m08CurrentRow.value) {
+    m08CurrentRow.value.template = name
+    m08CurrentRow.value.updatedAt = nowText()
+  }
+}
+
+function m08WizardBack() {
+  const step = Math.max(1, (m08Snap.value.doneSteps || 2) - 1)
+  m08Snap.value.doneSteps = step
+  if (m08CurrentRow.value) m08CurrentRow.value.doneSteps = step
+  m08FocusStep.value = step
+}
+
+function m08WizardToPreview() {
+  const name = m08TplForm.template || m08CurrentRow.value?.template
+  if (!name) {
+    toast('请先选择一个大纲模板', 'warning')
+    return
+  }
+  if (m08CurrentRow.value) m08CurrentRow.value.template = name
+  m08Snap.value.doneSteps = 3
+  if (m08CurrentRow.value) m08CurrentRow.value.doneSteps = 3
+  m08FocusStep.value = 3
+}
+
+function m08ApplyFullDoc(row) {
+  if (!row) return
+  row.fullDoc = true
+  row.chapters = schemeDocChapters.map((item) => ({ ...item }))
+  row.rounds = schemeDocRounds.map((item) => ({
+    ...item,
+    think: item.think.map((step) => ({ ...step })),
+  }))
+  row.versions = schemeDocVersions.map((item) => ({ ...item }))
+  row.ver = 'V4.0'
+  row.doneSteps = 4
+  row.wizard = false
+  row.updatedAt = row.updatedAt || nowText()
+}
+
+function m08JumpDoc(id) {
+  m08TocId.value = id
+  requestAnimationFrame(() => {
+    document.querySelector(`#doc-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+}
+
+function m08ViewRoundDoc(round) {
+  if (!round) return
+  m08FocusVer.value = round.resultVer || ''
+  const hit = (m08Snap.value.versions || []).find((item) => item.ver === round.resultVer)
+  if (hit) m08Snap.value.previewBadge = `${hit.ver} ${hit.label}`
+  const anchor = round.anchor ? `#doc-${round.anchor}` : '#m08-outline-panel'
+  requestAnimationFrame(() => {
+    document.querySelector(anchor)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  })
+  toast(`已打开 ${round.resultVer || ''} 对应正文`, 'success')
+}
+
+function m08StartGenerate() {
+  if (m08Generating.value) return
+  const row = m08CurrentRow.value
+  if (!row?.template) {
+    toast('请先选择大纲模板', 'warning')
+    return
+  }
+  m08Generating.value = true
+  m08GenProgress.value = 6
+  toast('初稿生成中，逐节装配', 'success')
+  clearInterval(m08GenTimer)
+  m08GenTimer = setInterval(() => {
+    m08GenProgress.value = Math.min(100, m08GenProgress.value + 8)
+    if (m08GenProgress.value < 100) return
+    clearInterval(m08GenTimer)
+    m08GenTimer = null
+    m08ApplyFullDoc(row)
+    m08Snap.value.chapters = row.chapters.map((item) => ({ ...item }))
+    m08Snap.value.rounds = row.rounds.map((item) => ({ ...item }))
+    m08Snap.value.versions = row.versions.map((item) => ({ ...item }))
+    m08Snap.value.doneSteps = 4
+    m08Snap.value.previewReady = true
+    m08Snap.value.previewBadge = 'V4.0 三轮优化'
+    m08Snap.value.chatReadonly = false
+    m08Snap.value.chatHint = '可继续输入自然语言，在已有校核记录上再优化一轮'
+    m08FocusVer.value = 'V4.0'
+    m08ActiveChapter.value = 0
+    m08Generating.value = false
+    m08Wizard.value = false
+    m08FocusStep.value = 3
+    toast('大纲已生成，并带入三轮校核记录', 'success')
+  }, 420)
+}
+
+const m08InWizard = computed(() => m08Wizard.value && (m08Snap.value?.doneSteps || 0) < 4)
+const m08FactorGapNote = computed(() => {
+  const count = m08Factors.value.length
+  const tag = count >= 22 ? '正偏离' : count >= 20 ? '满足要求' : `还差 ${20 - count} 个`
+  return `指标要求不少于 20 个，本方案配置 ${count} 个（${tag}）`
+})
 
 function m08SubmitCreate() {
   if (!m08CreateForm.name?.trim()) {
@@ -1526,11 +1796,28 @@ const m08Chapters = computed(() => m08Snap.value.chapters)
 const m08Rounds = computed(() => m08Snap.value.rounds)
 const m08Versions = computed(() => m08Snap.value.versions)
 const m08FactorCount = computed(() => m08Factors.value.length)
-const m08ChatCanSend = computed(() => !m08Snap.value.chatReadonly)
+const m08ChatStreaming = ref(false)
+const m08StreamText = ref('')
+const m08StreamPhase = ref('')
+const m08StreamDoc = ref({ index: -1, text: '', caret: false })
+const m08TocId = ref('c1')
+let m08StreamTimer = null
+const m08ChatCanSend = computed(() => !m08Snap.value.chatReadonly && !m08ChatStreaming.value)
 
 function m08OpenDetail(row) {
   const hit = row?.id ? m08List.value.find((r) => r.id === row.id) : m08List.value[0]
   m08CurrentRow.value = hit || row || m08List.value[0]
+  const current = m08CurrentRow.value
+  if (
+    current
+    && current.status === '草稿'
+    && Array.isArray(current.picked)
+    && current.picked.length
+    && (current.doneSteps || 0) >= 4
+    && !current.fullDoc
+  ) {
+    m08ApplyFullDoc(current)
+  }
   m08Snap.value = buildM08Snapshot(m08CurrentRow.value)
   m08SelFactor.value = 0
   m08ActiveChapter.value = m08Snap.value.activeChapter
@@ -1545,6 +1832,7 @@ function m08OpenDetail(row) {
     m08SyncVersionsFromRounds()
   }
   m08FocusVer.value = m08Snap.value.versions[m08Snap.value.versions.length - 1]?.ver || ''
+  m08Wizard.value = !!(m08CurrentRow.value?.wizard && (m08Snap.value.doneSteps || 0) < 4)
   m08DetailOpen.value = true
 }
 
@@ -1627,6 +1915,11 @@ function m08LoadStepForms(i) {
 
 /** 点击四步向导：仅弹说明/配置，不做页内滚动；草稿可继续未完成步骤 */
 function m08ClickStep(i) {
+  if (m08Wizard.value && (m08Snap.value.doneSteps || 0) < 4) {
+    if (i > m08Snap.value.doneSteps) return
+    m08FocusStep.value = i
+    return
+  }
   const done = m08Snap.value.doneSteps
   if (!m08IsDraft.value && i > done) {
     toast(`「${m08Steps[i].name}」尚未到达（当前完成 ${done}/4 步）`, 'warning')
@@ -2096,7 +2389,80 @@ function m08RevertDraft() {
   toast(`「${row.name}」已回退为草稿，可继续迭代`, 'success')
 }
 
+function m08EscHtml(value) {
+  return String(value).replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]))
+}
+
+function m08ClearMarks(html) {
+  return String(html || '').replace(/<mark class="m08-hl">([\s\S]*?)<\/mark>/gi, '$1')
+}
+
+function m08PlanOptimize(text, chapters) {
+  const find = (keys, fallback) => {
+    const index = chapters.findIndex((chapter) => keys.some((key) => `${chapter.no}${chapter.title}`.includes(key)))
+    return index >= 0 ? index : Math.min(fallback, Math.max(0, chapters.length - 1))
+  }
+  const rules = [
+    {
+      test: /电磁|兼容|GJB\s*151|GJB\s*181/,
+      chapter: find(['试验项目', '方法'], 2),
+      insert: '新增电磁兼容科目：按 GJB 151B 开展传导发射与辐射敏感度测试，电源瞬态按 GJB 181A 考核，超标频点当场记录并回链指标树。',
+      bot: '已在试验项目中补入电磁兼容科目。传导发射、辐射敏感度与电源瞬态分别按 GJB 151B、GJB 181A 执行，新增句已在文稿中高亮。',
+    },
+    {
+      test: /寒区|低温|贮存|高原|湿热/,
+      chapter: find(['试验条件', '条件'], 1),
+      insert: '环境工况细化：温度拆为 −41℃贮存、−41℃工作、常温、+55℃ 四水平，贮存与工作分别考核，极端环境有效样本不少于 12 发。',
+      bot: '已细化试验条件中的环境工况。贮存与工作拆开考核，极端环境样本量已写入，并在文稿中高亮。',
+    },
+    {
+      test: /精度|立靶|密集度|初速|膛压/,
+      chapter: find(['试验方法', '方法'], 3),
+      insert: '精度方法补充：立靶距离 1000 m，每组不少于 7 发，高低与方向偏差分别统计，密集度按 ≤2.6×2.6 m 判定。',
+      bot: '已补充试验方法中的立靶精度条款。射击距离、样本量和密集度判据已回填，并在文稿中高亮。',
+    },
+    {
+      test: /判据|准则|指标树|核对|回填/,
+      chapter: find(['判定', '准则'], chapters.length - 1),
+      insert: '判据核对：立靶高低偏差 ≤0.30 mil、立靶方向偏差 ≤0.30 mil、初速 930±10 m/s、最大膛压 ≤315 MPa，均引用指标树 V1.0。',
+      bot: '已核对判定准则。四项关键判据按指标树 V1.0 回填并保留溯源，新增句已在文稿中高亮。',
+    },
+    {
+      test: /因子|工况|条件|温度|路面/,
+      chapter: find(['试验条件', '条件'], 1),
+      insert: `条件补充：按「${text}」增列对应工况，纳入因子组合，并与已配置因子一并参与试验设计。`,
+      bot: `已按「${text}」修订试验条件，新增工况已写入因子组合，并在文稿中高亮。`,
+    },
+    {
+      test: /总则|依据|范围|目的/,
+      chapter: find(['总则'], 0),
+      insert: `总则补充：本轮明确「${text}」，作为大纲编制约束，后续章节据此展开。`,
+      bot: `已把「${text}」写入总则，作为后续章节的编制约束，并在文稿中高亮。`,
+    },
+  ]
+  const hit = rules.find((rule) => rule.test.test(text))
+  if (hit) return hit
+  const chapter = find(['试验项目', '项目'], Math.min(2, chapters.length - 1))
+  return {
+    chapter,
+    insert: `按本轮要求增补：${text}。该条款与指标树判据保持一致，并纳入本章实施要求。`,
+    bot: `已按「${text}」修订对应章节，新增条款已写入文稿并高亮。`,
+  }
+}
+
+function m08PaintOptimize(base, index, partial, caret) {
+  if (!partial) {
+    m08Snap.value.chapters = base.map((chapter) => ({ ...chapter }))
+    m08StreamDoc.value = { index: -1, text: '', caret: false }
+    return
+  }
+  m08StreamDoc.value = { index, text: partial, caret }
+}
+
 function m08SendChat() {
+  if (m08ChatStreaming.value) return
   if (!m08ChatCanSend.value) {
     toast(m08Snap.value.chatHint || '当前状态不可追加对话', 'warning')
     return
@@ -2106,28 +2472,97 @@ function m08SendChat() {
     toast('请输入优化要求', 'warning')
     return
   }
+  const chapters = m08Snap.value.chapters || []
+  if (!chapters.length) {
+    toast('请先生成初稿，再进行对话优化', 'warning')
+    return
+  }
   const now = new Date()
   const time = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const plan = m08PlanOptimize(text, chapters)
+  const base = chapters.map((chapter) => ({ ...chapter, content: m08ClearMarks(chapter.content) }))
   const roundNo = (m08Snap.value.rounds?.length || 0) + 1
-  m08Snap.value.rounds.push({
+  const round = {
     time,
     user: text,
-    bot: '已根据您的自然语言要求更新大纲草稿对应章节，并同步调整相关试验因子取值说明（演示回复）。',
-    diff: `本轮按「${text.slice(0, 24)}${text.length > 24 ? '…' : ''}」完成草稿修订，版本条已联动至 V${roundNo + 1}`,
-  })
-  m08SyncVersionsFromRounds()
+    bot: '',
+    diff: '',
+    where: '',
+    quote: '',
+    streaming: true,
+  }
+  m08Snap.value.rounds.push(round)
   m08ChatInput.value = ''
-  toast(`第${roundNo}轮校核完成，版本推进至 V${roundNo + 1}`, 'success')
+  m08ChatStreaming.value = true
+  m08StreamPhase.value = 'think'
+  m08StreamText.value = ''
+  m08PaintOptimize(base, plan.chapter, '', false)
+  requestAnimationFrame(() => {
+    document.querySelector('.m08-chat-scroll')?.scrollTo({ top: 99999, behavior: 'smooth' })
+  })
+  clearInterval(m08StreamTimer)
+  window.setTimeout(() => {
+    m08StreamPhase.value = 'write'
+    let cursor = 0
+    m08StreamTimer = setInterval(() => {
+      cursor += 1
+      const botShown = plan.bot.slice(0, cursor)
+      const docShown = plan.insert.slice(0, Math.ceil(plan.insert.length * (cursor / plan.bot.length)))
+      m08StreamText.value = botShown
+      const done = cursor >= plan.bot.length
+      m08PaintOptimize(base, plan.chapter, docShown, !done)
+      if (cursor % 8 === 0) {
+        document.querySelector('.m08-chat-scroll')?.scrollTo({ top: 99999 })
+      }
+      if (!done) return
+      clearInterval(m08StreamTimer)
+      m08StreamTimer = null
+      const chapter = base[plan.chapter]
+      round.bot = plan.bot
+      round.where = `${chapter.no} ${chapter.title}`
+      round.quote = plan.insert
+      round.diff = `已写入${chapter.no}「${chapter.title}」`
+      round.streaming = false
+      m08ChatStreaming.value = false
+      m08StreamPhase.value = ''
+      m08StreamText.value = ''
+      m08StreamDoc.value = { index: -1, text: '', caret: false }
+      const written = base.map((chapter, i) => (
+        i === plan.chapter
+          ? { ...chapter, content: `${chapter.content}<br><br><mark class="m08-hl">${m08EscHtml(plan.insert)}</mark>` }
+          : { ...chapter }
+      ))
+      m08Snap.value.chapters = written
+      if (m08CurrentRow.value) m08CurrentRow.value.chapters = written.map((item) => ({ ...item }))
+      m08SyncVersionsFromRounds()
+      requestAnimationFrame(() => {
+        document.querySelector('.m08-doc mark.m08-hl')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
+      toast(`第 ${roundNo} 轮优化完成，版本推进至 V${roundNo + 1}`, 'success')
+    }, 28)
+  }, 560)
 }
+
+const m08AlgoVisible = ref(false)
+const m08AlgoKey = ref('vector')
 
 function goResourceMatch() {
   if (!m08Snap.value.showMatch) {
     toast('请先打开已定稿方案再进行资源匹配', 'warning')
     return
   }
+  m08AlgoKey.value = demoStore.matchContext?.algo || m08AlgoKey.value || 'vector'
+  m08AlgoVisible.value = true
+}
+
+function m08ConfirmAlgo() {
+  const picked = m11Tabs.find((item) => item.key === m08AlgoKey.value) || m11Tabs[0]
   setMatchContext(m08CurrentRow.value)
+  demoStore.matchContext = { ...demoStore.matchContext, algo: picked.key }
+  m11Tab.value = picked.key
+  m08AlgoVisible.value = false
   router.push({ name: 'app', params: { pid: 'design', sid: 'match', mid: 'rec' } })
-  toast(`已带入方案「${m08CurrentRow.value?.name || ''}」需求`, 'success')
+  toast(`已按「${picked.label}」带入方案「${m08CurrentRow.value?.name || ''}」`, 'success')
 }
 
 
@@ -2135,14 +2570,16 @@ function goResourceMatch() {
 // ── 镜头五（M11）资源推荐四算法（与定稿方案上下文联动） ───────────────
 
 const demoStore = useDemoStore()
-const m11Tab = ref('rule')
+const m11Tab = ref('vector')
 const m11SelIdx = ref(0)
 
 const m11Tabs = [
-  { key: 'rule',     label: '基于规则',       algo: '规则匹配', desc: '按需求标签逐条规则过滤，满足全部约束的资源才进入候选' },
-  { key: 'content',  label: '基于内容相似度', algo: '内容相似度（余弦）', desc: '将资源描述向量化，与需求摘要做余弦相似计算' },
-  { key: 'collab',   label: '基于协同过滤',   algo: '协同过滤', desc: '基于历史试验案例中同类需求的资源使用频次协同推荐' },
-  { key: 'hybrid',   label: '多维度综合',     algo: '多维度综合（加权融合）', desc: '规则×0.35 + 内容相似度×0.35 + 协同过滤×0.30，融合排序' },
+  { key: 'vector', label: '基于向量语义召回的推荐算法', algo: '向量语义召回', desc: '将方案需求与资源描述编码为向量，按语义相似度召回候选资源' },
+  { key: 'llm', label: '基于大模型推理重排的推荐算法', algo: '大模型推理重排', desc: '在召回结果上由领域大模型按任务约束推理重排' },
+  { key: 'graph', label: '基于知识图谱增强的推荐算法', algo: '知识图谱增强', desc: '沿指标、科目、设备与历史案例的图谱关系扩展并增强排序' },
+  { key: 'seq', label: '基于用户行为序列建模的推荐算法', algo: '用户行为序列建模', desc: '按历史方案的资源采纳序列建模，推荐相近试验路径下的资源' },
+  { key: 'modal', label: '基于多模态融合的推荐算法', algo: '多模态融合', desc: '融合文本、指标判据、因子与案例画像进行联合匹配' },
+  { key: 'hybrid', label: '基于多目标优化的混合推荐算法', algo: '多目标优化混合', desc: '语义召回、推理重排、图谱增强与行为序列按多目标加权融合' },
 ]
 
 /** 左侧菜单 mid → 页面侧重（避免各叶子完全同页） */
@@ -2163,7 +2600,7 @@ const m11ViewMeta = computed(() => {
   if (mid.startsWith('trace')) {
     return { mid, title: '推荐资源历史案例溯源', focus: 'trace', hint: '突出资源关联的历史试验案例与来源说明' }
   }
-  return { mid, title: '历史资源相似度匹配', focus: 'match', hint: '四算法并行匹配，结果随关联定稿方案联动' }
+  return { mid, title: '历史资源相似度匹配', focus: 'match', hint: '按所选推荐算法匹配资源，结果随关联定稿方案联动' }
 })
 
 const m11SchemeOptions = computed(() => {
@@ -2322,10 +2759,12 @@ function m11ScoreSet(focus, seed) {
   }[focus] || [0.91, 0.78, 0.62, 0.54, 0.43]
   const jitter = (seed % 7) * 0.002
   return {
-    rule: base.map((s, i) => Math.min(0.99, +(s + jitter - i * 0.001).toFixed(2))),
-    content: base.map((s, i) => Math.min(0.99, +(s - 0.03 + jitter + (i % 2) * 0.01).toFixed(2))),
-    collab: base.map((s, i) => Math.min(0.99, +(s - 0.05 + jitter).toFixed(2))),
-    hybrid: base.map((s, i) => Math.min(0.99, +((s * 0.35 + (s - 0.03) * 0.35 + (s - 0.05) * 0.3) + jitter).toFixed(2))),
+    vector: base.map((s, i) => Math.min(0.99, +(s + jitter - i * 0.001).toFixed(2))),
+    llm: base.map((s, i) => Math.min(0.99, +(s - 0.02 + jitter + (i % 2) * 0.012).toFixed(2))),
+    graph: base.map((s, i) => Math.min(0.99, +(s - 0.04 + jitter).toFixed(2))),
+    seq: base.map((s, i) => Math.min(0.99, +(s - 0.06 + jitter + (i === 1 ? 0.03 : 0)).toFixed(2))),
+    modal: base.map((s, i) => Math.min(0.99, +(s - 0.01 + jitter - (i === 3 ? 0.02 : 0)).toFixed(2))),
+    hybrid: base.map((s, i) => Math.min(0.99, +((s * 0.3 + (s - 0.02) * 0.25 + (s - 0.04) * 0.2 + (s - 0.06) * 0.25) + jitter).toFixed(2))),
   }
 }
 
@@ -2351,15 +2790,56 @@ const m11Results = computed(() => {
     return { ...r }
   })
   return {
-    rule: rows.map((r, i) => ({ ...r, score: scores.rule[i] })),
-    content: rows.map((r, i) => ({ ...r, score: scores.content[i] })),
-    collab: rows.map((r, i) => ({ ...r, score: scores.collab[i] })),
+    vector: rows.map((r, i) => ({ ...r, score: scores.vector[i] })),
+    llm: rows.map((r, i) => ({ ...r, score: scores.llm[i] })),
+    graph: rows.map((r, i) => ({ ...r, score: scores.graph[i] })),
+    seq: rows.map((r, i) => ({ ...r, score: scores.seq[i] })),
+    modal: rows.map((r, i) => ({ ...r, score: scores.modal[i] })),
     hybrid: rows.map((r, i) => ({ ...r, score: scores.hybrid[i] })),
   }
 })
 
 const m11CurrentTab = computed(() => m11Tabs.find((t) => t.key === m11Tab.value))
 const m11CurrentResults = computed(() => m11Results.value[m11Tab.value] || m11Results.value.hybrid)
+
+const m11Indicators = computed(() => getM02RowsForDoc('某型装备研制总要求'))
+const m11IndId = ref('i01')
+const m11ActiveInd = computed(() => m11Indicators.value.find((row) => row.id === m11IndId.value) || m11Indicators.value[0])
+const m11IndRecommend = computed(() => recommendForIndicator(m11ActiveInd.value, m11Tab.value))
+const m11Demand = computed(() => {
+  const ctx = m11MatchCtx.value
+  const rawName = String(ctx.schemeName || '未关联方案')
+  const name = rawName.replace(/\s+V\d+(?:\.\d+)?$/, '')
+  const ver = /^V\d+$/.test(ctx.ver || '') ? `${ctx.ver}.0` : (ctx.ver || 'V1.0')
+  const stored = Array.isArray(ctx.factors) ? ctx.factors.length : 0
+  const factorCount = stored || (ctx.status === '已归档' ? 18 : 22)
+  const done = ctx.status === '已定稿' || ctx.status === '已归档'
+  return {
+    line: `定稿方案需求：${name} · ${ver} · 考核指标 ${m11Indicators.value.length} 项 · 试验因子 ${factorCount} 个`,
+    status: done ? '已完成' : (ctx.status || '进行中'),
+    done,
+  }
+})
+const m11Adopted = ref({})
+const m11CaseVisible = ref(false)
+const m11CaseRow = ref(null)
+
+function m11AdoptKey(name) {
+  return `${m11IndId.value}::${m11Tab.value}::${name}`
+}
+function m11IsAdopted(name) {
+  return m11Adopted.value[m11AdoptKey(name)] !== false
+}
+function m11ToggleAdopt(name) {
+  const key = m11AdoptKey(name)
+  const next = !m11IsAdopted(name)
+  m11Adopted.value = { ...m11Adopted.value, [key]: next }
+  toast(next ? `已采纳：${name}` : `已取消采纳：${name}`, next ? 'success' : 'info')
+}
+function m11OpenCase(row) {
+  m11CaseRow.value = row
+  m11CaseVisible.value = true
+}
 
 // 进入匹配相关页时，若无上下文则回填最近定稿方案
 watch(
@@ -2368,7 +2848,8 @@ watch(
     if (String(mid || '').startsWith('rec') || String(mid || '').startsWith('show') || String(mid || '').startsWith('trace')) {
       m11EnsureMatchContext()
       m11SelIdx.value = 0
-      m11Tab.value = 'rule'
+      const algo = demoStore.matchContext?.algo
+      if (algo && m11Tabs.some((item) => item.key === algo)) m11Tab.value = algo
     }
   },
   { immediate: true },
@@ -2447,6 +2928,9 @@ watch(
     m01ActiveCat,
     m01Search,
     m01FilteredRows,
+    m01VisibleRows,
+    m01Page,
+    m01PageSize,
     m01Secret,
     m01Detail,
     m01SelChapter,
@@ -2513,6 +2997,31 @@ watch(
     m08SaveTplCase,
     m08OpenCreate,
     m08SubmitCreate,
+    m08GoFactorStep,
+    m08PublishedTrees,
+    m08IndicatorRows,
+    m08PickedIds,
+    m08ToggleIndicator,
+    m08ToggleAllIndicators,
+    m08TemplateCards,
+    m08Wizard,
+    m08InWizard,
+    m08Generating,
+    m08GenProgress,
+    m08FactorGapNote,
+    m08QuickFactors,
+    m08QuickAddFactor,
+    m08FactorName,
+    m08AddFactorLine,
+    m08WizardNextFactors,
+    m08WizardBack,
+    m08PickTemplate,
+    m08WizardToPreview,
+    m08StartGenerate,
+    m08ViewRoundDoc,
+    m08JumpDoc,
+    m08TocId,
+    schemeDocToc,
     m08SendChat,
     m08AddFactor,
     m08OpenFactorDialog,
@@ -2532,6 +3041,10 @@ watch(
     m08ExportWord,
     m08ChatInput,
     m08ChatCanSend,
+    m08ChatStreaming,
+    m08StreamText,
+    m08StreamPhase,
+    m08StreamDoc,
     m08FactorCount,
     m08FocusStep,
     m08FocusVer,
@@ -2539,6 +3052,9 @@ watch(
     m08StepDialogIdx,
     m08StepDetails,
     goResourceMatch,
+    m08AlgoVisible,
+    m08AlgoKey,
+    m08ConfirmAlgo,
     m11ViewMeta,
     m11SchemeOptions,
     m11SchemeTitle,
@@ -2560,5 +3076,15 @@ watch(
     m11CurrentTab,
     m11CurrentResults,
     m11SelIdx,
+    m11Indicators,
+    m11IndId,
+    m11ActiveInd,
+    m11IndRecommend,
+    m11Demand,
+    m11IsAdopted,
+    m11ToggleAdopt,
+    m11CaseVisible,
+    m11CaseRow,
+    m11OpenCase,
   })
 }

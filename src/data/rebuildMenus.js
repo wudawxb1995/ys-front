@@ -9,7 +9,7 @@ export function rebuildSystems() {
       menus: [
         leaf('home', '首页', home(
           '欢迎使用 实验判定异构数据智能量化系统',
-          '面向试验鉴定业务，提供定型资料、历史试验数据、标准规范、专业文献的统一录入、智能解析、清洗规整、语义量化与成果导出，支撑定型资料数据智能再造。',
+          '面向论证立项、方案设计、工程研制、试验鉴定、定型验收及成果沉淀等业务阶段，统一管理资料并完成解析、清洗、语义量化与成果导出。',
           [
             { name: '资源录入', to: 'res-add', desc: '统一汇聚多模态资料' },
             { name: '智能解析', to: 'parse-multi', desc: '文本、图像、表格、音视频' },
@@ -18,15 +18,15 @@ export function rebuildSystems() {
             { name: '语义量化', to: 'vec-task', desc: '50页内 ≤15 秒' },
           ],
           [
-            { label: '数据资源总量', value: '286', unit: '项' },
-            { label: '已完成解析', value: '214', unit: '项' },
+            { label: '数据资源总量', value: '362', unit: '项' },
+            { label: '已完成解析', value: '358', unit: '项' },
             { label: '待审核成果', value: '37', unit: '项' },
-            { label: '向量化完成', value: '168', unit: '项' },
+            { label: '向量化完成', value: '326', unit: '项' },
           ],
           '近7日数据上传统计',
         )),
         g('res', '数据资源管理', 'folder', [
-          leaf('res-add', '数据资源录入', { type: 'entry', desc: '登记定型资料、历史试验数据、标准规范与专业文献。支持即时解析或暂存，单次批量不少于 50 篇、总容量不少于 500 MB。', dataset: 'resources' }),
+          leaf('res-add', '数据资源录入', { type: 'entry', desc: '按八类业务阶段登记试验鉴定资料，支持即时解析或暂存，单次批量不少于 50 篇、总容量不少于 500 MB。', dataset: 'resources' }),
           leaf('res-list', '数据资源管理', { type: 'm01', desc: '' }),
         ]),
         g('parse', '多格式结构化解析', 'parse', reuse(

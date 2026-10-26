@@ -28,19 +28,47 @@
         <div class="fi-actions">
           <el-button v-if="detail.fileUrl" @click="openOriginal">打开原文</el-button>
           <el-button @click="goParseTask">查看解析日志</el-button>
-          <el-button type="primary" @click="goExtract">发起指标抽取</el-button>
+          <el-button type="primary" :loading="extracting" @click="goExtract">发起指标抽取</el-button>
         </div>
       </div>
     </div>
 
-    <div v-if="detail.fileUrl && /PDF/i.test(detail.fmt || '')" class="dash-frame preview-frame">
-      <h3><i></i>原文预览</h3>
-      <div class="pdf-shell">
-        <iframe
-          class="pdf-frame"
-          :src="detail.fileUrl"
-          :title="detail.name"
-        />
+    <div class="dash-frame parse-frame">
+      <h3><i></i>解析结果</h3>
+      <div class="parse-split">
+        <div class="chapter-pane">
+          <div class="chapter-head">
+            章节结构
+            <span class="chapter-count">{{ flatChapters.length }} 节</span>
+          </div>
+          <div class="chapter-tree">
+            <div
+              v-for="item in treeItems"
+              :key="item.id"
+              class="chap-item"
+              :class="[item.level === 1 ? 'lv1' : 'lv2', { open: item.expandable && expanded[item.id], active: activeChap === item.id }]"
+              @click="item.expandable ? toggleChap(item) : (activeChap = item.id)"
+            >
+              <svg v-if="item.expandable" class="chap-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <path d="M9 6l6 6-6 6"/>
+              </svg>
+              <svg v-else class="chap-dot" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/></svg>
+              <span>{{ item.title }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="origin-pane">
+          <iframe
+            v-if="detail.fileUrl && /PDF/i.test(detail.fmt || '')"
+            class="pdf-frame"
+            :src="detail.fileUrl"
+            :title="detail.name"
+          />
+          <div v-else class="origin-empty">
+            <p>暂无原文预览</p>
+            <el-button v-if="detail.fileUrl" @click="openOriginal">打开原文</el-button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -96,28 +124,6 @@
           </div>
       </div>
 
-      <div class="dash-frame chapter-frame">
-        <h3>
-          <i></i>章节结构
-          <span class="chapter-count">{{ flatChapters.length }} 节</span>
-        </h3>
-        <div class="chapter-tree">
-          <div
-            v-for="item in treeItems"
-            :key="item.id"
-            class="chap-item"
-            :class="[item.level === 1 ? 'lv1' : 'lv2', { open: item.expandable && expanded[item.id], active: activeChap === item.id }]"
-            @click="item.expandable ? toggleChap(item) : (activeChap = item.id)"
-          >
-            <svg v-if="item.expandable" class="chap-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-              <path d="M9 6l6 6-6 6"/>
-            </svg>
-            <svg v-else class="chap-dot" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3"/></svg>
-            <span>{{ item.title }}</span>
-          </div>
-        </div>
-      </div>
-
       <div class="dash-frame entity-frame">
           <h3><i></i>实体识别概况</h3>
           <div class="entity-list">
@@ -137,6 +143,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { ElLoading } from 'element-plus'
 import { useUi } from '@/composables/ui'
 
 const props = defineProps({
@@ -146,6 +153,7 @@ const emit = defineEmits(['back'])
 const { toast } = useUi()
 const route = useRoute()
 const router = useRouter()
+const extracting = ref(false)
 
 // ── 路由跳转函数 ──────────────────────────────────────────────────────
 
@@ -164,7 +172,18 @@ function goParseTask() {
 
 // 发起指标抽取 → 关键指标抽取 / 指标数据提取
 function goExtract() {
-  router.push({ name: 'app', params: { pid: route.params.pid, sid: 'extract', mid: 'ind-data' } })
+  if (extracting.value) return
+  extracting.value = true
+  const loading = ElLoading.service({
+    lock: true,
+    text: '正在发起指标抽取…',
+    background: 'rgba(255, 255, 255, 0.72)',
+  })
+  setTimeout(() => {
+    loading.close()
+    extracting.value = false
+    router.push({ name: 'app', params: { pid: route.params.pid, sid: 'extract', mid: 'ind-data' } })
+  }, 5000)
 }
 
 // 语义检索 → 向量化任务（vec-task），按当前资源名称筛选
@@ -314,13 +333,40 @@ const maxEntCount = computed(() => Math.max(...entitySummary.map((e) => e.count)
 .fi-attrs .dot { margin: 0 5px; }
 .fi-actions { display: flex; gap: 8px; flex: 0 0 auto; }
 
-.preview-frame { display: flex; flex-direction: column; min-height: 0; }
-.pdf-shell {
+.parse-split {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 12px;
+  height: min(62vh, 640px);
+  min-height: 420px;
+}
+.chapter-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid #e6eef6;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.chapter-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef3f8;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1f3d5a;
+}
+.origin-pane {
+  min-width: 0;
+  min-height: 0;
   border: 1px solid #e0eaf3;
   border-radius: 8px;
   overflow: hidden;
-  background: #f4f7fa;
-  height: min(62vh, 640px);
+  background: #525659;
 }
 .pdf-frame {
   width: 100%;
@@ -328,38 +374,23 @@ const maxEntCount = computed(() => Math.max(...entitySummary.map((e) => e.count)
   border: 0;
   background: #fff;
 }
+.origin-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #f4f7fa;
+  color: #8a99a8;
+}
 
 .detail-body {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  grid-template-rows: auto auto auto;
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-items: stretch;
 }
-.stat-frame { grid-column: 1 / -1; grid-row: 1; }
-.chapter-frame {
-  grid-column: 1;
-  grid-row: 2 / 4;
-  display: flex;
-  flex-direction: column;
-  /* 固定高度：展开/收起章节时框高不变，过长在树内滚动 */
-  height: 460px;
-  min-height: 460px;
-  max-height: 460px;
-  overflow: hidden;
-  align-self: start;
-}
-.chapter-frame > h3 {
-  flex: 0 0 auto;
-  margin-bottom: 12px;
-}
-.index-frame { grid-column: 2; grid-row: 2; }
-.entity-frame {
-  grid-column: 2;
-  grid-row: 3;
-  display: flex;
-  flex-direction: column;
-}
+.entity-frame { display: flex; flex-direction: column; }
 .chapter-count {
   margin-left: auto;
   font-size: 12px;

@@ -1,19 +1,7 @@
 import { equipmentReqChapters, EQUIPMENT_REQ_SAMPLE_URL } from './equipmentReqDetail'
+import { resourceCorpus, resourceCategories } from './resourceCorpus'
 
-const resources = [
-  ['某型研制总要求（D-01）', '定型资料', 'PDF', '文本', '12.4 MB', '48', '已解析', '张明远', '2026-10-08 09:24'],
-  ['雷沃谷神4LZ-8谷物联合收割机鉴定大纲', '定型资料', 'PDF', '文本', '18.2 MB', '86', '已解析', '李慧敏', '2026-10-09 10:11'],
-  ['NY/T 2090-2025 农业机械试验鉴定通则', '标准规范', 'PDF', '文本', '6.8 MB', '42', '已解析', '王建国', '2026-09-28 14:02'],
-  ['2BMQ-6气力式免耕播种机田间试验数据', '历史试验数据', 'XLSX', '表格', '12.4 MB', '—', '解析中', '陈思远', '2026-10-14 16:40'],
-  ['五征4YZP-4自走式玉米收获机可靠性试验报告', '定型资料', 'DOCX', '文本', '41.7 MB', '152', '已解析', '张明远', '2026-10-05 11:32'],
-  ['约翰迪尔S770联合收割机对比试验影像', '历史试验数据', 'MP4', '音视频', '486 MB', '—', '已解析', '刘志强', '2026-10-11 15:20'],
-  ['《农业机械试验鉴定办法》2025年修订版', '标准规范', 'PDF', '文本', '4.2 MB', '28', '暂存', '李慧敏', '2026-10-15 09:05'],
-  ['旋耕机刀片磨损试验扫描件（1987年归档）', '历史试验数据', 'JPG', '图像', '96.3 MB', '—', '解析失败', '赵雪梅', '2026-10-13 10:47'],
-  ['大马力拖拉机PTO功率测试原始记录', '历史试验数据', 'XLSX', '表格', '8.9 MB', '—', '暂存', '陈思远', '2026-10-16 14:18'],
-  ['植保无人飞机作业性能测试数据集', '历史试验数据', 'CSV', '表格', '15.6 MB', '—', '已解析', '刘志强', '2026-10-12 09:44'],
-  ['农业机械智能化技术发展综述（2025）', '专业文献', 'PDF', '文本', '9.4 MB', '56', '已解析', '赵雪梅', '2026-09-30 16:22'],
-  ['DG/T 001-2025 农业轮式拖拉机鉴定技术规范', '标准规范', 'PDF', '文本', '7.5 MB', '48', '已解析', '王建国', '2026-10-02 10:36'],
-]
+const resources = resourceCorpus
 
 function resourceRow([name, cat, fmt, modal, size, pages, status, by, time]) {
   const row = { name, cat, fmt, modal, size, pages, status, by, time }
@@ -27,7 +15,7 @@ export const datasets = {
   resources: {
     filters: [
       { key: 'name', label: '资源名称', type: 'search' },
-      { key: 'cat', label: '资源类别', options: ['定型资料', '历史试验数据', '标准规范', '专业文献'] },
+      { key: 'cat', label: '资源类别', options: resourceCategories },
       { key: 'status', label: '解析状态', options: ['已解析', '解析中', '暂存', '解析失败'] },
       { key: 'modal', label: '数据模态', options: ['文本', '图像', '表格', '音视频'] },
     ],
@@ -63,10 +51,10 @@ export const datasets = {
     ],
     rows: [
       { name: '某型研制总要求（D-01）全文解析', mode: '即时解析', engine: '领域多模态大模型', progress: 100, count: '1286/1286', status: '已完成', cost: '156s', time: '2026-10-08 09:24' },
-      { name: '雷沃谷神4LZ-8鉴定大纲解析', mode: '即时解析', engine: '文档OCR识别引擎', progress: 100, count: '642/642', status: '已完成', cost: '98s', time: '2026-10-09 10:11' },
-      { name: '2BMQ-6免耕播种机田间数据解析', mode: '批量调度', engine: '表格结构识别引擎', progress: 64, count: '328/512', status: '进行中', cost: '—', time: '2026-10-14 16:41' },
-      { name: '播种机历史影像资料批量解析', mode: '批量调度', engine: '语音转写ASR引擎', progress: 0, count: '0/96', status: '排队中', cost: '—', time: '2026-10-16 11:05' },
-      { name: '标准规范双栏版式批量解析', mode: '暂存后解析', engine: '文档OCR识别引擎', progress: 100, count: '210/210', status: '已完成', cost: '74s', time: '2026-10-02 11:02' },
+      { name: '某型装备性能鉴定试验大纲V4解析', mode: '即时解析', engine: '文档OCR识别引擎', progress: 100, count: '642/642', status: '已完成', cost: '98s', time: '2026-10-09 10:11' },
+      { name: '某型装备寒区试验遥测数据解析', mode: '批量调度', engine: '表格结构识别引擎', progress: 64, count: '328/512', status: '进行中', cost: '—', time: '2026-10-14 16:41' },
+      { name: '历年同类装备试验报告批量解析', mode: '批量调度', engine: '文档OCR识别引擎', progress: 0, count: '0/96', status: '排队中', cost: '—', time: '2026-10-16 11:05' },
+      { name: 'GJB标准规范双栏版式批量解析', mode: '暂存后解析', engine: '文档OCR识别引擎', progress: 100, count: '210/210', status: '已完成', cost: '74s', time: '2026-10-02 11:02' },
     ],
     ops: ['详情', '日志', '删除'],
   },

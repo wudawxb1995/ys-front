@@ -1,11 +1,11 @@
 /**
  * M02 关键指标抽取结果（D-01 / 某型装备研制总要求 · 28 项）
- * srcPage / srcText / highlight：点击行后原文溯源高亮用
- * 列表「抽取指标数」必须与 getM02RowsForDoc(name).length 一致，禁止写死兜底数。
+ * 列表「抽取指标数」必须与 getM02RowsForDoc(name).length 一致。
+ * domain 仍用七域口径，供新建任务筛选；klass 为详情表「性能域/指标类」。
  */
 export const m02Domains = ['机动', '火力', '防护', '可靠性', '环境适应性', '电磁兼容', '信息能力']
 
-/** 非研制总要求类文档的抽取条数（详情用切片/占位行，数量与列表联动） */
+/** 非研制总要求类文档的抽取条数（详情用切片，数量与列表联动） */
 export const m02CountMap = {
   '雷沃谷神4LZ-8谷物联合收割机鉴定大纲': 15,
   'NY/T 2090-2025 农业机械试验鉴定通则': 21,
@@ -20,57 +20,68 @@ export function isM02MasterDoc(name = '') {
   return /某型装备研制总要求|某型研制总要求/.test(String(name))
 }
 
-function row( partial) {
+function row(partial) {
+  const criteria = partial.criteria
+  const name = partial.name
+  const klass = partial.klass
   return {
     unit: '',
-    status: '已确认',
+    value: criteria,
+    status: '待审核',
+    criteriaType: /^[≤≥<>+\-0-9]/.test(String(criteria)) ? '定量' : '定性',
+    examMethod: '实测',
     srcDoc: 'D-01《某型研制总要求》',
+    srcSection: klass,
+    highlight: criteria,
+    srcText: `${klass}\n「${name}」判据为 ${criteria}。`,
     ...partial,
   }
 }
 
 export const m02IndRows = [
-  row({ id: 'i01', name: '最大公路速度', value: '≥ 65', unit: 'km/h', criteria: '≥ 60 km/h（研制总要求 4.1.1）', domain: '机动', conf: 0.96, srcPage: 12, highlight: '最大公路速度不低于 65 km/h', srcText: '4.1.1 最大公路速度\n受试件在硬路面直线路段的最大公路速度不低于 65 km/h，取三次测量均值作为判定值。' }),
-  row({ id: 'i02', name: '最大越野速度', value: '≥ 35', unit: 'km/h', criteria: '≥ 30 km/h（研制总要求 4.1.2）', domain: '机动', conf: 0.94, srcPage: 12, highlight: '最大越野速度不低于 35 km/h', srcText: '4.1.2 最大越野速度\n砂石路面条件下，最大越野速度不低于 35 km/h。' }),
-  row({ id: 'i03', name: '最大行程', value: '≥ 500', unit: 'km', criteria: '≥ 450 km（研制总要求 4.1.3）', domain: '机动', conf: 0.91, srcPage: 13, highlight: '最大行程不低于 500 km', srcText: '4.1.3 最大行程\n一次加注条件下最大行程不低于 500 km。' }),
-  row({ id: 'i04', name: '爬坡度', value: '≥ 30', unit: '°', criteria: '≥ 25°（研制总要求 4.1.4）', domain: '机动', conf: 0.93, srcPage: 13, highlight: '爬坡度不低于 30°', srcText: '4.1.4 爬坡能力\n最大爬坡度不低于 30°。' }),
-  row({ id: 'i05', name: '涉水深度', value: '≥ 1.2', unit: 'm', criteria: '≥ 1.0 m（研制总要求 4.1.5）', domain: '机动', conf: 0.88, srcPage: 14, highlight: '涉水深度不低于 1.2 m', srcText: '4.1.5 涉水能力\n静水涉水深度不低于 1.2 m。' }),
-  row({ id: 'i06', name: '主炮口径', value: '125', unit: 'mm', criteria: '= 125 mm（研制总要求 5.1.1）', domain: '火力', conf: 0.99, srcPage: 18, highlight: '主炮口径为 125 mm', srcText: '5.1.1 主炮口径\n主炮口径为 125 mm。' }),
-  row({ id: 'i07', name: '穿甲弹初速', value: '≥ 1700', unit: 'm/s', criteria: '≥ 1650 m/s（研制总要求 5.1.2）', domain: '火力', conf: 0.97, srcPage: 18, highlight: '穿甲弹初速不低于 1700 m/s', srcText: '5.1.2 穿甲弹初速\n穿甲弹初速不低于 1700 m/s。' }),
-  row({ id: 'i08', name: '射速', value: '6–8', unit: '发/min', criteria: '6～8发/min（研制总要求 5.2.1）', domain: '火力', conf: 0.95, srcPage: 19, highlight: '射速为 6～8 发/min', srcText: '5.2.1 射速\n战斗射速为 6～8 发/min。' }),
-  row({ id: 'i09', name: '最大射程', value: '≥ 4000', unit: 'm', criteria: '≥ 3500 m（研制总要求 5.2.2）', domain: '火力', conf: 0.92, srcPage: 19, highlight: '最大射程不低于 4000 m', srcText: '5.2.2 最大射程\n最大有效射程不低于 4000 m。' }),
-  row({ id: 'i10', name: '首发命中概率', value: '≥ 0.85', criteria: '≥ 0.80（研制总要求 5.3.1）', domain: '火力', conf: 0.76, status: '待审核', srcPage: 20, highlight: '首发命中概率不低于 0.85', srcText: '5.3.1 首发命中概率\n静止对静止条件下首发命中概率不低于 0.85（研制总要求表述存在歧义，待核验）。' }),
-  row({ id: 'i11', name: '装甲防护等级', value: 'RHA 600', unit: 'mm', criteria: '等效均质钢 ≥ 550 mm（5.4.1）', domain: '防护', conf: 0.90, srcPage: 22, highlight: '等效均质钢不低于 600 mm', srcText: '5.4.1 装甲防护\n正面装甲等效均质钢不低于 600 mm。' }),
-  row({ id: 'i12', name: '核生化防护等级', value: '超压 ≥ 4', unit: 'Pa', criteria: '超压值 ≥ 3 Pa（研制总要求 5.4.2）', domain: '防护', conf: 0.86, srcPage: 22, highlight: '超压值不低于 4 Pa', srcText: '5.4.2 核生化防护\n三防系统超压值不低于 4 Pa。' }),
-  row({ id: 'i13', name: '主动防护覆盖角', value: '360', unit: '°', criteria: '360° 全向（研制总要求 5.4.3）', domain: '防护', conf: 0.83, srcPage: 23, highlight: '覆盖角 360°', srcText: '5.4.3 主动防护\n主动防护系统覆盖角 360°。' }),
-  row({ id: 'i14', name: 'MTBF', value: '≥ 320', unit: 'h', criteria: '≥ 300 h（研制总要求 6.1.1）', domain: '可靠性', conf: 0.94, srcPage: 26, highlight: 'MTBF 不低于 320 h', srcText: '6.1.1 平均故障间隔时间\nMTBF 不低于 320 h。' }),
-  row({ id: 'i15', name: 'MTTR', value: '≤ 2', unit: 'h', criteria: '≤ 4 h（研制总要求 6.1.2）', domain: '可靠性', conf: 0.91, srcPage: 26, highlight: 'MTTR 不大于 2 h', srcText: '6.1.2 平均修复时间\nMTTR 不大于 2 h。' }),
-  row({ id: 'i16', name: '使用可用度', value: '≥ 0.92', criteria: '≥ 0.90（研制总要求 6.1.3）', domain: '可靠性', conf: 0.87, srcPage: 27, highlight: '使用可用度不低于 0.92', srcText: '6.1.3 使用可用度\n使用可用度不低于 0.92。' }),
-  row({ id: 'i17', name: '寿命', value: '≥ 25', unit: '年', criteria: '≥ 20 年（研制总要求 6.2.1）', domain: '可靠性', conf: 0.78, status: '待审核', srcPage: 27, highlight: '设计寿命不低于 25 年', srcText: '6.2.1 寿命\n设计寿命不低于 25 年（与附录表 A-3 表述 20 年冲突，待核验）。' }),
-  row({ id: 'i18', name: '高温工作温度上限', value: '≥ 55', unit: '℃', criteria: '≥ 50 ℃（研制总要求 7.1.1）', domain: '环境适应性', conf: 0.93, srcPage: 30, highlight: '高温工作温度上限不低于 55 ℃', srcText: '7.1.1 高温工作\n高温工作温度上限不低于 55 ℃。' }),
-  row({ id: 'i19', name: '低温工作温度下限', value: '≤ −40', unit: '℃', criteria: '≤ −40 ℃（研制总要求 7.1.2）', domain: '环境适应性', conf: 0.90, srcPage: 30, highlight: '低温工作温度下限不高于 −40 ℃', srcText: '7.1.2 低温工作\n低温工作温度下限不高于 −40 ℃。' }),
-  row({ id: 'i20', name: '防尘等级', value: 'IP6X', criteria: '≥ IP5X（研制总要求 7.2.1）', domain: '环境适应性', conf: 0.85, srcPage: 31, highlight: '防尘等级达到 IP6X', srcText: '7.2.1 防尘\n防尘等级达到 IP6X。' }),
-  row({ id: 'i21', name: '防水等级', value: 'IP67', criteria: '≥ IP56（研制总要求 7.2.2）', domain: '环境适应性', conf: 0.89, srcPage: 31, highlight: '防水等级达到 IP67', srcText: '7.2.2 防水\n防水等级达到 IP67。' }),
-  row({ id: 'i22', name: '传导发射限值', value: '≤ RE102', criteria: 'RE102 B类（研制总要求 8.1.1）', domain: '电磁兼容', conf: 0.82, srcPage: 34, highlight: '传导发射满足 RE102', srcText: '8.1.1 传导发射\n传导发射满足 RE102 B 类限值。' }),
-  row({ id: 'i23', name: '辐射敏感度阈值', value: '≥ RS103', criteria: 'RS103 C类（研制总要求 8.1.2）', domain: '电磁兼容', conf: 0.75, status: '待审核', srcPage: 34, highlight: '辐射敏感度满足 RS103', srcText: '8.1.2 辐射敏感度\n辐射敏感度满足 RS103 C 类（表格脚注与正文等级不一致，待核验）。' }),
-  row({ id: 'i24', name: '综合电子系统接口', value: 'MIL-STD', criteria: 'MIL-STD-1553B（研制总要求 8.2.1）', domain: '电磁兼容', conf: 0.91, srcPage: 35, highlight: '接口符合 MIL-STD-1553B', srcText: '8.2.1 总线接口\n综合电子系统接口符合 MIL-STD-1553B。' }),
-  row({ id: 'i25', name: '态势感知刷新率', value: '≥ 2', unit: 'Hz', criteria: '≥ 1 Hz（研制总要求 9.1.1）', domain: '信息能力', conf: 0.94, srcPage: 38, highlight: '态势感知刷新率不低于 2 Hz', srcText: '9.1.1 态势感知\n态势感知刷新率不低于 2 Hz。' }),
-  row({ id: 'i26', name: '通信距离', value: '≥ 30', unit: 'km', criteria: '≥ 20 km（研制总要求 9.1.2）', domain: '信息能力', conf: 0.92, srcPage: 38, highlight: '通信距离不低于 30 km', srcText: '9.1.2 通信距离\n视距通信距离不低于 30 km。' }),
-  row({ id: 'i27', name: '数据链吞吐量', value: '≥ 2', unit: 'Mbps', criteria: '≥ 1 Mbps（研制总要求 9.2.1）', domain: '信息能力', conf: 0.88, srcPage: 39, highlight: '数据链吞吐量不低于 2 Mbps', srcText: '9.2.1 数据链\n数据链吞吐量不低于 2 Mbps。' }),
-  row({ id: 'i28', name: '目标识别距离', value: '≥ 3000', unit: 'm', criteria: '≥ 2500 m（研制总要求 9.2.2）', domain: '信息能力', conf: 0.86, srcPage: 39, highlight: '目标识别距离不低于 3000 m', srcText: '9.2.2 目标识别\n昼间目标识别距离不低于 3000 m。' }),
+  row({ id: 'i01', klass: '火力性能 / 射击精度', name: '立靶高低偏差', criteria: '≤0.30 mil', domain: '火力', conf: 0.76, srcPage: 12 }),
+  row({ id: 'i02', klass: '火力性能 / 射击精度', name: '立靶方向偏差', criteria: '≤0.30 mil', domain: '火力', conf: 0.93, srcPage: 12 }),
+  row({ id: 'i03', klass: '火力性能 / 射击精度', name: '1000m立靶密集度（高低×方向）', criteria: '≤2.6×2.6 m', domain: '火力', conf: 0.91, srcPage: 13 }),
+  row({ id: 'i04', klass: '火力性能 / 射击精度', name: '地面目标首发命中概率', criteria: '≥85 %', domain: '火力', conf: 0.88, srcPage: 13 }),
+  row({ id: 'i05', klass: '火力性能 / 火力强度', name: '战斗射速', criteria: '6-8 发/min', domain: '火力', conf: 0.94, srcPage: 14 }),
+  row({ id: 'i06', klass: '火力性能 / 火力强度', name: '最大射程', criteria: '≥15 km', domain: '火力', conf: 0.92, srcPage: 14 }),
+  row({ id: 'i07', klass: '火力性能 / 火力强度', name: '初速', criteria: '930±10 m/s', domain: '火力', conf: 0.90, srcPage: 14 }),
+  row({ id: 'i08', klass: '火力性能 / 火力强度', name: '最大膛压', criteria: '≤315 MPa', domain: '火力', conf: 0.89, srcPage: 15 }),
+  row({ id: 'i09', klass: '机动性能 / 行驶性能', name: '最大行驶速度', criteria: '≥65 km/h', domain: '机动', conf: 0.95, srcPage: 17 }),
+  row({ id: 'i10', klass: '机动性能 / 行驶性能', name: '0-32 km/h加速时间', criteria: '≤12 s', domain: '机动', conf: 0.90, srcPage: 17 }),
+  row({ id: 'i11', klass: '机动性能 / 行驶性能', name: '最大爬坡度', criteria: '≥60 %', domain: '机动', conf: 0.93, srcPage: 18 }),
+  row({ id: 'i12', klass: '机动性能 / 行驶性能', name: '最大行程', criteria: '≥500 km', domain: '机动', conf: 0.91, srcPage: 18 }),
+  row({ id: 'i13', klass: '机动性能 / 通过性能', name: '越壕宽', criteria: '≥2.5 m', domain: '机动', conf: 0.92, srcPage: 19 }),
+  row({ id: 'i14', klass: '机动性能 / 通过性能', name: '涉水深度', criteria: '≥1.2 m', domain: '机动', conf: 0.90, srcPage: 19 }),
+  row({ id: 'i15', klass: '防护性能 / 弹道防护', name: '正面装甲抗弹能力', criteria: '满足战术技术要求', domain: '防护', conf: 0.87, srcPage: 21 }),
+  row({ id: 'i16', klass: '防护性能 / 弹道防护', name: '三防密封性', criteria: '满足三防防护要求', domain: '防护', conf: 0.86, srcPage: 22 }),
+  row({ id: 'i17', klass: '探测性能 / 观瞄探测', name: '昼间目标发现距离', criteria: '≥5.0 km', domain: '信息能力', conf: 0.90, srcPage: 24 }),
+  row({ id: 'i18', klass: '探测性能 / 观瞄探测', name: '夜间目标发现距离', criteria: '≥3.0 km', domain: '信息能力', conf: 0.88, srcPage: 24 }),
+  row({ id: 'i19', klass: '探测性能 / 观瞄探测', name: '激光测距误差', criteria: '≤5 m', domain: '信息能力', conf: 0.92, srcPage: 25 }),
+  row({ id: 'i20', klass: '通信性能 / 电台通信', name: '电台通信距离', criteria: '≥25 km', domain: '信息能力', conf: 0.90, srcPage: 27 }),
+  row({ id: 'i21', klass: '通信性能 / 电台通信', name: '数传传输速率', criteria: '≥9.6 kbps', domain: '信息能力', conf: 0.89, srcPage: 27 }),
+  row({ id: 'i22', klass: '可靠性 / 任务可靠', name: '平均故障间隔里程', criteria: '≥800 km', domain: '可靠性', conf: 0.84, srcPage: 29 }),
+  row({ id: 'i23', klass: '可靠性 / 任务可靠', name: '任务可靠度', criteria: '≥0.92', domain: '可靠性', conf: 0.72, srcPage: 29 }),
+  row({ id: 'i24', klass: '可靠性 / 维修性', name: '平均修复时间', criteria: '≤30 min', domain: '可靠性', conf: 0.87, srcPage: 30 }),
+  row({ id: 'i25', klass: '环境适应性 / 温度适应', name: '高温工作能力', criteria: '+55℃正常工作', domain: '环境适应性', conf: 0.90, srcPage: 32 }),
+  row({ id: 'i26', klass: '环境适应性 / 温度适应', name: '低温工作能力', criteria: '-41℃正常启动', domain: '环境适应性', conf: 0.90, srcPage: 32 }),
+  row({ id: 'i27', klass: '环境适应性 / 电磁兼容', name: '电磁兼容性', criteria: '满足GJB 151B要求', domain: '电磁兼容', conf: 0.68, srcPage: 33 }),
+  row({ id: 'i28', klass: '环境适应性 / 电磁兼容', name: '电源瞬态耐受', criteria: '满足GJB 181A要求', domain: '电磁兼容', conf: 0.85, srcPage: 33 }),
 ]
 
-/** 按来源文档取抽取结果行；列表 count 与详情共用此函数，保证联动 */
+function copyMasterRows(name) {
+  return m02IndRows.map((r) => ({
+    ...r,
+    srcDoc: name && name.includes('.pdf') ? name : r.srcDoc,
+  }))
+}
+
+/** 按来源文档取抽取结果行；列表 count 与详情共用此函数，保证联动。未单独配置条数的文档沿用 28 项样例。 */
 export function getM02RowsForDoc(docName = '') {
   const name = String(docName || '')
-  if (isM02MasterDoc(name)) {
-    return m02IndRows.map((r) => ({
-      ...r,
-      srcDoc: name.includes('.pdf') ? name : r.srcDoc,
-    }))
-  }
+  if (!name) return []
   const mapped = m02CountMap[name]
-  if (mapped != null) {
+  if (mapped != null && !isM02MasterDoc(name)) {
     const n = Math.min(mapped, m02IndRows.length)
     return m02IndRows.slice(0, n).map((r, i) => ({
       ...r,
@@ -78,7 +89,7 @@ export function getM02RowsForDoc(docName = '') {
       srcDoc: name,
     }))
   }
-  return []
+  return copyMasterRows(name)
 }
 
 export function getM02CountForDoc(docName = '') {

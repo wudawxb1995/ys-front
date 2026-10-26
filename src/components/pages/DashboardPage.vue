@@ -12,7 +12,7 @@
       </div>
     </div>
     <div class="kpi-row">
-      <div v-for="k in page.kpis" :key="k.label" class="kpi">
+      <div v-for="k in displayKpis" :key="k.label" class="kpi">
         <div class="mark"><Icon :name="kpiIcon(k.label)" /></div>
         <div class="label">{{ k.label }}</div>
         <div class="value">{{ k.value }}<small>{{ k.unit }}</small></div>
@@ -45,8 +45,19 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import Icon from '@/components/Icon.vue'
+import { useRows } from '@/composables/tables'
 const props = defineProps({ page: Object })
+const route = useRoute()
+const resources = useRows('resources')
+const displayKpis = computed(() => route.params.pid === 'rebuild' && route.params.sid === 'quant'
+  ? props.page.kpis.map(item => {
+      if (item.label === '数据资源总量') return { ...item, value: String(resources.length) }
+      if (item.label === '已完成解析') return { ...item, value: String(resources.filter(row => row.status === '已解析').length) }
+      return item
+    })
+  : props.page.kpis)
 function kpiIcon(label = '') {
   if (/卡片/.test(label)) return 'card'
   if (/问答/.test(label)) return 'chat'

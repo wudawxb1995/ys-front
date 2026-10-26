@@ -4,7 +4,7 @@
     <div v-if="isResourceEntry" class="res-entry">
       <div class="entry-title">
         <h2>{{ title || '数据资源录入' }}</h2>
-        <p>统一录入定型资料、历史试验数据、标准规范及专业文献</p>
+        <p>按论证立项、方案设计、工程研制、试验鉴定等业务阶段统一录入资料</p>
       </div>
 
       <div class="entry-split">
@@ -17,15 +17,6 @@
             @dragleave.prevent="dragOver = false"
             @drop.prevent="onDrop"
           >
-            <div class="type-tabs" @click.stop>
-              <button
-                v-for="tab in typeTabs"
-                :key="tab.key"
-                type="button"
-                :class="{ on: activeType === tab.key }"
-                @click="setType(tab.key)"
-              >{{ tab.label }}</button>
-            </div>
             <div class="drop-body">
               <template v-if="!pendingFiles.length">
                 <div class="cloud">
@@ -41,7 +32,7 @@
               </template>
               <div v-else class="pending-box" @click.stop>
                 <div class="pending-title">已选择 {{ pendingFiles.length }} 个文件</div>
-                <div class="pending-hint">请完善右侧资源信息后点击「确认录入」</div>
+                <div class="pending-hint">请完善右侧资源信息后点击「确定录入并解析」</div>
                 <div class="pending-list">
                   <div v-for="(pf, i) in pendingFiles" :key="pf.uid" class="pending-chip">
                     <span class="file-ico" :class="iconKind(pf.fmt)">{{ iconText(pf.fmt) }}</span>
@@ -88,7 +79,7 @@
               <input v-model="meta.version" placeholder="V1.0" />
 
               <label>来源单位<span class="req">*</span></label>
-              <input v-model="meta.org" placeholder="试验单位" />
+              <input v-model="meta.org" placeholder="XXX单位" />
               <label>资料日期<span class="req">*</span></label>
               <date-field v-model="meta.date" placeholder="选择日期" />
 
@@ -101,7 +92,7 @@
             </div>
             <div class="form-actions">
               <el-button @click="stash">暂存</el-button>
-              <el-button type="primary" @click="confirmEntry">确认录入</el-button>
+              <el-button type="primary" @click="confirmEntry">确定录入并解析</el-button>
             </div>
           </div>
         </div>
@@ -139,7 +130,7 @@
             </thead>
             <tbody>
               <tr v-if="!tasks.length">
-                <td colspan="6" class="empty">暂无录入任务，请选择文件并完善资源信息后点击「确认录入」</td>
+                <td colspan="6" class="empty">暂无录入任务，请选择文件并完善资源信息后点击「确定录入并解析」</td>
               </tr>
               <tr v-for="row in tasks" :key="row.id">
                 <td>
@@ -233,6 +224,7 @@
 
 <script>
 import { computed, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useRichPage } from '@/composables/rich/useRichPage'
 import { useUi } from '@/composables/ui'
 import { useRows } from '@/composables/tables'
@@ -248,13 +240,9 @@ import { nowText } from '@/utils/format'
 import SelectField from '@/components/SelectField.vue'
 import DateField from '@/components/DateField.vue'
 import TextAreaField from '@/components/TextAreaField.vue'
+import { resourceCategories } from '@/data/resourceCorpus'
 
-const TYPE_TABS = [
-  { key: '定型资料', label: '定型资料' },
-  { key: '历史试验数据', label: '历史试验数据' },
-  { key: '标准规范', label: '标准规范' },
-  { key: '专业文献', label: '专业文献' },
-]
+const TYPE_TABS = resourceCategories.map(name => ({ key: name, label: name }))
 
 function catLabelOf(key) {
   return TYPE_TABS.find((t) => t.key === key)?.label || key
@@ -277,13 +265,15 @@ export default {
   props: { page: Object, title: String },
   setup(props) {
     const rich = useRichPage(props)
+    const route = useRoute()
+    const router = useRouter()
     const { toast, confirm, openDrawer } = useUi()
     const fileInput = ref(null)
     const dragOver = ref(false)
     const uploading = ref(false)
     const uploadPct = ref(0)
     const uploadHint = ref('')
-    const activeType = ref('定型资料')
+    const activeType = ref('方案设计')
     let seq = 2
     let pendingUid = 0
     const ALLOW_EXT = /\.(doc|docx|pdf|xls|xlsx|csv|jpg|jpeg|png|tif|tiff|bmp)$/i
@@ -295,18 +285,18 @@ export default {
     const pendingFiles = ref([])
 
     const meta = reactive({
-      name: '某型定型技术资料',
-      project: '定型试验项目',
-      cat: '定型资料',
+      name: '某型装备性能鉴定试验资料',
+      project: '某型装备性能鉴定试验',
+      cat: '方案设计',
       version: 'V1.0',
-      org: '试验单位',
+      org: 'XXX单位',
       date: '2026-10-22',
       remark: '',
     })
 
     const tasks = ref([
-      { id: 1, name: '定型技术资料.docx', cat: '定型资料', catLabel: '定型资料', size: '2.36 MB', version: 'V1.0', status: '已完成', fmt: 'DOCX', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
-      { id: 2, name: '技术研究文献.pdf', cat: '专业文献', catLabel: '专业文献', size: '3.85 MB', version: 'V1.0', status: '已完成', fmt: 'PDF', org: '试验单位', project: '定型试验项目', date: '2026-10-22' },
+      { id: 1, name: '某型装备性能鉴定试验大纲V4.docx', cat: '方案设计', catLabel: '方案设计', size: '5.70 MB', version: 'V4.0', status: '已完成', fmt: 'DOCX', org: '试验鉴定机构', project: '某型装备性能鉴定试验', date: '2026-10-22' },
+      { id: 2, name: '某型装备性能鉴定试验报告V2.pdf', cat: '试验鉴定', catLabel: '试验鉴定', size: '16.80 MB', version: 'V2.0', status: '已完成', fmt: 'PDF', org: '试验鉴定机构', project: '某型装备性能鉴定试验', date: '2026-10-22' },
     ])
 
     const projects = ['定型试验项目', '性能鉴定试验项目', '可靠性试验项目']
@@ -325,10 +315,6 @@ export default {
       ]
     })
 
-    function setType(key) {
-      activeType.value = key
-      meta.cat = key
-    }
     watch(() => meta.cat, (v) => { if (v) activeType.value = v })
 
     function iconKind(fmt) {
@@ -420,10 +406,11 @@ export default {
             file,
           })
         })
-        if (!meta.name || meta.name === '某型定型技术资料') {
+        const presetName = !meta.name?.trim() || meta.name === '某型定型技术资料' || meta.name === '某型装备性能鉴定试验资料'
+        if (presetName) {
           meta.name = ok[0].name.replace(/\.[^.]+$/, '')
         }
-        toast(`已选择 ${ok.length} 个文件，请完善资源信息后确认录入`, 'success')
+        toast(`已选择 ${ok.length} 个文件，请完善资源信息后确定录入并解析`, 'success')
       } catch {
         toast('文件上传失败，请重试', 'error')
       } finally {
@@ -490,20 +477,32 @@ export default {
       return true
     }
 
+    function uniqueResourceName(rows, name) {
+      if (!rows.some((r) => r.name === name)) return name
+      const dot = name.lastIndexOf('.')
+      const base = dot > 0 ? name.slice(0, dot) : name
+      const ext = dot > 0 ? name.slice(dot) : ''
+      let n = 2
+      while (rows.some((r) => r.name === `${base}（${n}）${ext}`)) n += 1
+      return `${base}（${n}）${ext}`
+    }
+
     function pushResource(row, status) {
       if (props.page?.dataset !== 'resources') return null
       const rows = useRows('resources')
+      const name = uniqueResourceName(rows, row.name)
+      row.name = name
       const modal = /XLS|CSV/.test(row.fmt) ? '表格' : /PNG|JPE?G|TIF|BMP/.test(row.fmt) ? '图像' : '文本'
       const time = nowText()
       const record = {
-        name: row.name,
+        name,
         cat: row.cat,
         fmt: row.fmt,
         modal,
         size: row.size,
         pages: row.pages || '—',
         status,
-        by: 'Mona',
+        by: '管理员',
         time,
         fileUrl: row.fileUrl || '',
         version: row.version,
@@ -511,12 +510,9 @@ export default {
         org: row.org,
         date: row.date,
         remark: row.remark,
+        fresh: true,
       }
-      const existIdx = rows.findIndex((r) => r.name === record.name)
-      if (existIdx >= 0) {
-        Object.assign(rows[existIdx], record)
-        return rows[existIdx]
-      }
+      rows.forEach((item) => { if (item.fresh) item.fresh = false })
       rows.unshift(record)
       return record
     }
@@ -614,16 +610,34 @@ export default {
         toast('请先选择文件后再暂存', 'warning')
         return
       }
-      toast('资源信息已暂存，确认录入后才会写入录入任务', 'success')
+      toast('资源信息已暂存，确定录入并解析后才会写入录入任务', 'success')
+    }
+
+    function formTask() {
+      seq += 1
+      const raw = meta.name.trim()
+      const name = /\.[a-zA-Z0-9]+$/.test(raw) ? raw : `${raw}.docx`
+      return {
+        id: seq,
+        name,
+        cat: meta.cat || '方案设计',
+        catLabel: catLabelOf(meta.cat || '方案设计'),
+        size: '2.40 MB',
+        version: meta.version || 'V1.0',
+        status: '处理中',
+        fmt: extOf(name),
+        org: meta.org,
+        project: meta.project,
+        date: meta.date,
+        remark: meta.remark,
+        fileUrl: guessFileUrl(name),
+        pages: '24',
+      }
     }
 
     function confirmEntry() {
       if (!requiredOk()) return
-      if (!pendingFiles.value.length) {
-        toast('请先选择文件，完善资源信息后再确认录入', 'warning')
-        return
-      }
-      const batch = buildTasksFromPending()
+      const batch = pendingFiles.value.length ? buildTasksFromPending() : [formTask()]
       pendingFiles.value = []
       const ids = batch.map((t) => t.id)
       const names = batch.map((t) => t.name)
@@ -644,6 +658,13 @@ export default {
           if (task) finishParse(task)
         })
         toast('解析完成，已写入录入任务与数据资源管理', 'success')
+        setTimeout(() => {
+          const pid = route.params.pid
+          const sid = route.params.sid
+          if (pid && sid) {
+            router.push({ name: 'app', params: { pid, sid, mid: 'res-list' } })
+          }
+        }, 2000)
       }, 1400)
     }
 
@@ -669,9 +690,6 @@ export default {
     return {
       ...rich,
       isResourceEntry,
-      typeTabs: TYPE_TABS,
-      activeType,
-      setType,
       meta,
       projects,
       catOptions,
@@ -771,39 +789,10 @@ export default {
 .upload-mask :deep(.el-progress) { width: 240px; }
 .upload-mask :deep(.el-progress__text) { color: #1668a8 !important; min-width: 36px; }
 
-.type-tabs {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  background: rgba(255, 255, 255, .78);
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: 0 1px 6px rgba(13, 78, 131, .06);
-}
-.type-tabs button {
-  height: 36px;
-  border: 0;
-  background: transparent;
-  color: #5d7388;
-  font-size: 13.5px;
-  border-radius: 6px;
-  font-weight: 500;
-}
-.type-tabs button.on {
-  background: #fff;
-  color: #0d4e83;
-  font-weight: 700;
-  box-shadow: 0 1px 4px rgba(13, 78, 131, .12);
-}
-
 .drop-body {
   height: 100%;
   min-height: 280px;
-  padding: 64px 16px 28px;
+  padding: 28px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;

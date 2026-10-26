@@ -1,7 +1,106 @@
 <template>
   <div class="rich-type-m14">
+    <div v-if="m14Wizard" class="m14-wizard">
+      <div class="m14-topbar">
+        <button type="button" class="m14-back" @click="closeProbeWizard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+          返回探针列表
+        </button>
+        <span class="m14-sep">|</span>
+        <span class="m14-title">{{ m14DialogTitle }}</span>
+      </div>
+      <p class="m14-wiz-sub">四步完成配置：绑定监测参数 → 判据从指标树同源引用 → 告警级别 → 触发后联动动作。</p>
+      <div class="m14-wiz-grid">
+        <section class="m14-wiz-card">
+          <h3><i>1</i>监测参数绑定</h3>
+          <label>探针名称</label>
+          <el-input v-model="m14CreateForm.name" maxlength="40" placeholder="如 弹着点散布探针-2" />
+          <label>监测参数</label>
+          <el-select
+            :model-value="m14CreateForm.indicatorId"
+            :disabled="!m14CreateForm.treeVer"
+            filterable
+            placeholder="请先在右侧选择指标树，再选指标"
+            style="width:100%"
+            @change="m14PickIndicator"
+          >
+            <el-option v-for="row in m14TreeIndicators" :key="row.id" :label="row.name" :value="row.id" />
+          </el-select>
+          <label>数据来源</label>
+          <el-select v-model="m14CreateForm.dataSrc" style="width:100%">
+            <el-option v-for="item in m14DataSrcOpts" :key="item" :label="item" :value="item" />
+          </el-select>
+          <label>采样方式</label>
+          <el-select v-model="m14CreateForm.sampleMode" style="width:100%">
+            <el-option v-for="item in m14SampleOpts" :key="item" :label="item" :value="item" />
+          </el-select>
+        </section>
+
+        <section class="m14-wiz-card">
+          <h3><i>2</i>判据配置</h3>
+          <button v-if="!m14TreeOpen" type="button" class="m14-tree-btn" @click="m14TreeOpen = true">从指标树选择</button>
+          <template v-else>
+            <label>指标树</label>
+            <el-select
+              :model-value="m14CreateForm.treeVer"
+              placeholder="先选择已生成的指标树"
+              style="width:100%"
+              @change="m14PickTree"
+            >
+              <el-option v-for="tree in m14TreeOptions" :key="tree.value" :label="tree.label" :value="tree.value" />
+            </el-select>
+            <label>指标</label>
+            <el-select
+              :model-value="m14CreateForm.indicatorId"
+              :disabled="!m14CreateForm.treeVer"
+              filterable
+              placeholder="再选择该指标树下的指标"
+              style="width:100%"
+              @change="m14PickIndicator"
+            >
+              <el-option
+                v-for="row in m14TreeIndicators"
+                :key="row.id"
+                :label="`${row.name}  ${row.criteria}`"
+                :value="row.id"
+              />
+            </el-select>
+          </template>
+          <div v-if="m14PickedIndicator" class="m14-picked">
+            <span>当前判据</span>
+            <b>{{ m14PickedIndicator.name }}</b>
+            <em>{{ m14PickedIndicator.criteria }}</em>
+            <small>引自{{ m14CreateForm.treeVer }}</small>
+          </div>
+          <p v-else class="m14-wiz-hint">判据不手工录入，请从指标树引用。</p>
+          <label>告警级别</label>
+          <div class="m14-alarm-picks">
+            <button
+              v-for="level in m14AlarmOpts"
+              :key="level"
+              type="button"
+              :class="{ on: m14CreateForm.alarmLevel === level }"
+              @click="m14CreateForm.alarmLevel = level"
+            >{{ level }}</button>
+          </div>
+          <el-checkbox v-model="m14CreateForm.autoCause">触发后自动启动根因分析</el-checkbox>
+        </section>
+
+        <section class="m14-wiz-card m14-wiz-graph">
+          <h3><i>3</i>挂载推理图谱</h3>
+          <div class="m14-graph-stats">
+            <div><b>128</b><span>图谱节点</span></div>
+            <div><b>214</b><span>关系</span></div>
+            <div><b>6</b><span>历史案例</span></div>
+          </div>
+          <p>探针保存后自动挂载至推理图谱子图，异常触发时沿图谱开展根因推理。</p>
+          <el-button type="primary" class="m14-save" @click="submitCreateProbe">保存探针</el-button>
+        </section>
+      </div>
+    </div>
+
     <!-- ═══ 第二级：探针配置详情（白底整卡） ═══ -->
-    <div v-if="m14Detail" class="m14-detail-shell">
+    <div v-else-if="m14Detail" class="m14-detail-shell">
       <div class="m14-topbar">
         <button type="button" class="m14-back" @click="m14Detail = null">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -224,7 +323,7 @@
               <td>
                 <span class="m14-cite-sm">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                  引自指标树V1.0
+                  引自{{ p.treeVer || '指标树 V1.0' }}
                 </span>
               </td>
               <td class="time">{{ p.lastTrigger || '—' }}</td>
@@ -397,6 +496,95 @@ export default {
   font-size: 15px;
   color: #1f3d5a;
 }
+.m14-wiz-sub { margin: 0; font-size: 13px; color: #7c8fa2; }
+.m14-wiz-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+.m14-wiz-card {
+  background: #fff;
+  border: 1px solid #e3edf6;
+  border-radius: 12px;
+  padding: 16px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 420px;
+}
+.m14-wiz-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: #1f3d5a;
+}
+.m14-wiz-card h3 i {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1668a8;
+  color: #fff;
+  font-style: normal;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.m14-wiz-card label { font-size: 13px; color: #5c7084; margin-top: 4px; }
+.m14-tree-btn {
+  height: 40px;
+  border: 1px dashed #9ec8e8;
+  background: #f4f9fd;
+  color: #1668a8;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.m14-picked {
+  background: #f7fbfe;
+  border: 1px solid #d5e6f4;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.m14-picked span, .m14-picked small { font-size: 12px; color: #7c8fa2; }
+.m14-picked b { color: #1f3d5a; font-size: 14px; }
+.m14-picked em { font-style: normal; color: #0d4e83; font-weight: 700; }
+.m14-wiz-hint { margin: 0; font-size: 12px; color: #8aa0b3; }
+.m14-alarm-picks { display: flex; gap: 8px; }
+.m14-alarm-picks button {
+  flex: 1;
+  height: 34px;
+  border: 1px solid #d5e4f0;
+  background: #fff;
+  border-radius: 8px;
+  color: #3f5062;
+  cursor: pointer;
+}
+.m14-alarm-picks button.on {
+  border-color: #1668a8;
+  background: #e8f3fb;
+  color: #0d4e83;
+  font-weight: 700;
+}
+.m14-graph-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: #f4f9fd;
+  border-radius: 10px;
+  padding: 14px 8px;
+  text-align: center;
+}
+.m14-graph-stats b { display: block; font-size: 22px; color: #1668a8; }
+.m14-graph-stats span { font-size: 12px; color: #7c8fa2; }
+.m14-wiz-graph p { margin: 0; font-size: 13px; line-height: 1.6; color: #5c7084; }
+.m14-save { margin-top: auto; width: 100%; }
 
 .m14-stack { display: flex; flex-direction: column; gap: 14px; }
 .m14-row2 {

@@ -10,12 +10,12 @@
           </div>
         </div>
         <div class="p-user">
-          <button class="hub-btn" @click="goCockpit">
+          <button class="hub-btn" @click="router.push('/hub')">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7">
               <rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" />
               <rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" />
             </svg>
-            总览驾驶舱
+            后台管理系统
           </button>
           <span class="mona">管理员</span>
         </div>
@@ -61,10 +61,6 @@ function enter(app) {
   router.push({ name: 'app', params: { pid: app.id, sid: system.id, mid: leaf.id } })
 }
 
-/** 镜头四：门户右上角进入管理端总览驾驶舱（m32） */
-function goCockpit() {
-  router.push({ name: 'app', params: { pid: 'cockpit', sid: 'cockpit-main', mid: 'home' } })
-}
 </script>
 
 <style scoped>

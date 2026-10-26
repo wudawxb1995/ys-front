@@ -3,7 +3,7 @@
     <div class="post-trial-shell">
       <div class="entry-title">
         <h2>{{ title }}</h2>
-      </div>
+    </div>
 
     <template v-if="stage === 'outline'">
       <div class="wizard-stack">
@@ -12,7 +12,7 @@
           <el-steps :active="1" finish-status="success" align-center>
             <el-step v-for="step in wizardSteps" :key="step" :title="step" />
           </el-steps>
-        </section>
+      </section>
         <section class="sec-frame">
           <h3><i></i>提纲概况</h3>
           <div class="outline-stats">
@@ -20,9 +20,9 @@
             <div class="stat"><div class="k">提纲要点</div><div class="n">24 <small>项</small></div></div>
             <div class="stat"><div class="k">知识引用</div><div class="n">31 <small>条</small></div></div>
             <div class="stat"><div class="k">完整度</div><div class="n">100 <small>%</small></div></div>
-          </div>
+      </div>
         </section>
-        <div class="outline-layout">
+      <div class="outline-layout">
           <section class="sec-frame">
             <h3>
               <i></i>自动生成提纲
@@ -42,8 +42,8 @@
               <span class="chapter-no">{{ item.no }}</span>
               <b>{{ item.name }}</b>
               <span class="source-pill">{{ item.source }}</span>
-            </div>
-          </section>
+          </div>
+        </section>
           <section class="sec-frame outline-editor">
             <h3><i></i>章节设计 <em class="ok">已通过完整性检查</em></h3>
             <div class="field">
@@ -59,12 +59,12 @@
             </div>
             <div class="field">
               <span class="field-cap">章节要点</span>
-              <div class="point-list">
+          <div class="point-list">
                 <div v-for="(child, index) in selectedOutline.children" :key="index">
                   <span class="drag">⋮⋮</span>
                   <el-input v-model="selectedOutline.children[index]" />
                   <el-button link type="danger" @click="removePoint(index)">删除</el-button>
-                </div>
+          </div>
               </div>
               <el-button class="add-point" @click="addPoint">添加要点</el-button>
             </div>
@@ -155,8 +155,8 @@
             <p>请先在「文档生成需求配置」中勾选指标树、试验数据与解读报告，再回到本页装配初稿。</p>
             <div class="wizard-actions">
               <el-button type="primary" @click="goTo('write', 'generate-requirement')">去勾选素材</el-button>
-            </div>
-          </section>
+          </div>
+        </section>
           <template v-else>
             <section class="sec-frame">
               <h3>
@@ -166,7 +166,7 @@
                   <el-button @click="goTo('write', 'generate-requirement')">重新勾选</el-button>
                 </span>
               </h3>
-              <div class="material-grid">
+        <div class="material-grid">
                 <article v-for="material in materials" :key="material.id" class="material-card" :class="material.tone">
                   <div class="material-top">
                     <span class="material-icon">{{ material.id === 'rule' ? '树' : material.id === 'data' ? '表' : '析' }}</span>
@@ -175,9 +175,9 @@
                   <b>{{ material.name }}</b>
                   <p>{{ material.meta }}</p>
                   <small>来源：{{ material.source }}</small>
-                </article>
-              </div>
-            </section>
+          </article>
+        </div>
+          </section>
             <section class="sec-frame">
               <h3><i></i>报告命名</h3>
               <div class="compose-name">
@@ -185,7 +185,7 @@
                 <span>生成后 → {{ draftReport.fullName || `${draftReport.title || '某型性能鉴定试验报告'} V1（初稿）` }}</span>
                 <el-button link type="primary" @click="goTo('write', 'generate-requirement')">修改名称</el-button>
               </div>
-            </section>
+          </section>
             <section class="sec-frame outline-frame">
               <h3><i></i>提纲预览 <em>8 章</em></h3>
               <div class="outline-list">
@@ -281,7 +281,7 @@
                 <div v-for="(block, idx) in chapterBody.blocks" :key="idx" class="chapter-point">
                   <b>{{ selectedChapterMeta.no }}.{{ idx + 1 }} {{ block.title }}</b>
                   <p>{{ block.text }}</p>
-                </div>
+              </div>
               </div>
               <div class="source-note">生成来源：{{ selectedChapterMeta.source }}</div>
             </template>
@@ -315,7 +315,7 @@
             <div class="stat"><div class="k">引用依据</div><div class="n">36</div></div>
             <div class="stat"><div class="k">文档版本</div><div class="n">2</div></div>
             <div class="stat"><div class="k">修改记录</div><div class="n">11</div></div>
-          </div>
+      </div>
         </section>
         <section class="sec-frame">
           <h3><i></i>文档生成全过程</h3>
@@ -327,7 +327,7 @@
                   <strong>{{ node.name }}</strong>
                   <span>{{ node.time }}</span>
                   <small>{{ node.desc }}</small>
-                </div>
+      </div>
               </div>
             </el-tab-pane>
             <el-tab-pane label="条款关系图" name="graph">
@@ -346,8 +346,8 @@
               </div>
             </el-tab-pane>
           </el-tabs>
-        </section>
-        <div class="trace-grid">
+      </section>
+      <div class="trace-grid">
           <section class="sec-frame">
             <h3>
               <i></i>条款与引用追溯
@@ -442,18 +442,18 @@
               </div>
             </div>
           </section>
-          <div class="review-layout">
+        <div class="review-layout">
             <section class="sec-frame">
               <h3><i></i>{{ draftReport.reviewTarget }}</h3>
               <div class="paper">
                 <small>{{ activeIssue.location }}</small>
                 <h2>{{ activeIssue.type === '判据引用' ? '6 符合性判定' : activeIssue.type === '数据勾稽' ? '8 结论与建议' : '1 试验任务概述' }}</h2>
-                <p>根据试验任务安排，本次试验依据性能试验提纲组织实施，试验数据完整，过程记录可追溯。</p>
+              <p>根据试验任务安排，本次试验依据性能试验提纲组织实施，试验数据完整，过程记录可追溯。</p>
                 <p class="highlight-line" :class="{ pulse: locating }">
                   {{ activeIssue.snippet }}
                   <el-tag size="small" type="warning" effect="light" class="issue-mark">审查意见 {{ activeIssue.id }}</el-tag>
                 </p>
-                <p>经逐项核对指标树、原始记录与数据汇总表，报告所列结果具备判定依据；相关修改将在定稿版本中保留处理记录。</p>
+              <p>经逐项核对指标树、原始记录与数据汇总表，报告所列结果具备判定依据；相关修改将在定稿版本中保留处理记录。</p>
                 <el-alert
                   class="located-tip"
                   type="info"
@@ -461,8 +461,8 @@
                   show-icon
                   :title="`已定位到：${activeIssue.location}`"
                 />
-              </div>
-            </section>
+            </div>
+          </section>
             <aside class="sec-frame issue-side">
               <h3>
                 <i></i>审查意见
@@ -507,7 +507,7 @@
                   <el-button type="primary" @click="acceptIssue">采纳建议</el-button>
                 </div>
               </div>
-            </aside>
+          </aside>
           </div>
         </div>
       </template>
@@ -539,7 +539,7 @@
             <el-table-column label="状态" width="110" align="center">
               <template #default="{ row }">
                 <span class="badge" :class="statusBadgeClass(row.status)"><i></i>{{ row.status }}</span>
-              </template>
+    </template>
             </el-table-column>
             <el-table-column label="操作" width="140" align="center">
               <template #default="{ row }">
@@ -1048,10 +1048,10 @@ function generateDraft() {
   setTimeout(() => {
     assembling.value = false
     markDraftReportGenerated()
-    postTrialState.generated = true
-    postTrialState.currentVersion = 'V1（初稿）'
+  postTrialState.generated = true
+  postTrialState.currentVersion = 'V1（初稿）'
     postTrialState.selectedChapter = '符合性判定'
-    composeMode.value = 'preview'
+  composeMode.value = 'preview'
     toast(`已生成「${demoStore.draftReport.fullName}」，${demoStore.metricTreeCount} 项判定已写入`)
   }, 240)
 }
@@ -1108,9 +1108,9 @@ function finalizeArchive() {
     '更新状态为已入库',
     '归集完成',
   ], () => {
-    reviewIssues.forEach((issue) => { issue.status = '已采纳' })
-    postTrialState.archived = true
-    postTrialState.currentVersion = 'V2（定稿）'
+  reviewIssues.forEach((issue) => { issue.status = '已采纳' })
+  postTrialState.archived = true
+  postTrialState.currentVersion = 'V2（定稿）'
     finalizeTrialReport()
     toast('试验报告 V2 已入库')
     goTo('collect', 'document-type-archive')

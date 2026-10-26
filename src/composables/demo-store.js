@@ -268,6 +268,7 @@ export function updateActiveProbeCount(count) {
  */
 export function setMatchContext(row) {
   if (!row) return
+  const algo = store.matchContext?.algo
   store.matchContext = {
     schemeId: row.id || '',
     schemeName: row.name || '',
@@ -279,6 +280,7 @@ export function setMatchContext(row) {
     domains: Array.isArray(row.domains) ? [...row.domains] : [],
     factors: Array.isArray(row.factors) ? row.factors.map((f) => ({ ...f })) : [],
     updatedAt: row.updatedAt || '',
+    ...(algo ? { algo } : {}),
   }
 }
 

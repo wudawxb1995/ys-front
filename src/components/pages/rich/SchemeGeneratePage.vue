@@ -212,8 +212,80 @@
         </template>
       </el-dialog>
 
+      <!-- 新建向导：配置因子 → 选模板 → 生成预览 -->
+      <div v-if="m08InWizard" class="m08-wiz">
+        <div v-if="m08Snap.doneSteps <= 1" class="m08-panel">
+          <div class="m08-panel-head">
+            <span class="m08-panel-title">已配置因子：{{ m08FactorCount }} 个</span>
+            <span class="m08-factor-note">{{ m08FactorGapNote }}</span>
+          </div>
+          <div class="m08-factor-lines">
+            <div v-for="(factor, index) in m08Factors" :key="factor.name + index" class="m08-factor-line">
+              <b>{{ factor.name }}</b>
+              <span>{{ factor.levels }}</span>
+            </div>
+          </div>
+          <div class="m08-factor-add">
+            <span>现场添加因子</span>
+            <button
+              v-for="item in m08QuickFactors"
+              :key="item.name"
+              type="button"
+              @click="m08QuickAddFactor(item)"
+            >+ {{ item.name }}</button>
+            <span class="spacer"></span>
+            <el-input v-model="m08FactorName" placeholder="因子名" style="width: 160px" @keyup.enter="m08AddFactorLine" />
+            <el-button type="primary" @click="m08AddFactorLine">添加</el-button>
+          </div>
+          <div class="m08-wiz-foot">
+            <el-button type="primary" @click="m08WizardNextFactors">下一步：选择模板与案例 →</el-button>
+          </div>
+        </div>
+
+        <div v-else-if="m08Snap.doneSteps === 2" class="m08-panel">
+          <div class="m08-panel-head">
+            <span class="m08-panel-title">标准方案模板库（点击选择）</span>
+          </div>
+          <div class="m08-tpl-list">
+            <button
+              v-for="item in m08TemplateCards"
+              :key="item.name"
+              type="button"
+              class="m08-tpl-card"
+              :class="{ on: (m08CurrentRow?.template || m08TplForm.template) === item.name }"
+              @click="m08PickTemplate(item.name)"
+            >
+              <b>{{ item.name }}</b>
+              <span>{{ item.brief }}</span>
+              <em v-if="item.name.includes('精度')">推荐</em>
+            </button>
+          </div>
+          <div class="m08-wiz-foot">
+            <el-button @click="m08WizardBack">← 上一步</el-button>
+            <el-button type="primary" @click="m08WizardToPreview">下一步：生成预览 →</el-button>
+          </div>
+        </div>
+
+        <div v-else class="m08-panel m08-gen-panel">
+          <div class="m08-panel-head"><span class="m08-panel-title">生成预览</span></div>
+          <div class="m08-gen-body">
+            <p>将以「{{ m08CurrentRow?.template || '精度试验大纲模板' }}」为骨架，融合已选考核指标与试验因子，装配五章大纲初稿。</p>
+            <el-button v-if="!m08Generating" type="primary" @click="m08StartGenerate">生成初稿</el-button>
+            <div v-else class="m08-gen-run">
+              <div
+                v-loading="true"
+                class="m08-gen-loading"
+                element-loading-text="详细方案装配中：按指标树逐章生成试验设计，判据与来源同步回填"
+              ></div>
+              <div class="m08-gen-bar"><i :style="{ width: m08GenProgress + '%' }"></i></div>
+              <p>每项指标均生成条件、步骤、数据记录、判据与异常处置</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 因子面板 -->
-      <div id="m08-factor-panel" class="m08-panel">
+      <div v-if="!m08InWizard && !m08CurrentRow?.picked?.length" id="m08-factor-panel" class="m08-panel">
         <div class="m08-panel-head">
           <span class="m08-panel-title">试验因子配置</span>
           <span class="m08-factor-count">已配置因子：{{ m08FactorCount }}个</span>
@@ -238,7 +310,7 @@
       </div>
 
       <!-- 大纲 + 对话 -->
-      <div class="m08-lower">
+      <div v-if="!m08InWizard" class="m08-lower">
         <div id="m08-outline-panel" class="m08-panel m08-outline">
           <div class="m08-panel-head">
             <span class="m08-panel-title">大纲预览</span>
@@ -251,23 +323,42 @@
             </span>
             <el-button @click="m08ExportWord">导出 Word</el-button>
           </div>
-          <div v-if="m08Snap.previewReady || m08Snap.doneSteps >= 4" class="m08-outline-body">
-            <div class="m08-chap-tree">
-              <div
-                v-for="(ch, i) in m08Chapters"
-                :key="ch.no"
-                class="m08-chap"
-                :class="{ on: m08ActiveChapter === i }"
-                @click="m08ActiveChapter = i"
-              >
-                <span class="m08-chap-no">{{ ch.no }}</span>
-                {{ ch.title }}
-              </div>
+          <div v-if="m08Snap.previewReady || m08Snap.doneSteps >= 4" class="m08-doc-wrap">
+            <div v-if="m08ChatStreaming" class="m08-doc-live">正在把本轮修改写入文稿…</div>
+            <div v-if="m08CurrentRow?.fullDoc" class="m08-doc-layout">
+              <aside class="m08-toc">
+                <div class="m08-toc-title">文档目录</div>
+                <button
+                  v-for="item in schemeDocToc"
+                  :key="item.id"
+                  type="button"
+                  :class="{ on: m08TocId === item.id }"
+                  @click="m08JumpDoc(item.id)"
+                >{{ item.title }}</button>
+              </aside>
+              <article class="m08-doc" :class="{ 'is-writing': m08ChatStreaming }">
+                <header>
+                  <b>{{ m08CurrentRow?.name || '试验方案' }}.docx</b>
+                  <span>V4.0 · 11章 · 指标 28 项</span>
+                </header>
+                <section v-for="ch in m08Chapters" :key="ch.id || ch.no">
+                  <div v-html="ch.content"></div>
+                </section>
+              </article>
             </div>
-            <div class="m08-chap-content">
-              <div class="m08-chap-h">{{ m08Chapters[m08ActiveChapter]?.no }} {{ m08Chapters[m08ActiveChapter]?.title }}</div>
-              <div v-html="m08Chapters[m08ActiveChapter]?.content"></div>
-            </div>
+            <article v-else class="m08-doc" :class="{ 'is-writing': m08ChatStreaming }">
+              <header>
+                <b>{{ m08CurrentRow?.name || '试验方案' }}.docx</b>
+                <span>预览文件</span>
+              </header>
+              <section v-for="(ch, ci) in m08Chapters" :key="ch.no + ci">
+                <h4>{{ ch.no }} {{ ch.title }}</h4>
+                <div v-html="ch.content"></div>
+                <p v-if="m08StreamDoc.index === ci && m08StreamDoc.text" class="m08-hl-live">
+                  <mark class="m08-hl">{{ m08StreamDoc.text }}<i v-if="m08StreamDoc.caret" class="m08-caret"></i></mark>
+                </p>
+              </section>
+            </article>
           </div>
           <div v-else class="m08-outline-empty">
             <div class="m08-outline-empty-title">大纲尚未生成</div>
@@ -280,9 +371,12 @@
           </div>
         </div>
 
-        <div id="m08-chat-panel" class="m08-panel m08-chat">
+        <div id="m08-chat-panel" class="m08-panel m08-chat" :class="{ 'is-streaming': m08ChatStreaming }">
           <div class="m08-panel-head">
-            <span class="m08-panel-title">多轮校核优化</span>
+            <span class="m08-panel-title">对话优化</span>
+            <span v-if="m08CurrentRow?.fullDoc" class="m08-chat-flow">指令解析 → 文档定位 → 正文修订 → 版本生成</span>
+            <span v-if="m08ChatStreaming" class="m08-live-tag">生成中</span>
+            <span v-else-if="m08Rounds.length" class="m08-live-tag">{{ m08Rounds.length }} 轮</span>
           </div>
           <div class="m08-chat-scroll">
             <div v-if="!(m08Snap.previewReady || m08Snap.doneSteps >= 4)" class="m08-chat-empty">
@@ -296,15 +390,38 @@
               :id="'m08-round-' + ri"
               :key="ri"
               class="m08-round"
-              :class="{ 'm08-round-focus': m08FocusVer === ('V' + (ri + 2)) }"
+              :class="{ 'm08-round-focus': m08FocusVer === round.resultVer || m08FocusVer === ('V' + (ri + 2)) }"
             >
-              <div class="m08-bubble user">
+              <div class="m08-bubble user m08-bubble-in">
                 <div class="m08-bubble-meta">第{{ ['一', '二', '三', '四', '五'][ri] || (ri + 1) }}轮 · {{ round.time }}</div>
                 {{ round.user }}
               </div>
-              <div class="m08-bubble bot">{{ round.bot }}</div>
-              <div class="m08-diff">
-                <span>△ 差异</span>{{ round.diff }}
+              <div v-if="round.streaming" class="m08-bubble bot m08-bubble-live">
+                <div v-if="m08StreamPhase === 'think'" class="m08-typing">
+                  <i></i><i></i><i></i>
+                  <span>正在对照大纲与指标树</span>
+                </div>
+                <template v-else>{{ m08StreamText }}<i class="m08-caret"></i></template>
+              </div>
+              <template v-else-if="round.think?.length">
+                <div class="m08-think">
+                  <div class="m08-think-title">思考与执行</div>
+                  <p v-for="step in round.think" :key="step.label"><b>【{{ step.label }}】</b>{{ step.text }}</p>
+                </div>
+                <div class="m08-made">
+                  <b>已生成 {{ round.resultVer }}</b>
+                  <p>{{ round.resultText }}</p>
+                  <button type="button" @click="m08ViewRoundDoc(round)">查看该版本完整文档</button>
+                </div>
+              </template>
+              <div v-else class="m08-bubble bot">{{ round.bot }}</div>
+              <div v-if="!round.streaming && !round.think?.length && (round.quote || round.diff)" class="m08-diff m08-diff-in">
+                <span>△ 本轮修改</span>
+                <div>
+                  <b v-if="round.where">{{ round.where }}</b>
+                  <p v-if="round.quote"><mark>{{ round.quote }}</mark></p>
+                  <p v-else>{{ round.diff }}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -317,14 +434,14 @@
                 placeholder="输入优化要求，如：补充寒区贮存工况…"
                 @keyup.enter="m08SendChat"
               />
-              <el-button type="primary" :disabled="!m08ChatCanSend" @click="m08SendChat">发送</el-button>
+              <el-button type="primary" :disabled="!m08ChatCanSend" @click="m08SendChat">{{ m08ChatStreaming ? '生成中' : '发送' }}</el-button>
             </div>
           </div>
         </div>
       </div>
 
       <!-- 版本条：V1 初稿 → 各轮对话优化 → 定稿；点击可回溯到对应校核轮次 -->
-      <div class="m08-panel m08-ver-bar">
+      <div v-if="!m08InWizard" class="m08-panel m08-ver-bar">
         <div class="m08-vers">
           <div v-for="(ver, vi) in m08Versions" :key="ver.ver" class="m08-ver-item">
             <div
@@ -405,78 +522,65 @@
     <!-- 新建方案 -->
     <el-dialog
       v-model="m08CreateVisible"
-      title="新建方案"
-      width="560px"
+      title="新建方案 · 第一步：选定考核指标"
+      width="760px"
       align-center
-      destroy-on-close
       :close-on-click-modal="false"
     >
-      <el-form label-width="7.2em" require-asterisk-position="right" class="m08-create-form">
+      <el-form label-position="top" class="m08-create-form">
         <el-form-item label="方案名称" required>
-          <el-input v-model="m08CreateForm.name" maxlength="80" placeholder="如 某型装备性能鉴定试验大纲" />
+          <el-input v-model="m08CreateForm.name" maxlength="80" />
         </el-form-item>
-        <el-form-item label="初始版本" required>
-          <el-radio-group v-model="m08CreateForm.ver">
-            <el-radio value="V1">V1 初稿</el-radio>
-            <el-radio value="V2">V2</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="关联指标树" required>
+        <el-form-item label="指标树" required>
           <el-select
-            ref="treeSelectRef"
             v-model="m08CreateForm.treeVer"
-            placeholder="请选择指标树版本"
+            placeholder="请选择已发布的指标树"
             style="width:100%"
-            popper-class="m08-select-popper"
-            @change="onSelectPicked('tree')"
-            @visible-change="(open) => !open && onSelectPicked('tree')"
+            @change="m08PickedIds.splice(0, m08PickedIds.length)"
           >
-            <el-option
-              v-for="op in m08TreeOptions"
-              :key="op.value"
-              :label="op.label"
-              :value="op.value"
-            >
-              <span>{{ op.label }}</span>
-              <span class="m08-opt-meta">{{ op.status }} · {{ op.count || 0 }} 项</span>
-            </el-option>
+            <el-option v-for="op in m08PublishedTrees" :key="op.value" :label="op.label" :value="op.value" />
           </el-select>
-        </el-form-item>
-        <el-form-item label="大纲模板" required>
-          <el-select
-            ref="tplSelectRef"
-            v-model="m08CreateForm.template"
-            style="width:100%"
-            popper-class="m08-select-popper"
-            @change="onSelectPicked('tpl')"
-            @visible-change="(open) => !open && onSelectPicked('tpl')"
-          >
-            <el-option v-for="t in m08TemplateOptions" :key="t" :label="t" :value="t" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="初始状态">
-          <el-radio-group v-model="m08CreateForm.status">
-            <el-radio value="草稿">草稿</el-radio>
-            <el-radio value="已定稿">已定稿</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="m08CreateForm.remark"
-            type="textarea"
-            :rows="2"
-            maxlength="120"
-            show-word-limit
-            placeholder="可选，说明本方案考核范围或生成约束"
-          />
-        </el-form-item>
-        <el-form-item label="创建后">
-          <el-checkbox v-model="m08CreateForm.openAfter">立即进入生成结果页</el-checkbox>
         </el-form-item>
       </el-form>
+      <div v-if="!m08CreateForm.treeVer" class="m08-ind-empty">请先选择指标树，再勾选本次考核指标</div>
+      <div v-else class="m08-ind-box">
+        <div class="m08-ind-bar">
+          <span>从{{ m08CreateForm.treeVer }}勾选本次考核指标（已选 {{ m08PickedIds.length }} 项）</span>
+          <el-button @click="m08ToggleAllIndicators">{{ m08PickedIds.length === m08IndicatorRows.length ? '全不选' : '全选' }}</el-button>
+        </div>
+        <div class="m08-ind-grid">
+          <label v-for="row in m08IndicatorRows" :key="row.id" :class="{ on: m08PickedIds.includes(row.id) }">
+            <input type="checkbox" :checked="m08PickedIds.includes(row.id)" @change="m08ToggleIndicator(row.id)">
+            <b>{{ row.name }}</b>
+            <em>{{ row.criteria }}</em>
+          </label>
+        </div>
+      </div>
       <template #footer>
         <el-button @click="m08CreateVisible = false">取消</el-button>
-        <el-button type="primary" @click="m08SubmitCreate">创建</el-button>
+        <el-button type="primary" @click="m08GoFactorStep">下一步：配置试验因子</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="m08AlgoVisible"
+      title="选择推荐算法"
+      width="560px"
+      align-center
+      :close-on-click-modal="false"
+    >
+      <div class="m08-algo-list">
+        <button
+          v-for="item in m11Tabs"
+          :key="item.key"
+          type="button"
+          :class="{ on: m08AlgoKey === item.key }"
+          @click="m08AlgoKey = item.key"
+        >{{ item.label }}</button>
+      </div>
+      <template #footer>
+        <el-button @click="m08AlgoVisible = false">取消</el-button>
+        <el-button type="primary" @click="m08ConfirmAlgo">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -585,30 +689,38 @@ export default {
 .spacer { flex: 1; }
 
 .m08-factor-grid {
-  /* 固定约两行：卡高 72 + 间距 10 + 上下内边距 28 */
-  height: 182px;
-  padding: 14px 16px;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
-  align-content: start;
-  overflow-x: hidden;
-  overflow-y: auto;
+  height: auto;
+  max-height: 280px;
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: auto;
 }
 .m08-factor {
   position: relative;
-  border: 1px solid #e0eaf3;
-  border-radius: 8px;
-  padding: 10px 10px 12px;
+  border: 0;
+  border-bottom: 1px solid #eef3f8;
+  border-radius: 0;
+  padding: 8px 16px;
   background: #fff;
   cursor: pointer;
-  height: 72px;
-  min-height: 72px;
+  height: auto;
+  min-height: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   box-sizing: border-box;
-  overflow: hidden;
 }
 .m08-factor:hover { border-color: #b8cfe4; background: #f7fbfe; }
-.m08-factor-name { font-size: 13px; font-weight: 600; color: #1f3d5a; padding-right: 36px; }
+.m08-factor-name { font-size: 13px; font-weight: 600; color: #1f3d5a; }
+.m08-factor-name::after { content: '：'; font-weight: 400; }
+.m08-factor-range { margin-top: 0; font-size: 13px; color: #5c7084; line-height: 1.5; }
+.m08-factor-tag {
+  margin-left: auto;
+  font-size: 11px; color: #1668a8; background: #e8f2fb;
+  padding: 1px 6px; border-radius: 8px;
+}
 .m08-factor-form :deep(.el-form-item__label) {
   text-align: left;
   justify-content: flex-start;
@@ -667,12 +779,6 @@ export default {
   border-color: #9ec8e8;
   color: #1668a8;
 }
-.m08-factor-range { margin-top: 5px; font-size: 11.5px; color: #5c7084; line-height: 1.5; }
-.m08-factor-tag {
-  position: absolute; top: 8px; right: 8px;
-  font-size: 11px; color: #1668a8; background: #e8f2fb;
-  padding: 1px 6px; border-radius: 8px;
-}
 
 .m08-lower {
   display: grid;
@@ -681,7 +787,135 @@ export default {
   align-items: stretch;
   min-height: 400px;
 }
-.m08-outline, .m08-chat { display: flex; flex-direction: column; min-height: 400px; max-height: 420px; }
+.m08-outline, .m08-chat { display: flex; flex-direction: column; min-height: 480px; max-height: 640px; }
+.m08-doc-wrap { flex: 1; min-height: 0; overflow: auto; background: #f4f7fb; padding: 16px; }
+.m08-doc-layout { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 12px; align-items: start; }
+.m08-toc {
+  position: sticky; top: 0; max-height: 640px; overflow: auto;
+  background: #fff; border: 1px solid #e4ebf2; border-radius: 8px; padding: 8px 0;
+}
+.m08-toc-title { padding: 6px 12px 8px; font-size: 13px; font-weight: 700; color: #1f3d5a; }
+.m08-toc button {
+  display: block; width: 100%; text-align: left; border: 0; border-left: 3px solid transparent;
+  background: transparent; padding: 8px 10px; font-size: 12.5px; line-height: 1.45; color: #3f5062; cursor: pointer;
+}
+.m08-toc button.on { background: #eaf3fd; border-left-color: #1668a8; color: #0d4e83; font-weight: 600; }
+.m08-doc :deep(h5) { margin: 18px 0 8px; color: #0d4e83; font-size: 15px; }
+.m08-doc :deep(h6) { margin: 12px 0 4px; color: #1f3d5a; font-size: 13.5px; }
+.m08-doc :deep(b) { color: #0d4e83; }
+.m08-chat-flow { margin-left: 8px; color: #8a99a8; font-size: 12px; }
+.m08-think {
+  background: #f4f8fb; border: 1px solid #e4eef6; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+}
+.m08-think-title { font-size: 12px; font-weight: 700; color: #1668a8; margin-bottom: 6px; }
+.m08-think p { margin: 0 0 6px; font-size: 12.5px; line-height: 1.65; color: #3f5062; }
+.m08-think b { color: #0d4e83; }
+.m08-made {
+  background: #f3faf6; border: 1px solid #d7eedf; border-radius: 8px; padding: 8px 10px;
+}
+.m08-made b { display: block; color: #1d7a45; font-size: 13px; }
+.m08-made p { margin: 4px 0 8px; font-size: 12.5px; line-height: 1.65; color: #3f5062; }
+.m08-made button {
+  border: 0; background: transparent; color: #1668a8; padding: 0; cursor: pointer; font-size: 12.5px;
+}
+.m08-made button:hover { text-decoration: underline; }
+.m08-doc {
+  background: #fff;
+  border: 1px solid #e4ebf2;
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(15, 55, 95, .08);
+  padding: 22px 32px 36px;
+  min-height: 420px;
+}
+.m08-doc header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e8eef5;
+  padding-bottom: 10px;
+  margin-bottom: 8px;
+  color: #8a99a8;
+  font-size: 12px;
+}
+.m08-doc header b { color: #1f3d5a; font-size: 14px; }
+.m08-doc h4 { margin: 16px 0 6px; color: #0d4e83; font-size: 15px; }
+.m08-doc section { font-size: 13.5px; line-height: 1.85; color: #3f5062; }
+.m08-factor-lines { max-height: 360px; overflow: auto; }
+.m08-factor-line {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  padding: 9px 16px;
+  border-bottom: 1px solid #eef3f8;
+  font-size: 13.5px;
+}
+.m08-factor-line b { flex: 0 0 128px; color: #1f3d5a; }
+.m08-factor-line span { color: #5c7084; }
+.m08-factor-note { color: #8a6a2b; font-size: 13px; }
+.m08-factor-add { display: flex; align-items: center; gap: 8px; padding: 12px 16px; flex-wrap: wrap; }
+.m08-factor-add .spacer { flex: 1; }
+.m08-factor-add button {
+  border: 1px dashed #c5daf0;
+  background: #fff;
+  color: #1668a8;
+  border-radius: 14px;
+  height: 28px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+.m08-wiz-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid #eef3f8; }
+.m08-tpl-list { display: grid; gap: 10px; padding: 14px 16px; max-height: 420px; overflow: auto; }
+.m08-tpl-card {
+  position: relative;
+  text-align: left;
+  border: 1px solid #e0eaf3;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+.m08-tpl-card.on { border-color: #1668a8; background: #f4f9fd; }
+.m08-tpl-card b { display: block; color: #1f3d5a; }
+.m08-tpl-card span { display: block; margin-top: 4px; color: #7d90a3; font-size: 12.5px; }
+.m08-tpl-card em { position: absolute; right: 12px; top: 12px; font-style: normal; color: #c8902a; font-size: 12px; }
+.m08-gen-body {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 28px;
+  text-align: center;
+  color: #5c7084;
+}
+.m08-gen-run { width: 100%; text-align: left; }
+.m08-gen-loading { position: relative; min-height: 148px; }
+.m08-gen-bar { height: 8px; background: #e7eef5; border-radius: 99px; overflow: hidden; margin-top: 4px; }
+.m08-gen-bar i { display: block; height: 100%; background: #1f3d5a; transition: width .25s linear; }
+.m08-gen-run p { margin: 8px 0 0; font-size: 12px; color: #8a99a8; }
+.m08-ind-empty {
+  border: 1px dashed #d5e3ef;
+  border-radius: 10px;
+  background: #f7fbfe;
+  color: #8a99a8;
+  text-align: center;
+  padding: 28px 12px;
+}
+.m08-ind-bar { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; color: #5c7084; font-size: 13px; }
+.m08-ind-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 360px; overflow: auto; }
+.m08-ind-grid label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e4eef6;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+}
+.m08-ind-grid label.on { border-color: #9ec8e8; background: #f4f9fd; }
+.m08-ind-grid b { color: #1f3d5a; font-size: 13px; }
+.m08-ind-grid em { margin-left: auto; color: #8a99a8; font-style: normal; font-size: 12px; white-space: nowrap; }
 .m08-outline-body { display: grid; grid-template-columns: 180px 1fr; flex: 1; min-height: 0; }
 .m08-outline-empty {
   flex: 1;
@@ -733,6 +967,57 @@ export default {
   display: flex; align-items: flex-start; gap: 6px;
 }
 .m08-diff span { flex: 0 0 auto; font-weight: 700; color: #c8902a; }
+.m08-diff b { display: block; margin-bottom: 4px; color: #8a6420; }
+.m08-diff p { margin: 0; }
+.m08-diff mark, .m08-doc :deep(mark.m08-hl) {
+  background: #fff3bf;
+  color: #7a4e00;
+  padding: 0 3px;
+  border-radius: 3px;
+  box-shadow: inset 0 -1px 0 #e3c36a;
+}
+.m08-hl-live { margin: 10px 0 0; line-height: 1.85; }
+.m08-doc.is-writing { box-shadow: 0 0 0 2px rgba(22, 104, 168, .18); }
+.m08-doc-live {
+  margin: 0 16px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #eaf3fd;
+  color: #1668a8;
+  font-size: 12px;
+}
+.m08-chat.is-streaming { box-shadow: 0 0 0 2px rgba(22, 104, 168, .16); }
+.m08-live-tag {
+  margin-left: auto;
+  font-size: 12px;
+  color: #1668a8;
+  background: #eaf3fd;
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+.m08-bubble-in { animation: m08-pop .28s ease; }
+.m08-diff-in { animation: m08-pop .35s ease; }
+.m08-bubble-live { min-height: 38px; }
+.m08-typing { display: inline-flex; align-items: center; gap: 4px; color: #5c7084; }
+.m08-typing i {
+  width: 6px; height: 6px; border-radius: 50%; background: #1668a8;
+  animation: m08-dot 1s infinite ease-in-out;
+}
+.m08-typing i:nth-child(2) { animation-delay: .15s; }
+.m08-typing i:nth-child(3) { animation-delay: .3s; }
+.m08-caret, .m08-doc :deep(.m08-caret) {
+  display: inline-block; width: 1px; height: 1em; margin-left: 1px;
+  background: #1668a8; vertical-align: text-bottom;
+  animation: m08-blink .8s steps(1) infinite;
+}
+.m08-doc :deep(.m08-caret) { background: #7a4e00; }
+@keyframes m08-dot {
+  0%, 80%, 100% { transform: translateY(0); opacity: .35; }
+  40% { transform: translateY(-3px); opacity: 1; }
+}
+@keyframes m08-blink { 50% { opacity: 0; } }
+@keyframes m08-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes m08-hl-in { from { background: #ffe08a; } to { background: #fff3bf; } }
 .m08-chat-input {
   border-top: 1px solid #eef3f8; padding: 10px 12px 12px; flex: 0 0 auto;
 }
@@ -766,7 +1051,24 @@ export default {
   gap: 8px; /* UI rule：并排按钮间距 8px */
 }
 .m08-ver-foot :deep(.el-button + .el-button) {
-  margin-left: 0; /* 禁止与 gap 叠加 */
+  margin-left: 0;
+}
+.m08-algo-list { display: flex; flex-direction: column; gap: 8px; }
+.m08-algo-list button {
+  text-align: left;
+  border: 1px solid #e0eaf3;
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #1f3d5a;
+  cursor: pointer;
+  font-size: 14px;
+}
+.m08-algo-list button.on {
+  border-color: #1668a8;
+  background: #f4f9fd;
+  color: #0d4e83;
+  font-weight: 600;
 }
 
 .m08-remark-cell {

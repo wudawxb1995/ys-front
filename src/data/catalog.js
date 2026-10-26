@@ -4,6 +4,9 @@ import { probeSystems } from '@/data/probeMenus'
 import { designSystems } from '@/data/designMenus'
 import { insightSystems } from '@/data/insightMenus'
 import { ICON_POOL, uniquifySystemMenuIcons } from '@/utils/iconFor'
+import { trainBidModules } from '@/data/trainBidModules'
+import trainBidHierarchy from '@/data/trainBidHierarchy.json'
+import { agentSystems } from '@/data/agentMenus'
 
 const g = (id, name, icon, children) => ({ id, name, icon, children })
 const leaf = (id, name, page, icon) => (icon ? { id, name, page, icon } : { id, name, page })
@@ -320,10 +323,14 @@ const platformsRaw = [
             ],
           )),
           leaf('sets', '源数据集', crud('支持 txt、doc、docx、pdf、json、csv、xlsx、markdown、png、jpg、jpeg。可重命名、筛选删除，并查看关联训练任务。', 'trainSets'), 'folder'),
+          leaf('clean', '训练数据清洗', { type: 'cards', cardKey: 'trainParam', desc: '识别文件格式，完成内容解析、数据清洗、知识提炼与结构化打包。' }, 'clean'),
           leaf('preview', '双视图预览', { type: 'workbench', desc: '同时预览解析后文件和原文档。' }, 'eye'),
+          leaf('maintenance', '数据集维护', crud('支持数据集重命名、数据项筛选和精细化删除，查看与训练任务的绑定关系。', 'trainSets'), 'edit'),
           leaf('sft', '微调数据集', { type: 'entry', entryKey: 'sft', desc: '配置任务名称、源数据集、参数、需求描述和自动标签，生成领域微调数据。', dataset: 'trainSets' }, 'tag'),
+          leaf('tags', '自动标签', { type: 'entry', entryKey: 'sft', desc: '从数据集提取标签，支持手动添加、删除和训练数据分类。', dataset: 'trainSets' }, 'tag'),
           leaf('param', '训练参数', { type: 'cards', cardKey: 'trainParam', desc: '提供默认配置和手动配置，可设置训练集与测试集比例。' }, 'sliders'),
           leaf('infer', '历史推理任务', crud('展示任务名、时间、状态、创建人、可见成员、来源和审核进度。标签不超过 10 字且不含特殊符号，支持多选筛选。', 'inferTasks'), 'list'),
+          leaf('infer-tags', '推理任务标签', crud('创建和校验任务标签，按多个标签组合筛选历史问答对。', 'inferTasks'), 'tag'),
         ],
       },
       {
@@ -347,6 +354,9 @@ const platformsRaw = [
             ],
           )),
           leaf('score', '置信度评估', crud('覆盖多模型集成准确率、上下文一致性等指标，并以图表展示。', 'confidence'), 'chart'),
+          leaf('process', '推理过程分析', { type: 'report', reportKey: 'api', desc: '展示模型推理过程、同题多次采样及多模型输出概率分布。' }, 'graph'),
+          leaf('weighted', '综合置信度', crud('配置多维评估权重，汇总人工校核、上下文一致性与模型集成准确率。', 'confidence'), 'compare'),
+          leaf('strength', '模型强弱项', { type: 'cards', cardKey: 'trainParam', desc: '按试验鉴定业务场景对比不同模型的优势能力和薄弱项。' }, 'chart'),
         ],
       },
       {
@@ -371,6 +381,9 @@ const platformsRaw = [
             ],
           )),
           leaf('jobs', '微调任务', crud('配置迭代轮次、学习率、批处理大小，跟踪性能并动态调整策略。', 'loraJobs'), 'train'),
+          leaf('knowledge', '领域知识注入', { type: 'workbench', desc: '组织专家知识、细粒度微调样本与专家反馈，形成知识注入数据。' }, 'book'),
+          leaf('monitor', '训练过程监控', crud('跟踪训练状态与模型性能变化，并动态调整微调策略。', 'loraJobs'), 'chart'),
+          leaf('lora-config', 'LoRA 参数配置', { type: 'cards', cardKey: 'trainParam', desc: '配置迭代轮次、学习率、批处理大小和扩展参数。' }, 'sliders'),
         ],
       },
       {
@@ -394,6 +407,8 @@ const platformsRaw = [
             ],
           )),
           leaf('models', '模型目录', crud('检索、筛选、详情、部署调度与在线调试。支持多版本存储、对比、回滚。', 'llmModels'), 'model'),
+          leaf('versions', '模型版本管理', crud('管理基座与微调模型版本，支持对比、回滚、切换与快速部署。', 'llmModels'), 'history'),
+          leaf('deploy', '部署与服务监控', crud('使用 vLLM 部署 Qwen、GLM 等模型，查看服务状态、性能和资源调度。', 'llmModels'), 'server'),
           leaf('api', '管理接口', { type: 'report', reportKey: 'api', desc: '管理界面与标准化 API，供业务按需选用模型。' }, 'api'),
         ],
       },
@@ -418,6 +433,8 @@ const platformsRaw = [
             ],
           )),
           leaf('cmp', '量化对比', crud('利用预制指标对比同一模型不同量化程度的生成质量。', 'quants'), 'compare'),
+          leaf('quant-run', '量化推理任务', crud('选择量化模型和推理参数，执行任务并管理输出结果。', 'quants'), 'model'),
+          leaf('recommend', '模型适配推荐', { type: 'cards', cardKey: 'trainParam', desc: '依据算力资源和质量要求推荐模型类型及量化程度。' }, 'spark'),
         ],
       },
       {
@@ -442,6 +459,7 @@ const platformsRaw = [
           )),
           leaf('lib', '模板库', crud('分类存储、检索复用和动态修改。', 'prompts'), 'book'),
           leaf('chat', '模板生成', { type: 'chat', chatKey: 'prompt', desc: '描述任务后检索或生成针对性提示模板。' }, 'spark'),
+          leaf('prompt-feedback', '模板反馈优化', crud('采集使用反馈，持续优化提示模板内容与分类。', 'prompts'), 'edit'),
         ],
       },
       {
@@ -466,6 +484,7 @@ const platformsRaw = [
           )),
           leaf('metrics', '评估指标', crud('管理名称、类型、适用领域、描述、API 和版本。修改后版本号自动更新，新增时校验必填项。', 'metrics'), 'rule'),
           leaf('board', '评分榜单', crud('搭建评估体系、配置场景、创建任务并展示榜单。', 'confidence'), 'chart'),
+          leaf('eval-jobs', '评估任务', crud('配置评估场景、模型和指标，创建评估任务并查看结果。', 'confidence'), 'list'),
           leaf('debug', '在线调试', { type: 'chat', chatKey: 'debug', desc: '选择模型并调节温度、Top P、Top K 后查看生成结果。' }, 'sliders'),
         ],
       },
@@ -479,109 +498,28 @@ const platformsRaw = [
     brief: '以可视化编排组合知识库、大模型和工具，形成可发布、可监控的业务智能体',
     tags: ['工作流', '插件', '模块复用'],
     icon: 'plugin',
-    systems: [
-      {
-        id: 'flow',
-        name: '工作流编排',
-        full: '试验鉴定领域智能体工作流编排平台',
-        menus: [
-          leaf('home', '首页', home(
-            '欢迎使用 智能体工作流编排平台',
-            '通过拖拽组合预置能力形成工作流。调度响应时延不超过 3 秒（不含网络时延），并发不少于 10。',
-            [
-              { name: '可视化编排', to: 'canvas', desc: '拖拽组合' },
-              { name: '流程组件', to: 'canvas', desc: '不少于 14 个' },
-              { name: '能力集成', to: 'integ', desc: '知识库、模型、插件' },
-              { name: '运行监控', to: 'mon', desc: '状态与资源' },
-            ],
-            [
-              { label: '工作流', value: '24', unit: '条' },
-              { label: '流程组件', value: '14', unit: '个' },
-              { label: '在线智能体', value: '6', unit: '个' },
-              { label: '调度时延', value: '1.6', unit: 's' },
-            ],
-          )),
-          leaf('canvas', '可视化编排', { type: 'canvas', canvasKey: 'agent', desc: '定义节点输入输出、类型校验、默认值和参数映射，支持单组件调试与日志。' }, 'flow'),
-          leaf('integ', '能力集成封装', crud('同步知识库、切换大模型版本、接入工具，并以 API 组合封装训推平台能力。', 'agents'), 'plugin'),
-          leaf('mon', '服务监控', { type: 'stats', statsKey: 'agent', desc: '监控已发布智能体的服务状态、CPU、内存和网络。' }, 'chart'),
-          leaf('perm', '权限控制', crud('按角色分配查看、编辑、执行、管理权限。', 'kb'), 'shield'),
-        ],
-      },
-      {
-        id: 'tool',
-        name: '工具调用',
-        full: '试验鉴定领域智能体工具调用平台',
-        menus: [
-          leaf('home', '首页', home(
-            '欢迎使用 智能体工具调用平台',
-            '将编排完成的工作流封装为智能体，管理上线、下线与调用说明，并以 Web 页面或接口向第三方集成。',
-            [
-              { name: '封装上线', to: 'agents', desc: '调用方式说明' },
-              { name: '发布集成', to: 'agents', desc: '页面与接口' },
-            ],
-            [
-              { label: '已发布', value: '6', unit: '个' },
-              { label: '第三方集成', value: '4', unit: '个' },
-              { label: '并发上限', value: '10', unit: '路' },
-              { label: '调用成功率', value: '99.2', unit: '%' },
-            ],
-          )),
-          leaf('agents', '智能体发布', crud('上线、下线、Web 集成、接口调用和集成后的启停、访问控制。', 'agents'), 'spark'),
-        ],
-      },
-      {
-        id: 'plugin',
-        name: '插件扩展',
-        full: '插件扩展平台',
-        menus: [
-          leaf('home', '首页', home(
-            '欢迎使用 插件扩展平台',
-            '支持 Python、Java 插件规范，兼容 MCP、HTTP、TCP，并可自定义协议适配。插件需注册、审核后上线。',
-            [
-              { name: '开发规范', to: 'list', desc: 'Python / Java' },
-              { name: '协议适配', to: 'list', desc: 'MCP、HTTP、TCP' },
-              { name: '审核上线', to: 'list', desc: '调试日志与权限' },
-            ],
-            [
-              { label: '插件', value: '18', unit: '个' },
-              { label: '已上线', value: '11', unit: '个' },
-              { label: '待审核', value: '2', unit: '个' },
-              { label: '协议', value: '3', unit: '类' },
-            ],
-          )),
-          leaf('list', '插件管理', crud('注册、审核、上线、下线，查看调试日志和运行状态，设置可见范围与调用权限。', 'plugins'), 'plugin'),
-        ],
-      },
-      {
-        id: 'module',
-        name: '模块构建',
-        full: '模块化应用构建平台',
-        menus: [
-          leaf('home', '首页', home(
-            '欢迎使用 模块化应用构建平台',
-            '把工作流封装为可复用模块，明确名称、描述、参数和返回值，支持嵌套调用和跨智能体参数映射。',
-            [
-              { name: '模块封装', to: 'mods', desc: '输入与返回' },
-              { name: '嵌套调用', to: 'mods', desc: '跨智能体组合' },
-            ],
-            [
-              { label: '可复用模块', value: '15', unit: '个' },
-              { label: '嵌套调用', value: '7', unit: '条' },
-              { label: '跨智能体', value: '4', unit: '条' },
-              { label: '组合场景', value: '9', unit: '个' },
-            ],
-          )),
-          leaf('mods', '模块目录', crud('配置模块信息与调用参数映射，验证复杂业务组合。', 'modules'), 'box'),
-        ],
-      },
-    ],
+    systems: agentSystems,
   },
 ]
 
-export const platforms = platformsRaw.map((p) => ({
-  ...p,
-  systems: uniquifySystemMenuIcons(p.systems),
-}))
+export const platforms = platformsRaw.map((p) => {
+  const systems = p.id === 'train' ? p.systems.map(sys => ({
+    ...sys,
+    menus: [
+      ...sys.menus,
+      ...(trainBidModules[sys.id] || []).map(([name, target, icon], index) => {
+        const source = sys.menus.find(item => item.id === target)
+        const functions = trainBidHierarchy[sys.id]?.[index]?.functions || []
+        return g(`bid-${sys.id}-${index}`, name, icon, functions.map((functionName, featureIndex) => leaf(
+          `bid-${sys.id}-${index}-${featureIndex}`,
+          functionName,
+          { ...(source?.page || { type: 'dashboard', bannerTitle: name }), desc: functionName },
+        )))
+      }),
+    ],
+  })) : p.systems
+  return { ...p, systems: p.id === 'train' ? systems : uniquifySystemMenuIcons(systems) }
+})
 
 export function getPlatform(id) {
   return platforms.find((p) => p.id === id)

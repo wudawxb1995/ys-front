@@ -190,7 +190,7 @@
                 </thead>
                 <tbody>
                   <tr
-                    v-for="row in m01FilteredRows"
+                    v-for="row in m01VisibleRows"
                     :key="row.name"
                     style="cursor:pointer"
                     @click="m01OpenDetail(row)"
@@ -227,6 +227,7 @@
                 </tbody>
               </table>
             </div>
+            <el-pagination v-if="m01FilteredRows.length > m01PageSize" v-model:current-page="m01Page" :page-size="m01PageSize" :total="m01FilteredRows.length" layout="prev, pager, next" small background style="justify-content:flex-end;padding:12px" />
           </div>
         </div>
       </template>

@@ -46,7 +46,7 @@ const pageKey = computed(() => [
   props.title, props.page?.type, props.page?.dataset, props.page?.graphKey,
   props.page?.chatKey, props.page?.reportKey, props.page?.entryKey,
   props.page?.flowKey, props.page?.canvasKey, props.page?.cardKey, props.page?.statsKey, props.page?.codeKey,
-  props.page?.stage, props.page?.module, props.page?.scene,
+  props.page?.stage, props.page?.module, props.page?.scene, props.page?.focus, props.page?.mode,
   props.page?.moduleName, props.page?.featureName,
 ].join('-'))
 

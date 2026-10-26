@@ -2,7 +2,8 @@
  * Rich 页演示镜头（m14 / m15 / m19 / m22 / m29–m32）
  */
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
-import { useDemoStore, confirmRootCause, archiveInterpretReport, updateActiveProbeCount, syncTrialDataDock, setGraphBrowse } from '@/composables/demo-store'
+import { useDemoStore, confirmRootCause, archiveInterpretReport, updateActiveProbeCount, syncTrialDataDock, setGraphBrowse, getPersistedM03List } from '@/composables/demo-store'
+import { getM02RowsForDoc } from '@/data/m02-indicators'
 import { deviationTotal } from '@/data/deviations'
 import { nowText } from '@/utils/format'
 import {
@@ -33,6 +34,9 @@ const m14Query = ref('')
 /** 列表勾选 id */
 const m14CheckedIds = ref([])
 const m14CreateVisible = ref(false)
+/** 新建/编辑探针配置页（三栏），替代弹窗 */
+const m14Wizard = ref(false)
+const m14TreeOpen = ref(false)
 /** null=新建；探针 id=编辑配置 */
 const m14EditingId = ref(null)
 const m14CreateForm = reactive({
@@ -40,11 +44,38 @@ const m14CreateForm = reactive({
   obj: '',
   criteria: '',
   srcNode: '散布精度指标',
-  metrics: 3,
+  metrics: 1,
   dataSrc: '弹道测量文件',
   bindParam: '',
+  treeVer: '',
+  indicatorId: '',
+  sampleMode: '逐发触发',
+  alarmLevel: '告警',
+  autoCause: true,
 })
+const m14SampleOpts = ['逐发触发', '定时采集', '连续采样']
+const m14DataSrcOpts = ['弹道测量文件', '遥测数据流', '气象保障数据']
+const m14AlarmOpts = ['提示', '告警', '严重']
 const m14DialogTitle = computed(() => (m14EditingId.value ? '编辑探针配置' : '新建探针'))
+const m14TreeOptions = computed(() => {
+  const list = getPersistedM03List()
+  const published = list.filter((row) => row.status === '已发布')
+  return (published.length ? published : list).map((row) => ({
+    value: row.version,
+    label: `${row.version} · ${row.count} 项`,
+    count: Number(row.count) || 28,
+    srcDoc: row.srcDoc || '',
+  }))
+})
+const m14TreeIndicators = computed(() => {
+  const ver = m14CreateForm.treeVer
+  if (!ver) return []
+  const tree = m14TreeOptions.value.find((row) => row.value === ver)
+  const rows = getM02RowsForDoc(tree?.srcDoc || '某型装备研制总要求')
+  const n = tree?.count && tree.count < rows.length ? tree.count : rows.length
+  return rows.slice(0, n)
+})
+const m14PickedIndicator = computed(() => m14TreeIndicators.value.find((row) => row.id === m14CreateForm.indicatorId) || null)
 
 const m14SrcNodeOpts = [
   '散布精度指标', '初速指标', '姿态稳定性', '热变形指标',
@@ -154,30 +185,73 @@ function enableAllProbes() {
 
 function fillProbeForm(p) {
   m14CreateForm.name = p?.name || ''
-  m14CreateForm.obj = p?.obj || m14ObjOpts[0]
+  m14CreateForm.obj = p?.obj || ''
   m14CreateForm.criteria = p?.criteria || ''
-  m14CreateForm.srcNode = p?.srcNode || m14SrcNodeOpts[0]
-  m14CreateForm.metrics = Number(p?.metrics) || 3
+  m14CreateForm.srcNode = p?.srcNode || ''
+  m14CreateForm.metrics = Number(p?.metrics) || 1
   m14CreateForm.dataSrc = p?.dataSrc || '弹道测量文件'
-  m14CreateForm.bindParam = p?.bindParam || (p?.obj === '立靶偏差' ? '立靶高低偏差' : (p?.obj || ''))
+  m14CreateForm.bindParam = p?.bindParam || ''
+  m14CreateForm.treeVer = p?.treeVer || ''
+  m14CreateForm.indicatorId = p?.indicatorId || ''
+  m14CreateForm.sampleMode = p?.sampleMode || '逐发触发'
+  m14CreateForm.alarmLevel = p?.alarmLevel || '告警'
+  m14CreateForm.autoCause = p?.autoCause !== false
+  m14TreeOpen.value = !!(p?.treeVer || p?.indicatorId)
+}
+
+function m14PickTree(ver) {
+  m14CreateForm.treeVer = ver
+  m14CreateForm.indicatorId = ''
+  m14CreateForm.criteria = ''
+  m14CreateForm.bindParam = ''
+  m14CreateForm.obj = ''
+}
+
+function m14PickIndicator(id) {
+  m14CreateForm.indicatorId = id
+  const row = m14TreeIndicators.value.find((item) => item.id === id)
+  if (!row) return
+  m14CreateForm.bindParam = row.name
+  m14CreateForm.criteria = row.criteria
+  m14CreateForm.obj = row.name
+  m14CreateForm.srcNode = row.klass
+  if (!m14CreateForm.name.trim()) m14CreateForm.name = `${row.name}探针`
 }
 
 function openCreateProbe() {
   m14EditingId.value = null
+  m14Detail.value = null
   fillProbeForm(null)
-  m14CreateForm.obj = m14ObjOpts[0]
-  m14CreateForm.srcNode = m14SrcNodeOpts[0]
-  m14CreateForm.metrics = 3
+  m14CreateForm.metrics = 1
   m14CreateForm.dataSrc = '弹道测量文件'
-  m14CreateVisible.value = true
+  m14CreateForm.sampleMode = '逐发触发'
+  m14CreateForm.alarmLevel = '告警'
+  m14CreateForm.autoCause = true
+  m14TreeOpen.value = false
+  m14Wizard.value = true
 }
 
 /** 列表「配置」：打开与新建相同弹窗，编辑该探针 */
 function openEditProbe(p) {
   if (!p) return
   m14EditingId.value = p.id
+  m14Detail.value = null
   fillProbeForm(p)
-  m14CreateVisible.value = true
+  if (!m14CreateForm.treeVer) {
+    const published = m14TreeOptions.value[0]
+    m14CreateForm.treeVer = published?.value || '指标树 V1.0'
+  }
+  if (!m14CreateForm.indicatorId && m14CreateForm.bindParam) {
+    const hit = m14TreeIndicators.value.find((row) => row.name === m14CreateForm.bindParam || row.name === m14CreateForm.obj)
+    if (hit) m14CreateForm.indicatorId = hit.id
+  }
+  m14TreeOpen.value = true
+  m14Wizard.value = true
+}
+
+function closeProbeWizard() {
+  m14Wizard.value = false
+  m14EditingId.value = null
 }
 
 function todayStr() {
@@ -187,11 +261,11 @@ function todayStr() {
 
 function submitCreateProbe() {
   const name = m14CreateForm.name.trim()
-  const obj = m14CreateForm.obj.trim()
   const criteria = m14CreateForm.criteria.trim()
   if (!name) { toast('请填写探针名称', 'warning'); return }
-  if (!obj) { toast('请选择监测对象', 'warning'); return }
-  if (!criteria) { toast('请填写判据阈值', 'warning'); return }
+  if (!m14CreateForm.treeVer) { toast('请先选择指标树', 'warning'); return }
+  if (!m14CreateForm.indicatorId) { toast('请选择指标树下的指标', 'warning'); return }
+  if (!criteria) { toast('请选择指标以生成判据', 'warning'); return }
 
   const editingId = m14EditingId.value
   if (probeList.value.some((p) => p.name === name && p.id !== editingId)) {
@@ -199,14 +273,20 @@ function submitCreateProbe() {
     return
   }
 
+  const obj = (m14CreateForm.obj || m14CreateForm.bindParam || '').trim()
   const patch = {
     name,
     obj,
     criteria,
     srcNode: m14CreateForm.srcNode || '散布精度指标',
-    metrics: Number(m14CreateForm.metrics) || 1,
-    bindParam: m14CreateForm.bindParam.trim() || (obj === '立靶偏差' ? '立靶高低偏差' : obj),
+    metrics: 1,
+    bindParam: m14CreateForm.bindParam.trim() || obj,
     dataSrc: m14CreateForm.dataSrc || '弹道测量文件',
+    treeVer: m14CreateForm.treeVer,
+    indicatorId: m14CreateForm.indicatorId,
+    sampleMode: m14CreateForm.sampleMode || '逐发触发',
+    alarmLevel: m14CreateForm.alarmLevel || '告警',
+    autoCause: m14CreateForm.autoCause !== false,
     updated: todayStr(),
   }
 
@@ -218,6 +298,7 @@ function submitCreateProbe() {
     }
     Object.assign(hit, patch)
     if (m14Detail.value?.id === editingId) Object.assign(m14Detail.value, patch)
+    m14Wizard.value = false
     m14CreateVisible.value = false
     m14EditingId.value = null
     toast(`已更新探针「${name}」配置`, 'success')
@@ -235,10 +316,11 @@ function submitCreateProbe() {
     enabled: true,
   }
   probeList.value = [row, ...probeList.value]
+  m14Wizard.value = false
   m14CreateVisible.value = false
   m14PageNo.value = 1
   syncActiveProbeCount()
-  toast(`已新建探针「${name}」`, 'success')
+  toast(`已保存探针「${name}」，已加入探针列表`, 'success')
 }
 function previewProbeCite(node) {
   toast(`预览：${node || '指标项'} → 试验大纲第3章相关条款（录屏示意）`)
@@ -539,12 +621,15 @@ function m15Open(task) {
 const dockTasks = ref(dockTasksSeed.map((t) => ({ ...t })))
 const m15CreateVisible = ref(false)
 const m15CreateForm = reactive({
-  name: '',
-  srcType: '弹道测量+遥测文件',
-  count: '',
-  batch: 'D-07',
-  status: '成功',
+  name: '精度试验数据对接 (30发)',
+  sources: ['弹道测量文件（光测+雷达）', '遥测数据流（定位定向/温度/链路）', '气象保障数据'],
+  count: '30发',
 })
+const m15SourceOpts = [
+  '弹道测量文件（光测+雷达）',
+  '遥测数据流（定位定向/温度/链路）',
+  '气象保障数据',
+]
 const m15SrcTypeOpts = [
   '弹道测量+遥测文件',
   '气象站接口',
@@ -566,28 +651,37 @@ const m15FilteredTasks = computed(() => {
 })
 
 function openCreateDockTask() {
-  m15CreateForm.name = ''
-  m15CreateForm.srcType = m15SrcTypeOpts[0]
+  m15CreateForm.name = '精度试验数据对接 (30发)'
+  m15CreateForm.sources = [...m15SourceOpts]
   m15CreateForm.count = '30发'
-  m15CreateForm.batch = m15FilterBatch.value || 'D-07'
-  m15CreateForm.status = '成功'
   m15CreateVisible.value = true
+}
+
+function m15TaskMeta(task) {
+  const countText = String(task?.count || '')
+  const matched = countText.match(/(\d+)/)
+  const total = matched ? Number(matched[1]) : 0
+  const unit = countText.replace(/^\d+/, '') || '发'
+  const received = task?.received != null ? task.received : (task?.status === '成功' ? total : 0)
+  const label = task?.status === '成功' ? '已完成' : (task?.status === '暂存' ? '暂存' : (task?.status || '进行中'))
+  return { total, unit, received, label }
+}
+
+function startDockReturn(task) {
+  if (!task) return
+  task.status = '进行中'
+  toast(`已启动回传：${task.name}`, 'success')
 }
 
 function submitCreateDockTask() {
   const name = (m15CreateForm.name || '').trim()
-  const srcType = (m15CreateForm.srcType || '').trim()
-  const count = (m15CreateForm.count || '').trim()
+  const sources = (m15CreateForm.sources || []).filter(Boolean)
   if (!name) {
     toast('请填写任务名称', 'warning')
     return
   }
-  if (!srcType) {
-    toast('请选择数据源类型', 'warning')
-    return
-  }
-  if (!count) {
-    toast('请填写数据量', 'warning')
+  if (!sources.length) {
+    toast('请至少勾选一项数据源', 'warning')
     return
   }
   if (dockTasks.value.some((t) => t.name === name)) {
@@ -602,15 +696,17 @@ function submitCreateDockTask() {
   const row = {
     id,
     name,
-    srcType,
-    count,
-    batch: m15CreateForm.batch || 'D-07',
-    status: m15CreateForm.status || '成功',
+    srcType: sources.join(' + '),
+    sources: [...sources],
+    count: m15CreateForm.count || '30发',
+    received: 0,
+    batch: 'D-07',
+    status: '暂存',
     time: nowText(),
   }
   dockTasks.value.unshift(row)
   m15CreateVisible.value = false
-  toast(`已新建对接任务「${name}」`, 'success')
+  toast('对接任务已创建', 'success')
 }
 
 // ── M19 根因分析工作台 ──────────────────────────────────────────────────
@@ -1771,9 +1867,20 @@ onBeforeUnmount(() => {
     m14SomePageChecked,
     m14ToggleAllPage,
     m14CreateVisible,
+    m14Wizard,
+    m14TreeOpen,
     m14EditingId,
     m14CreateForm,
     m14DialogTitle,
+    m14TreeOptions,
+    m14TreeIndicators,
+    m14PickedIndicator,
+    m14SampleOpts,
+    m14DataSrcOpts,
+    m14AlarmOpts,
+    m14PickTree,
+    m14PickIndicator,
+    closeProbeWizard,
     m14SrcNodeOpts,
     m14ObjOpts,
     m14FilteredList,
@@ -1798,6 +1905,9 @@ onBeforeUnmount(() => {
     m15CreateVisible,
     m15CreateForm,
     m15SrcTypeOpts,
+    m15SourceOpts,
+    m15TaskMeta,
+    startDockReturn,
     m15FilteredTasks,
     openCreateDockTask,
     submitCreateDockTask,

@@ -13,6 +13,7 @@ export const richPageTypes = {
   'timeline': () => import('@/components/pages/rich/TimelinePage.vue'),
   'flow': () => import('@/components/pages/rich/FlowPage.vue'),
   'canvas': () => import('@/components/pages/rich/CanvasPage.vue'),
+  'agent-work': () => import('@/components/pages/AgentWorkPage.vue'),
   'cards': () => import('@/components/pages/rich/CardsPage.vue'),
   'report': () => import('@/components/pages/rich/ReportPage.vue'),
   'stats': () => import('@/components/pages/rich/StatsPage.vue'),
