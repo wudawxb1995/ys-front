@@ -186,6 +186,7 @@ alwaysApply: false
 - 镜头二：多策略融合智能审查任务列表（首行审查对象=刚生成的报告名，意见 7）→ 审查结果三类分组可定位高亮 → 文档归集列表首行「试验报告V2（定稿）」已入库
 - **视觉对齐 Part1/2**：外层 `.post-trial-shell` 白底实线壳（同探针详情）；内段 `.sec-frame` 虚线框（同 `m14-dash`）；禁止大面积黄/金装饰（推荐标签用 primary 蓝，来源 pill / 建议框用蓝灰）
 - **表样式统一**：判定/溯源/审查/归集表共用 `.metric-ep`；状态用 `.badge.on|warn|hold`；操作列 `.ops button` 蓝字文字链；禁止行底黄高亮、禁止操作胶囊 `source-tag`
+- **报告管理（report-flow）**：`知识驱动文档生成 / 报告管理` 与 `多策略融合智能审查` 走 `ReportWorkflowPage`。进页先出报告列表；未选指标树不展示关联材料；提纲竖排并带章节概述；初稿与审查左侧共用同一份章节正文；启动审查先出现进度，再进入结果页，右侧写问题、依据和修改建议
 - EP：`el-button` / `el-input` / `el-select` / `el-table`；虚线框标题在框内；并排按钮 `gap: 8px`
 
 ### Q. 创新点抽取 / 技术体系图谱（InnovationExtract m29 · TechSystemGraph m30）

@@ -45,7 +45,7 @@ export const docPlatformModules = {
       feature('design-type-config', '文档设计类型配置'), feature('outline', '标准化提纲生成'), feature('framework-build', '文档框架搭建'), feature('clause-fill', '文档条款填充'), feature('outline-optimize', '提纲表述优化'), feature('term-calibrate', '专业术语校准'), feature('outline-level-adjust', '提纲层级调整'), feature('outline-point-maintain', '提纲要点维护'),
     ]),
     module('knowledge-generate', '知识驱动文档生成', 'generate', [
-      feature('generate-requirement', '文档生成需求配置'), feature('history-knowledge-extract', '历史资料知识提取'), feature('draft', '领域文档内容生成'), feature('official-document-generate', '军队机关公文生成'), feature('standard-phrase-recommend', '标准话术推荐'), feature('grammar-polish', '文档语法润色'),
+      feature('generate-requirement', '报告管理'), feature('history-knowledge-extract', '历史资料知识提取'), feature('draft', '领域文档内容生成'), feature('official-document-generate', '军队机关公文生成'), feature('standard-phrase-recommend', '标准话术推荐'), feature('grammar-polish', '文档语法润色'),
     ]),
     module('generation-trace', '文档生成溯源与版本管控', 'generation-trace', [
       feature('trace', '文档生成过程追踪'), feature('clause-source-trace', '文书条款来源追溯'), feature('citation-trace', '引用依据追溯'), feature('version-record-manage', '文档版本与修改记录管理'), feature('source-jump', '原文依据一键跳转'),

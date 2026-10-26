@@ -27,10 +27,10 @@ function home(title, desc, steps, kpis, chartTitle = '近7日业务量') {
 
 const postTrialPages = {
   'write/outline-design/outline': { type: 'post-trial', stage: 'outline', module: 'M23', desc: '' },
-  'write/knowledge-generate/generate-requirement': { type: 'post-trial', stage: 'need', module: 'M24', desc: '' },
+  'write/knowledge-generate/generate-requirement': { type: 'report-flow', mode: 'write', module: 'M24', desc: '' },
   'write/knowledge-generate/draft': { type: 'post-trial', stage: 'compose', module: 'M24', desc: '' },
   'write/generation-trace/trace': { type: 'post-trial', stage: 'trace', module: 'M25', desc: '' },
-  'review/strategy-review/run': { type: 'post-trial', stage: 'review', module: 'M26 / M27', desc: '' },
+  'review/strategy-review/run': { type: 'report-flow', mode: 'review', module: 'M26 / M27', desc: '' },
   'review/review-result/issues': { type: 'post-trial', stage: 'review', entry: 'result', module: 'M27', desc: '' },
   'collect/doc-collect/document-type-archive': { type: 'post-trial', stage: 'archive', module: 'M28', desc: '' },
 }
