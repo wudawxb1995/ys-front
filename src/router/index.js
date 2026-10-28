@@ -32,6 +32,10 @@ router.beforeEach((to) => {
   const platform = getPlatform(to.params.pid)
   if (!platform) return { path: '/' }
   const system = platform.systems.find((s) => s.id === to.params.sid) || platform.systems[0]
+  // 挖掘结果只从「创新点抽取 → 查看」带 id 进入；平台入口与裸地址落到创新点抽取
+  if (platform.id === 'insight' && system?.id === 'innov' && to.params.mid === 'mine' && !to.query.id) {
+    return { name: 'app', params: { pid: 'insight', sid: 'innov', mid: 'points' } }
+  }
   const located = findMenu(platform, system.id, to.params.mid)
   const mid = located.menu?.id
   if (to.params.sid === system.id && to.params.mid === mid) return true

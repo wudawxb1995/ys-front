@@ -56,6 +56,7 @@
                 <td><b class="conf">{{ inn.confidence }}</b></td>
                 <td style="text-align:center">
                   <div class="ops" style="justify-content:center">
+                    <a @click="m29OpenView(inn)">查看</a>
                     <a @click="m29ExpandedId = m29ExpandedId === inn.id ? null : inn.id">
                       {{ m29ExpandedId === inn.id ? '收起' : '展开' }}
                     </a>

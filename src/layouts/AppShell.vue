@@ -105,7 +105,7 @@ import { useRoute, useRouter } from 'vue-router'
 import Icon from '@/components/Icon.vue'
 import Mark from '@/components/Mark.vue'
 import PageHost from '@/views/PageHost.vue'
-import { findMenu, getPlatform } from '@/data/catalog'
+import { findMenu, firstLeaf, getPlatform } from '@/data/catalog'
 import { iconFor } from '@/utils/iconFor'
 
 const route = useRoute()

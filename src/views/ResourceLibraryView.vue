@@ -3,7 +3,7 @@
     <header class="top">
       <button class="back" @click="router.push('/hub')">← 返回</button>
       <div class="brand">
-        <b>农业机械试验鉴定领域资源库</b>
+        <b>ZB试验鉴定领域资源库</b>
       </div>
     </header>
 

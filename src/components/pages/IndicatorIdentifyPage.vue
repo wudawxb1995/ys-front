@@ -66,7 +66,7 @@
                 <td class="center" :class="{ 'conf-low': row.conf < 0.8 }">{{ row.conf.toFixed(2) }}</td>
                 <td class="center muted">P{{ row.srcPage }}</td>
                 <td class="center">
-                  <span class="badge" :class="row.status === '已确认' ? 'on' : 'warn'"><i></i>{{ row.status }}</span>
+                  <span class="badge" :class="row.status === '已确认' ? 'on' : row.status === '已驳回' ? 'hold' : 'warn'"><i></i>{{ row.status }}</span>
                 </td>
                 <td class="center">
                   <div class="ops">
@@ -244,26 +244,38 @@
 
     <el-dialog
       v-model="traceVisible"
-      title="一键溯源"
-      width="560px"
+      width="520px"
       align-center
       destroy-on-close
+      class="m02-trace-dialog"
     >
-      <div v-if="traceRow" class="m02-trace">
-        <div class="m02-trace-head">
-          <div>
-            <div class="m02-trace-name">{{ traceRow.name }}</div>
-            <div class="m02-trace-sub">{{ traceRow.srcDoc }} · 第 {{ traceRow.srcPage }} 页 · {{ traceRow.klass }}</div>
-          </div>
-          <div class="m02-trace-val">{{ traceRow.criteria }}</div>
+      <template #header>
+        <div v-if="traceRow" class="m02-trace-title">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.5h6.2L13 5v9.5h-9.5v-13z" /><path d="M9.5 1.5V5H13" /></svg>
+          <b>{{ traceRow.name }}</b>
+          <span>置信度 {{ Number(traceRow.conf || 0).toFixed(2) }}</span>
         </div>
-        <div class="m02-trace-body">
-          <span class="page-tag">第 {{ traceRow.srcPage }} 页</span>
-          <p class="src-text" v-html="traceHtml" />
+      </template>
+      <div v-if="traceRow" class="m02-trace">
+        <div class="m02-trace-quote">
+          <div class="m02-trace-loc">原文同步定位 · 《{{ traceDocTitle(traceRow) }}》第 {{ traceRow.srcPage }} 页</div>
+          <p>......{{ traceSentence(traceRow) }}.......<mark>{{ traceMark(traceRow) }}</mark></p>
+        </div>
+        <div class="m02-trace-judge">
+          <span>抽取判据：</span>
+          <b>{{ traceRow.criteria }}</b>
         </div>
       </div>
       <template #footer>
-        <el-button type="primary" @click="traceVisible = false">关闭</el-button>
+        <button type="button" class="m02-act m02-act-ok" @click="confirmTrace">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8.2 6.3 11.2 12.8 4.6" /></svg>确认
+        </button>
+        <button type="button" class="m02-act m02-act-edit" @click="reviseTrace">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.2 3.2 12.8 6.8 6.2 13.4H2.6V9.8z" /><path d="M8.2 4.2 11.8 7.8" /></svg>修正
+        </button>
+        <button type="button" class="m02-act m02-act-no" @click="rejectTrace">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.2 4.2 11.8 11.8M11.8 4.2 4.2 11.8" /></svg>驳回
+        </button>
       </template>
     </el-dialog>
   </div>
@@ -399,17 +411,31 @@ const editForm = reactive({
 })
 const traceVisible = ref(false)
 const traceRow = ref(null)
-const traceHtml = computed(() => {
-  const row = traceRow.value
-  if (!row?.srcText) return ''
-  const phrase = row.highlight || row.criteria || ''
-  const escaped = String(row.srcText)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/\n/g, '<br/>')
-  if (!phrase) return escaped
-  const safe = String(phrase).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return escaped.replace(new RegExp(safe, 'g'), `<mark class="hl">${phrase}</mark>`)
-})
+const traceSentences = {
+  i01: '在标准气象条件下，立靶高低偏差应不大于0.30 mil，方向偏差应不大于0.30 mil',
+  i08: '最大膛压不大于315 MPa',
+}
+
+function traceDocTitle(row) {
+  const raw = String(row?.srcDoc || detail.value?.doc || '某型装备研制总要求')
+  if (/研制总要求/.test(raw)) return '某型装备研制总要求'
+  return raw.replace(/^D-\d+/, '').replace(/[《》]/g, '').trim() || raw
+}
+
+function traceSentence(row) {
+  if (!row) return ''
+  if (traceSentences[row.id]) return traceSentences[row.id]
+  const criteria = String(row.criteria || '')
+  if (/^[≤<]/.test(criteria)) return `${row.name}不大于${criteria.replace(/^[≤<]\s*/, '')}`
+  if (/^[≥>]/.test(criteria)) return `${row.name}不小于${criteria.replace(/^[≥>]\s*/, '')}`
+  return `${row.name}应满足${criteria}`
+}
+
+function traceMark(row) {
+  const criteria = String(row?.criteria || '')
+  const hit = criteria.match(/^[≤≥<>±]*\s*[\d.]+/)
+  return hit ? hit[0].replace(/\s+/g, '') : criteria
+}
 
 function openDetail(task) {
   detail.value = task
@@ -488,6 +514,28 @@ function openTrace(row) {
   traceRow.value = row
   demoStore.lastM02IndicatorId = row.id
   traceVisible.value = true
+}
+
+function confirmTrace() {
+  const row = traceRow.value
+  if (!row) return
+  row.status = '已确认'
+  traceVisible.value = false
+  toast(`已确认「${row.name}」`, 'success')
+}
+
+function rejectTrace() {
+  const row = traceRow.value
+  if (!row) return
+  row.status = '已驳回'
+  traceVisible.value = false
+  toast(`已驳回「${row.name}」`, 'warning')
+}
+
+function reviseTrace() {
+  const row = traceRow.value
+  traceVisible.value = false
+  if (row) openEdit(row)
 }
 
 function openCreate() {
@@ -632,28 +680,100 @@ function submitCreate() {
 .m02-table .ops a { color: #1668a8; cursor: pointer; }
 .m02-table .ops a:hover { text-decoration: underline; }
 .m02-table tbody tr { cursor: default; }
-.m02-trace-head {
+.m02-trace-title {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-right: 28px;
 }
-.m02-trace-name { font-size: 16px; font-weight: 700; color: #1f3d5a; }
-.m02-trace-sub { margin-top: 4px; font-size: 12.5px; color: #8a99a8; }
-.m02-trace-val {
-  font-size: 14px;
+.m02-trace-title svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: #1a3f66;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.m02-trace-title b {
+  color: #1a3f66;
+  font-size: 16px;
   font-weight: 700;
-  color: #0d4e83;
-  white-space: nowrap;
 }
-.m02-trace-body {
-  border: 1px solid #e8eef5;
+.m02-trace-title span {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: #f6edd6;
+  color: #b08a3c;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 22px;
+}
+.m02-trace-quote {
+  padding: 14px 16px;
+  border: 1px solid #e6ebf2;
   border-radius: 8px;
-  padding: 14px;
-  background: #fafcfe;
-  min-height: 140px;
+  background: #f7f9fb;
 }
+.m02-trace-loc {
+  margin-bottom: 8px;
+  color: #8b97a6;
+  font-size: 13px;
+}
+.m02-trace-quote p {
+  margin: 0;
+  color: #3e4e60;
+  font-size: 14px;
+  line-height: 1.75;
+}
+.m02-trace-quote mark {
+  padding: 0 4px;
+  border-radius: 3px;
+  background: #f3e4c0;
+  color: #6a5630;
+}
+.m02-trace-judge {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 16px;
+  color: #8b97a6;
+  font-size: 14px;
+}
+.m02-trace-judge b {
+  color: #1668a8;
+  font-size: 15px;
+  font-weight: 700;
+}
+.m02-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.m02-act svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.m02-act-ok { border: 1px solid #b7dfc4; color: #1f9d55; }
+.m02-act-edit { border: 1px solid #b7d4ee; color: #1668a8; }
+.m02-act-no { border: 1px solid #f0c4b8; color: #d4380d; }
+.m02-act-ok:hover { background: #f3faf5; }
+.m02-act-edit:hover { background: #f4f9fd; }
+.m02-act-no:hover { background: #fff6f3; }
 
 /* 虚线分段面板 */
 .m02-dash {
@@ -939,5 +1059,13 @@ function submitCreate() {
 @media (max-width: 1200px) {
   .m02-result-layout.split { grid-template-columns: 1fr; }
   .m02-title { max-width: 40%; }
+}
+</style>
+
+<style>
+.m02-trace-dialog .el-dialog__body { padding-top: 4px; padding-bottom: 8px; }
+.m02-trace-dialog .el-dialog__footer {
+  border-top: 1px solid #e8edf3;
+  padding-top: 14px;
 }
 </style>

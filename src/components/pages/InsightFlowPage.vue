@@ -47,20 +47,50 @@
     <template v-else-if="view === 'graph'">
       <div class="graph-bar">
         <button type="button" class="text-btn" @click="view = 'results'">← 返回挖掘结果</button>
-        <div class="dirs">
-          <button v-for="chip in graphChips" :key="chip" type="button" :class="{ on: graphChip === chip }" @click="graphChip = chip">{{ chip }}</button>
+        <div class="graph-current">
+          <span>当前创新点</span>
+          <b>{{ active.title }}</b>
+          <em>{{ graphModel.nodes.length }} 个节点 · {{ graphModel.links.length }} 条关系</em>
         </div>
+        <el-button type="primary" @click="openReport">生成技术研判报告</el-button>
       </div>
       <div class="graph-layout">
-        <div class="graph-canvas">
-          <button type="button" class="g-node hub" :style="hubStyle" @click="graphNode = 'hub'">{{ active.title }}</button>
-          <button v-for="node in visibleNodes" :key="node.id" type="button" class="g-node" :class="[node.tone, { on: graphNode === node.id }]" :style="node.style" @click="graphNode = node.id">{{ node.label }}</button>
+        <div class="graph-board">
+          <div class="dirs">
+            <button v-for="chip in graphChips" :key="chip" type="button" :class="{ on: graphChip === chip }" @click="graphChip = chip">{{ chip }}</button>
+          </div>
+          <InsightGraph
+            :nodes="graphModel.nodes"
+            :links="graphModel.links"
+            :selected="graphNode"
+            :focus="graphChip"
+            @update:selected="graphNode = $event"
+          />
         </div>
         <aside class="graph-side">
-          <h3>{{ sideNode.label }}</h3>
+          <div class="side-kicker">当前选中节点</div>
+          <span class="side-badge">{{ sideNode.group }}</span>
+          <h3>{{ sideNode.title }}</h3>
           <p>{{ sideNode.text }}</p>
-          <div class="side-meta"><span>关联关系</span><b>{{ sideNode.rel }}</b></div>
-          <div class="side-meta"><span>证据</span><b>{{ active.evidence }} 份资料</b></div>
+          <div class="side-block">
+            <span>关联关系</span>
+            <b>{{ sideNode.rels }}</b>
+          </div>
+          <div v-if="sideNode.evidence" class="side-block">
+            <span>引用证据</span>
+            <b>{{ sideNode.evidence.title }}</b>
+            <small>{{ sideNode.evidence.source }}</small>
+            <p class="quote">{{ sideNode.evidence.quote }}</p>
+          </div>
+          <div v-if="sideNode.hub" class="judge">
+            <span>综合研判</span>
+            <div class="judge-nums">
+              <div><b>{{ active.innov }}</b><small>创新度</small></div>
+              <div><b>{{ active.heat }}</b><small>热度</small></div>
+              <div><b>{{ active.evidence }}</b><small>证据</small></div>
+            </div>
+            <p>{{ active.summary }}</p>
+          </div>
         </aside>
       </div>
     </template>
@@ -105,122 +135,25 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { insightDirections, insightMineItems } from '@/data/insightMine'
+import { buildInsightGraph, insightGraphChips } from '@/data/insightGraph'
+import InsightGraph from '@/components/pages/InsightGraph.vue'
 
-const directions = [
-  { id: 'all', name: '全部方向' },
-  { id: 'target', name: '立靶偏差智能测量' },
-  { id: 'cause', name: '智能试验与异常分析' },
-  { id: 'sim', name: '试验推演与评估' },
-  { id: 'plan', name: '智能试验设计' },
-  { id: 'evidence', name: '试验质量与证据链' },
-  { id: 'guide', name: '智能测量与制导' },
-]
+const directions = insightDirections
+const items = insightMineItems
 
-const items = [
-  {
-    id: 'ip-30005', no: '01', direction: 'target', directionName: '立靶偏差智能测量', tag: '优先研发',
-    title: '多源光测融合的立靶高低偏差智能测量与误差溯源技术',
-    code: '创新点编号 IP-30005', innov: 96, heat: 94, stage: '原型验证', evidence: 4,
-    summary: '建议优先开展与现有立靶测量链路的比对验证，重点验证时间同步、坐标基准统一和复杂背景下弹着点识别能力。',
-    problem: '立靶高低偏差测量涉及弹着点识别、炮目坐标转换、弹道气象修正和复测判定。单一测量链路难以同时支撑高精度判定与异常复盘。',
-    principle: '融合靶面图像、雷达通测和光电经纬仪测量，通过统一时间基准和炮目坐标系完成弹着点空间定位，并联合弹道气象数据修正系统误差。',
-    content: '突破弹着点业像素识别、多源光测时间同步、炮目坐标统一转换和测量不确定度自动评定，形成从原始图像到偏差判定、异常溯源的完整证据链。',
-    value: '可用于立靶高低偏差指标的智能判读与复核。对第19发 0.42 mil 超差和复测 0.18 mil 结果进行同链路比对，辅助区分测量误差、气象修正误差与装备状态异常。',
-    quote: '以多站光测观测和标靶图像为共同证据，经时间同步、坐标统一转换和弹着点像素定位计算立靶高低偏差，并同步给出测量不确定度及原始证据索引。',
-    source: '《立靶偏差多源光测融合测量与误差溯源研究》，武器科技文献库，2025年。',
-  },
-  {
-    id: 'ip-30011', no: '02', direction: 'cause', directionName: '智能试验与异常分析', tag: '优先研发',
-    title: '多源试验数据驱动的异常根因推理',
-    code: '创新点编号 IP-30011', innov: 95, heat: 91, stage: '工程验证', evidence: 5,
-    summary: '把遥测、光测和标定记录放到同一发次上推理，优先解释单发超差而不是用批次均值掩盖。',
-    problem: '异常发次往往同时出现姿态、温度和初速变化，人工复盘很难判断哪一条证据先发生。',
-    principle: '按发次对齐遥测、光测和标定数据，沿温度跳变、姿态漂移和温补系数偏差逐层回溯。',
-    content: '输出候选根因、置信度和证据链，保留首测与复测两套记录，避免把复测符合回写成首测合格。',
-    value: '直接服务第19发立靶超差复盘，把定位定向系统温补失效与现场处置、复测结果连成闭环。',
-    quote: '异常事件按发次编号串联原始记录、分析结论和处置单，缺失任一环节不得给出闭环结论。',
-    source: '《第19发超差事件解读报告》V1.1，事件 EVT-001。',
-  },
-  {
-    id: 'ip-30018', no: '03', direction: 'target', directionName: '立靶偏差智能测量', tag: '',
-    title: '多站光电时序同步与弹着点三维重构技术',
-    code: '创新点编号 IP-30018', innov: 91, heat: 87, stage: '原型验证', evidence: 3,
-    summary: '用统一授时把多站光电观测恢复到同一时刻，再重建弹着点空间位置。',
-    problem: '各观测站时钟偏差会把同一发弹着点拆成多个位置，高低偏差随之失真。',
-    principle: '以授时脉冲对齐各站曝光时刻，再用共同炮目坐标系解算弹着点。',
-    content: '输出三维弹着点和各站残差，残差超限的站点不进入正式偏差计算。',
-    value: '为立靶高低、方向偏差提供可复核的空间位置，而不是只保留一张靶纸读数。',
-    quote: '多站观测必须先完成时序同步，再进入弹着点解算。',
-    source: '光电测量试验记录，2025年。',
-  },
-  {
-    id: 'ip-30022', no: '04', direction: 'sim', directionName: '试验推演与评估', tag: '',
-    title: '数字孪生驱动的试验过程推演与鉴定评估',
-    code: '创新点编号 IP-30022', innov: 90, heat: 88, stage: '原理验证', evidence: 3,
-    summary: '用孪生模型预演工况和样本安排，再对照实测判断方案是否覆盖判据。',
-    problem: '大纲样本和工况往往到现场才发现覆盖不足，补测成本高。',
-    principle: '把指标树判据、装备状态和气象边界放进孪生过程，提前推演超差风险。',
-    content: '推演结果只作为试验准备依据，不替代实测判定。',
-    value: '帮助在开试前发现温补、气象和测量链路的薄弱工况。',
-    quote: '推演结论必须回链到指标树条款，不能单独作为鉴定结论。',
-    source: '试验过程推演技术说明，2025年。',
-  },
-  {
-    id: 'ip-30027', no: '05', direction: 'plan', directionName: '智能试验设计', tag: '',
-    title: '指标树约束下的试验方案与资源协同优化',
-    code: '创新点编号 IP-30027', innov: 88, heat: 86, stage: '原理验证', evidence: 2,
-    summary: '按已发布指标树安排科目、样本和测量资源，避免方案与判据脱节。',
-    problem: '方案章节和指标树版本不一致时，现场记录无法直接支撑判定。',
-    principle: '以指标树为约束生成科目和资源清单，并标注每项指标对应的数据源。',
-    content: '资源冲突和缺测项在方案阶段标出，不留到数据汇总后再补。',
-    value: '保证 28 项指标都有对应的测量链路和样本数量。',
-    quote: '试验方案中的判据版本应与已发布指标树一致。',
-    source: '指标树 V1.0 与试验大纲对照说明。',
-  },
-  {
-    id: 'ip-30031', no: '06', direction: 'guide', directionName: '智能测量与制导', tag: '',
-    title: '温补气象联合修正的弹道偏差溯源试验技术',
-    code: '创新点编号 IP-30031', innov: 86, heat: 84, stage: '工程验证', evidence: 4,
-    summary: '把温补系数和气象修正放到同一发次里解释弹道偏差来源。',
-    problem: '温补失效和气象修正误差都会表现为立靶偏差，单独看其中一个容易误判。',
-    principle: '对照温补标定、气象观测和弹道测量残差，区分装备状态与环境修正。',
-    content: '给出偏差来源排序和对应证据，不把环境修正误差写成装备故障。',
-    value: '支撑第19发温补失效与气象修正的分流判断。',
-    quote: '弹道残差需同时对照温补系数和气象修正量。',
-    source: '弹道测量与气象保障对照记录。',
-  },
-  {
-    id: 'ip-30036', no: '07', direction: 'evidence', directionName: '试验质量与证据链', tag: '',
-    title: '复测样本与正式样本分离的判定口径固化',
-    code: '创新点编号 IP-30036', innov: 84, heat: 80, stage: '工程验证', evidence: 2,
-    summary: '正式统计只计 30 发，复测单独列表，结论里并列首测和复测。',
-    problem: '复测符合容易被读成首测合格，批次统计被单发处置结果带偏。',
-    principle: '正式样本、复测样本和判定结论使用不同字段，禁止回写。',
-    content: '判定表保留两个值，并写明复测不进入正式样本基数。',
-    value: '避免鉴定结论把处置后的复测结果算进首测合格数。',
-    quote: '复测符合不能回写为首测合格，两套数值都要保留。',
-    source: '精度试验数据汇总口径说明。',
-  },
-  {
-    id: 'ip-30040', no: '08', direction: 'evidence', directionName: '试验质量与证据链', tag: '优先研发',
-    title: '试验证据链自动回链与条款定位',
-    code: '创新点编号 IP-30040', innov: 83, heat: 79, stage: '原型验证', evidence: 3,
-    summary: '从结论句回到指标树条款、发次记录和异常事件编号。',
-    problem: '报告判定句经常缺少条款号和原始记录位置，复核时对不上。',
-    principle: '每条判定同时挂指标树版本、发次编号和证据原文位置。',
-    content: '没有出处的条款不自动编号，只提示人工核对。',
-    value: '让审校可以直接从结论跳回原文和数据源。',
-    quote: '任一判定句都应能顺着发次编号回到源文件。',
-    source: '试验鉴定证据链组织规范。',
-  },
-]
-
+const route = useRoute()
 const view = ref('results')
 const direction = ref('all')
-const activeId = ref(items[0].id)
+const activeId = ref(String(route.query.id || items[0].id))
+watch(() => route.query.id, (id) => {
+  if (id && items.some((item) => item.id === id)) activeId.value = String(id)
+})
 const graphChip = ref('全部节点')
 const graphNode = ref('hub')
+const graphChips = insightGraphChips
 const reportPhase = ref('ready')
 const progress = ref(0)
 let timer = 0
@@ -235,28 +168,9 @@ const kpis = computed(() => [
 ])
 const reportTitle = computed(() => `${active.value.title}研判报告`)
 
-const graphNodes = [
-  { id: 'n1', group: '创新点', tone: 'blue', label: '立靶偏差智能测量', text: '当前创新点所属技术方向，承接光测、雷达和靶纸证据。', rel: '属于' },
-  { id: 'n2', group: '关键方法', tone: 'blue', label: '多源光测时间同步', text: '统一各站曝光时刻，避免同一发弹着点被拆开。', rel: '采用' },
-  { id: 'n3', group: '关键方法', tone: 'blue', label: '炮目坐标统一转换', text: '把各站观测转换到同一炮目坐标系。', rel: '采用' },
-  { id: 'n4', group: '验证指标', tone: 'gold', label: '高低 ≤0.30 mil', text: '指标树判据。第19发首测 0.42 mil，复测 0.18 mil。', rel: '对照' },
-  { id: 'n5', group: '异常发次', tone: 'gold', label: '第19发 EVT-001', text: '立靶高低偏差超差事件，处置后复测符合。', rel: '关联' },
-  { id: 'n6', group: '复测结果', tone: 'green', label: '复测 0.18 mil', text: '复测记录单独保留，不回写为首测合格。', rel: '形成' },
-  { id: 'n7', group: '根因溯源', tone: 'green', label: '温补失效', text: '定位定向系统温补失效为候选根因，置信度 0.86。', rel: '解释' },
-  { id: 'n8', group: '证据文献', tone: 'blue', label: '光测与靶纸证据', text: '靶纸、测量文件和设备日志按同一发次编号存放。', rel: '引用' },
-]
-const graphChips = ['全部节点', ...new Set(graphNodes.map((node) => node.group))]
-const visibleNodes = computed(() => graphNodes
-  .filter((node) => graphChip.value === '全部节点' || node.group === graphChip.value)
-  .map((node, index, list) => {
-    const angle = (-90 + (360 / list.length) * index) * Math.PI / 180
-    return { ...node, style: { left: `${50 + Math.cos(angle) * 34}%`, top: `${46 + Math.sin(angle) * 38}%` } }
-  }))
-const hubStyle = { left: '50%', top: '46%' }
-const sideNode = computed(() => {
-  if (graphNode.value === 'hub') return { label: active.value.title, text: active.value.content, rel: '创新点' }
-  return graphNodes.find((node) => node.id === graphNode.value) || graphNodes[0]
-})
+const graphModel = computed(() => buildInsightGraph(active.value))
+const sideNode = computed(() => graphModel.value.nodes.find((node) => node.id === graphNode.value) || graphModel.value.nodes[0])
+watch(activeId, () => { graphNode.value = 'hub' })
 
 const reportBlocks = computed(() => {
   const item = active.value
@@ -295,7 +209,7 @@ onBeforeUnmount(() => clearInterval(timer))
 <style scoped>
 .insight-flow { display: flex; flex-direction: column; gap: 12px; color: #29465c; }
 .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.kpi, .result-card, .result-detail, .graph-canvas, .graph-side, .report-banner, .ready-card, .report-doc {
+.kpi, .result-card, .result-detail, .graph-board, .graph-side, .report-banner, .ready-card, .report-doc {
   background: #fff; border: 1px solid #e3edf5; border-radius: 12px;
 }
 .kpi { padding: 14px 16px; }
@@ -305,7 +219,8 @@ onBeforeUnmount(() => clearInterval(timer))
 .dirs button, .text-btn { border: 1px solid #d7e3ee; background: #fff; color: #4d6982; border-radius: 999px; padding: 5px 12px; cursor: pointer; }
 .dirs button.on { background: #1668a8; color: #fff; border-color: #1668a8; }
 .text-btn { border: 0; background: none; color: #1668a8; padding: 0; }
-.result-grid, .graph-layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 12px; align-items: start; }
+.result-grid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 12px; align-items: start; }
+.graph-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; align-items: start; }
 .result-list { display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 250px); overflow: auto; }
 .result-card { text-align: left; padding: 12px; cursor: pointer; }
 .result-card.on { border-color: #1668a8; box-shadow: 0 0 0 3px rgba(22, 104, 168, .12); }
@@ -323,14 +238,28 @@ onBeforeUnmount(() => clearInterval(timer))
 .result-detail blockquote { margin: 16px 0 0; padding: 12px 14px; background: #f7fbfe; border-radius: 8px; }
 .result-detail blockquote small { display: block; margin-top: 6px; color: #8a9aaa; }
 .graph-bar, .report-tools { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.graph-canvas { position: relative; min-height: 560px; overflow: hidden; }
-.g-node { position: absolute; transform: translate(-50%, -50%); max-width: 150px; border: 0; border-radius: 999px; padding: 8px 12px; color: #fff; background: #1668a8; cursor: pointer; font-size: 12px; line-height: 1.4; }
-.g-node.hub { max-width: 220px; background: #0d4e83; font-weight: 650; }
-.g-node.gold { background: #c9842a; }
-.g-node.green { background: #2e9b57; }
-.g-node.on { box-shadow: 0 0 0 3px rgba(22, 104, 168, .25); }
+.graph-current { display: flex; align-items: baseline; gap: 10px; min-width: 0; flex: 1; }
+.graph-current span, .graph-current em, .side-kicker, .side-block span, .judge > span { color: #8a9aaa; font-size: 12px; }
+.graph-current b { color: #16324a; font-size: 14px; line-height: 1.45; }
+.graph-current em { font-style: normal; white-space: nowrap; }
+.graph-bar :deep(.el-button) { margin-left: auto; }
+.graph-board { padding: 14px 14px 16px; }
+.graph-board .dirs { margin-bottom: 12px; }
 .graph-side { padding: 16px; }
-.side-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eef3f8; }
+.side-kicker { margin-bottom: 8px; }
+.side-badge { display: inline-block; margin-bottom: 8px; color: #1668a8; background: #e8f3fb; border-radius: 999px; padding: 2px 8px; font-size: 12px; }
+.graph-side h3 { margin: 0 0 8px; font-size: 16px; line-height: 1.45; }
+.side-block { margin-top: 14px; padding-top: 12px; border-top: 1px solid #eef3f8; }
+.side-block b, .side-block small { display: block; }
+.side-block b { margin-top: 4px; color: #16324a; line-height: 1.5; }
+.side-block small { margin-top: 2px; color: #8a9aaa; }
+.quote { margin-top: 8px; color: #4d6278; line-height: 1.7; }
+.judge { margin-top: 14px; padding-top: 12px; border-top: 1px solid #eef3f8; }
+.judge-nums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+.judge-nums div { background: #f4f8fb; border-radius: 8px; padding: 8px 6px; text-align: center; }
+.judge-nums b { display: block; color: #0d4e83; font-size: 20px; }
+.judge-nums small, .judge p { color: #6d8194; }
+.judge p { margin: 0; line-height: 1.7; font-size: 13px; }
 .report-banner, .ready-card, .report-doc { padding: 18px 20px; }
 .report-banner h2, .report-doc h2 { margin: 0; font-size: 20px; }
 .report-banner p { margin: 6px 0 0; }

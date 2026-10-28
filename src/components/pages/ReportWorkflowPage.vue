@@ -140,23 +140,36 @@
         <div>
           <button type="button" class="back-link" @click="goReportList">← 返回报告列表</button>
           <h2>{{ editingReportId ? '编辑报告配置' : '新建报告 · 关联试验结果' }}</h2>
-          <p>进来后先选择已发布指标树。选定后自动带出试验结果、原始记录和异常根因，不必再手工勾选素材。</p>
+          <p>进来后先选择试验项目，再选择报告模板。项目选定后自动带出试验结果、原始记录和异常根因，不必再手工勾选素材。</p>
         </div>
       </header>
       <section class="flow-panel padded">
-        <h3><span class="step-number">1</span>报告信息与指标树</h3>
+        <h3><span class="step-number">1</span>报告信息与项目</h3>
         <el-form label-position="top" class="form-grid">
           <el-form-item label="报告名称" required><el-input v-model="form.title" maxlength="80" placeholder="请输入报告名称" /></el-form-item>
-          <el-form-item label="选择已发布指标树" required>
-            <el-select v-model="form.treeId" placeholder="请选择指标树，自动关联试验结果" style="width:100%" @change="selectTree">
-              <el-option v-for="tree in publishedTrees" :key="tree.id" :label="treeLabel(tree)" :value="tree.id" />
+          <el-form-item label="选择项目" required>
+            <el-select v-model="form.projectId" placeholder="请选择试验项目，自动关联试验结果" style="width:100%" @change="selectProject">
+              <el-option v-for="project in reportProjects" :key="project.id" :label="project.name" :value="project.id" />
             </el-select>
           </el-form-item>
         </el-form>
         <el-alert v-if="!publishedTrees.length" type="warning" :closable="false" title="暂无已发布指标树，请先完成指标树发布。" />
       </section>
+      <section class="flow-panel padded">
+        <h3><span class="step-number">2</span>选择报告模板 <small>共 {{ reportTemplates.length }} 套 · 点击即选</small></h3>
+        <div class="template-picker">
+          <button v-for="template in reportTemplates" :key="template.id" type="button" class="template-chip" :class="{ selected: form.templateId === template.id }" :title="template.description" @click="form.templateId = template.id">
+            <b>{{ template.name }}</b>
+            <span>{{ template.chapters.length }} 章</span>
+          </button>
+        </div>
+        <div class="template-detail">
+          <p>{{ selectedTemplate.description }}</p>
+          <div class="chapter-chips"><span v-for="(chapter, index) in selectedTemplate.chapters" :key="chapter">{{ String(index + 1).padStart(2, '0') }} {{ chapter }}</span></div>
+        </div>
+      </section>
       <section v-if="configMaterials" class="flow-panel padded">
-        <h3><span class="step-number">2</span>自动关联试验材料 <em>自动关联，无需手工选素材</em></h3>
+        <h3><span class="step-number">3</span>自动关联试验材料 <em>已关联「{{ configMaterials.project?.name || '试验项目' }}」，无需手工选素材</em></h3>
         <div class="material-stats">
           <div><small>指标树与判据</small><strong>{{ configMaterials.metrics.length }} 项</strong><span>{{ configMaterials.tree.version }} · 已关联</span></div>
           <div><small>试验结果与符合性判定</small><strong>{{ configMaterials.metrics.length }} / {{ configMaterials.metrics.length }} 项</strong><span>{{ resultSummary(configMaterials) }}</span></div>
@@ -196,19 +209,6 @@
           </div>
         </div>
       </section>
-      <section class="flow-panel padded">
-        <h3><span class="step-number">3</span>选择报告模板 <small>共 {{ reportTemplates.length }} 套 · 点击即选</small></h3>
-        <div class="template-picker">
-          <button v-for="template in reportTemplates" :key="template.id" type="button" class="template-chip" :class="{ selected: form.templateId === template.id }" :title="template.description" @click="form.templateId = template.id">
-            <b>{{ template.name }}</b>
-            <span>{{ template.chapters.length }} 章</span>
-          </button>
-        </div>
-        <div class="template-detail">
-          <p>{{ selectedTemplate.description }}</p>
-          <div class="chapter-chips"><span v-for="(chapter, index) in selectedTemplate.chapters" :key="chapter">{{ String(index + 1).padStart(2, '0') }} {{ chapter }}</span></div>
-        </div>
-      </section>
       <footer class="flow-foot">
         <span>创建后进入编写页。提纲和初稿都使用上面关联好的材料。</span>
         <el-button type="primary" :disabled="!configReady" @click="saveReportConfig">{{ editingReportId ? '保存配置并进入编写' : '创建报告并进入编写' }}</el-button>
@@ -222,6 +222,7 @@
           <h2>{{ currentReport.title }}</h2>
           <p>指标树试验结果与异常根因已汇集。按所选模板生成提纲和初稿，每项判定都可以回到原始记录。</p>
           <div class="meta-line">
+            <span v-if="currentReport.materials.project">关联项目 {{ currentReport.materials.project.name }}</span>
             <span>关联指标树 {{ currentReport.materials.tree.version }}</span>
             <span>报告模板 {{ currentTemplate.name }}</span>
             <span>试验结果 {{ currentReport.materials.metrics.length }} 项</span>
@@ -243,6 +244,30 @@
           <el-button type="primary" :disabled="busy" @click="generateOutline">按模板生成提纲</el-button>
         </div>
         <div v-if="busy && currentReport.stage === 'materials'" class="inline-busy"><span class="loading-spinner"></span><b>{{ busyTitle }}</b><el-progress :percentage="progress" :stroke-width="6" :show-text="false" /></div>
+      </section>
+      <section v-if="currentReport.stage === 'materials'" class="flow-panel padded">
+        <h3>选择专家与技能 <small>可选，不选也能按模板生成提纲</small></h3>
+        <div class="rpt-pick">
+          <div class="rpt-pick-tabs">
+            <button type="button" :class="{ on: pickTab === 'expert' }" @click="setPickTab('expert')">专家</button>
+            <button type="button" :class="{ on: pickTab === 'skill' }" @click="setPickTab('skill')">技能</button>
+            <span>已选 {{ expertIds.length }} 个专家 · {{ skillIds.length }} 项技能</span>
+          </div>
+          <div class="rpt-pick-chips">
+            <button v-for="chip in pickChips" :key="chip" type="button" :class="{ on: pickChip === chip }" @click="pickChip = chip">{{ chip }}</button>
+          </div>
+          <div class="rpt-pick-grid">
+            <button v-for="item in pickCards" :key="item.id" type="button" class="rpt-pick-card" :class="{ on: pickOn(item.id) }" @click="togglePick(item.id)">
+              <pick-avatar :id="item.id" />
+              <span class="rpt-pick-main">
+                <b>{{ item.name }}</b>
+                <small>{{ item.brief }}</small>
+                <span class="rpt-pick-tags"><em v-for="tag in item.tags" :key="tag">{{ tag }}</em></span>
+              </span>
+            </button>
+          </div>
+          <p>将按「{{ currentTemplate.name }}」组稿，由已选专家与技能整理判定、原始记录和异常闭环。</p>
+        </div>
       </section>
       <section v-if="currentReport.stage === 'outline'" class="flow-panel padded">
         <h3>报告提纲 <small>{{ currentTemplate.chapters.length }} 章 · 每章附一段生成概述</small></h3>
@@ -312,6 +337,10 @@ import {
   cloneReportData, collectReportMaterials, createWorkflowReport, generateReportSections, inspectReport,
   outlineBlurbs, reportTemplates, reportWorkflow, resultSummary, reviewRulePacks, reviewTypes, seedWorkflow, workflowTime,
 } from '@/data/reportWorkflow'
+import {
+  reportExpertGroups, reportExperts, reportProjects, reportSkillGroups, reportSkills,
+} from '@/data/reportAgents'
+import PickAvatar from '@/components/PickAvatar.vue'
 
 const props = defineProps({ page: Object, title: String })
 const router = useRouter()
@@ -344,13 +373,23 @@ const busyTitle = ref('')
 const busyDetail = ref('')
 const progress = ref(0)
 let progressTimer = 0
-const form = reactive({ title: '某型装备性能鉴定试验报告', treeId: '', templateId: 'qualification' })
+const form = reactive({ title: '某型装备性能鉴定试验报告', projectId: '', treeId: '', templateId: 'qualification' })
+const pickTab = ref('expert')
+const pickChip = ref('全部')
+const expertIds = ref(['rx-judge', 'rx-fire', 'rx-cause', 'rx-report'])
+const skillIds = ref(['rs-outline', 'rs-judge', 'rs-shot', 'rs-cause'])
+const pickChips = computed(() => (pickTab.value === 'expert' ? reportExpertGroups : reportSkillGroups))
+const pickCards = computed(() => {
+  const source = pickTab.value === 'expert' ? reportExperts : reportSkills
+  if (pickChip.value === '全部') return source
+  return source.filter((item) => item.group === pickChip.value)
+})
 
 const publishedTrees = computed(() => (demo.m03List || []).filter((row) => row.status === '已发布'))
 const currentReport = computed(() => workflow.reports.find((row) => row.id === currentId.value) || null)
 const currentTemplate = computed(() => reportTemplates.find((item) => item.id === currentReport.value?.templateId) || reportTemplates[0])
 const selectedTemplate = computed(() => reportTemplates.find((item) => item.id === form.templateId) || reportTemplates[0])
-const configReady = computed(() => form.title.trim() && form.treeId && form.templateId && configMaterials.value)
+const configReady = computed(() => form.title.trim() && form.projectId && form.templateId && configMaterials.value)
 const draftReports = computed(() => workflow.reports.filter((row) => row.sections?.length))
 const activeReview = computed(() => workflow.reviews.find((row) => row.id === workflow.activeReviewId) || null)
 const showResult = computed(() => isResultPage.value && Boolean(activeReview.value))
@@ -369,9 +408,19 @@ const materialCards = computed(() => {
   ]
 })
 
-function treeLabel(tree) {
-  const name = String(tree.version || '').includes('指标树') ? `试验鉴定${tree.version}` : tree.version
-  return `${name} · ${tree.count}项指标`
+function setPickTab(tab) {
+  pickTab.value = tab
+  pickChip.value = '全部'
+}
+function pickOn(id) {
+  const list = pickTab.value === 'expert' ? expertIds.value : skillIds.value
+  return list.includes(id)
+}
+function togglePick(id) {
+  const list = pickTab.value === 'expert' ? expertIds : skillIds
+  const index = list.value.indexOf(id)
+  if (index >= 0) list.value.splice(index, 1)
+  else list.value.push(id)
 }
 function stageLabel(stage) {
   return { materials: '素材已关联', outline: '提纲', draft: '初稿', final: '初稿' }[stage] || '初稿'
@@ -397,19 +446,29 @@ function goReportList() {
 function newReport() {
   editingReportId.value = ''
   form.title = '某型装备性能鉴定试验报告'
+  form.projectId = ''
   form.treeId = ''
   form.templateId = 'qualification'
   configMaterials.value = null
   view.value = 'config'
 }
-function selectTree(id) {
-  const tree = publishedTrees.value.find((item) => item.id === id)
-  configMaterials.value = tree ? collectReportMaterials(tree, demo) : null
+function selectProject(id) {
+  const project = reportProjects.find((item) => item.id === id)
+  const tree = publishedTrees.value[0]
+  form.treeId = tree?.id || ''
+  if (!project || !tree) {
+    configMaterials.value = null
+    return
+  }
+  const materials = collectReportMaterials(tree, demo)
+  materials.project = { id: project.id, name: project.name, org: project.org, scope: project.scope }
+  configMaterials.value = materials
 }
 function editReport(row) {
   editingReportId.value = row.id
   form.title = row.title
   form.templateId = row.templateId || 'qualification'
+  form.projectId = row.materials?.project?.id || ''
   form.treeId = row.materials?.tree?.id || ''
   configMaterials.value = cloneReportData(row.materials)
   view.value = 'config'
@@ -431,7 +490,7 @@ function saveReportConfig() {
   if (editingReportId.value) {
     const row = workflow.reports.find((item) => item.id === editingReportId.value)
     if (!row) return
-    const changed = row.templateId !== form.templateId || row.materials?.tree?.id !== form.treeId
+    const changed = row.templateId !== form.templateId || row.materials?.tree?.id !== form.treeId || row.materials?.project?.id !== form.projectId
     row.title = form.title.trim()
     row.templateId = form.templateId
     row.materials = cloneReportData(configMaterials.value)
@@ -630,15 +689,51 @@ onBeforeUnmount(() => clearInterval(progressTimer))
 .rb-arrow { margin: 0 6px; color: #8a99a8; font-size: 12px; }
 .rb-table :deep(th.el-table__cell) { background: #f6f9fc; color: #7d90a3; font-weight: 500; font-size: 12.5px; }
 .rb-table :deep(.el-table__row.is-retest > td.el-table__cell) { background: #fdf6e8; }
-.rb-side { border-left: 1px solid #eef3f8; padding: 14px 16px; }
-.rb-side small { color: #7d90a3; font-size: 12px; }
-.rb-side h4 { margin: 6px 0 10px; color: #16324a; font-size: 13.5px; line-height: 1.5; }
-.rb-side dl { display: grid; gap: 8px; margin: 0; }
-.rb-side dl div { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 8px; }
-.rb-side dt { color: #8a99a8; font-size: 12px; }
-.rb-side dd { margin: 0; color: #3e556b; font-size: 12.5px; line-height: 1.55; }
+.rb-side { background: #fbf6ec; border-left: 1px solid #ead9b8; padding: 18px 18px 20px; }
+.rb-side small { color: #b08d45; font-size: 12px; font-weight: 650; }
+.rb-side h4 { margin: 8px 0 16px; color: #1a3f66; font-size: 16px; font-weight: 700; line-height: 1.45; }
+.rb-side dl { display: grid; gap: 12px; margin: 0; }
+.rb-side dl div { display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 10px; align-items: start; }
+.rb-side dt { color: #8d8476; font-size: 13px; }
+.rb-side dd { margin: 0; color: #3e4e60; font-size: 13.5px; line-height: 1.6; }
 .judge-ok { color: #16815a; font-weight: 600; }
 .judge-retest { color: #d48806; font-weight: 600; }
+.rpt-pick { display: flex; flex-direction: column; gap: 10px; }
+.rpt-pick-tabs { display: flex; align-items: center; gap: 8px; }
+.rpt-pick-tabs button {
+  height: 32px; padding: 0 14px; border: 1px solid #d7e3ee; border-radius: 8px;
+  background: #fff; color: #4d6982; cursor: pointer;
+}
+.rpt-pick-tabs button.on { background: #1668a8; border-color: #1668a8; color: #fff; }
+.rpt-pick-tabs span { margin-left: auto; color: #8a99a8; font-size: 12.5px; }
+.rpt-pick-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.rpt-pick-chips button {
+  height: 28px; padding: 0 12px; border: 1px solid #d7e3ee; border-radius: 999px;
+  background: #fff; color: #4d6982; cursor: pointer; font-size: 12.5px;
+}
+.rpt-pick-chips button.on { background: #e8f3fb; border-color: #1668a8; color: #1668a8; }
+.rpt-pick-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+  max-height: 420px; overflow: auto;
+}
+.rpt-pick-card {
+  display: flex; gap: 12px; align-items: flex-start; text-align: left;
+  border: 1px solid #e6edf4; border-radius: 12px; background: #fff; padding: 12px; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 50, 80, .04);
+}
+.rpt-pick-card.on { border-color: #1668a8; box-shadow: 0 0 0 1px #1668a8; }
+.rpt-pick-main { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.rpt-pick-main b { color: #1a2332; font-size: 14px; line-height: 1.4; }
+.rpt-pick-main small {
+  color: #7d8b9a; font-size: 12px; line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.rpt-pick-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.rpt-pick-tags em {
+  font-style: normal; background: #f4f6f8; color: #66788a; border-radius: 6px;
+  padding: 1px 7px; font-size: 12px;
+}
+.rpt-pick > p { margin: 0; color: #6d8092; font-size: 13px; line-height: 1.6; }
 .template-picker { display: flex; flex-wrap: wrap; gap: 8px; }
 .template-chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border: 1px solid #dbe7f1; border-radius: 999px; background: #f8fbfe; color: #29465c; cursor: pointer; font-size: 13px; line-height: 1.4; }
 .template-chip b { font-weight: 650; }
@@ -716,8 +811,8 @@ onBeforeUnmount(() => clearInterval(progressTimer))
 .preview-note { color: #5d7388; }
 .muted { color: #7d90a3; font-size: 12px; }
 @media (max-width: 1100px) {
-  .form-grid, .material-stats, .material-cards, .rb-body, .review-columns { grid-template-columns: 1fr; }
-  .rb-side { border-left: 0; border-top: 1px solid #eef3f8; }
+  .form-grid, .material-stats, .material-cards, .rb-body, .review-columns, .rpt-pick-grid { grid-template-columns: 1fr; }
+  .rb-side { border-left: 0; border-top: 1px solid #ead9b8; }
   .review-counts { margin-left: 0; }
 }
 </style>

@@ -182,7 +182,7 @@ const platformsRaw = [
     id: 'resource',
     group: 'infra',
     no: 'A1',
-    name: '农业机械试验鉴定领域资源库',
+    name: 'ZB试验鉴定领域资源库',
     brief: '原始库、基础库、推理库三级资源，为五大应用和智能体提供可追溯的数据支撑',
     tags: ['汇聚治理', '知识图谱', '智能问答'],
     icon: 'book',
@@ -193,7 +193,7 @@ const platformsRaw = [
         full: '多源异构数据汇聚与治理',
         menus: [
           leaf('home', '首页', home(
-            '欢迎使用 农业机械试验鉴定领域资源库',
+            '欢迎使用 ZB试验鉴定领域资源库',
             '统一采集定型资料、试验鉴定数据、标准规范和专业文献，完成去噪、标注和结构化，形成原始库、结构化基础库、推理知识库。',
             [
               { name: '汇聚入库', to: 'in', desc: '格式识别与标准化' },
@@ -534,9 +534,16 @@ export function infraPlatforms() {
 }
 
 export function firstLeaf(system) {
+  if (system?.id === 'innov') {
+    for (const item of system.menus) {
+      const hit = item.children?.find((child) => child.id === 'points')
+      if (hit) return hit
+    }
+  }
   for (const item of system.menus) {
+    if (item.hidden) continue
     if (item.page) return item
-    if (item.children?.length) return item.children[0]
+    if (item.children?.length) return item.children.find((child) => !child.hidden) || item.children[0]
   }
   return null
 }

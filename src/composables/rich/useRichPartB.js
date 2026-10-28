@@ -4,6 +4,7 @@
 import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useDemoStore, confirmRootCause, archiveInterpretReport, updateActiveProbeCount, syncTrialDataDock, setGraphBrowse, getPersistedM03List } from '@/composables/demo-store'
 import { getM02RowsForDoc } from '@/data/m02-indicators'
+import { insightMineItems } from '@/data/insightMine'
 import { deviationTotal } from '@/data/deviations'
 import { nowText } from '@/utils/format'
 import {
@@ -17,6 +18,7 @@ import {
 import * as echarts from 'echarts'
 
 let pendingM22ReportId = null
+let pendingM19EventId = null
 let m19GenerationTimer = null
 
 export function buildRichPartB({ toast, router, route, props, bag }) {
@@ -795,6 +797,7 @@ if (dockT01) syncTrialDataDock(dockT01)
 
 // m19：采纳根因 + 触发解读报告生成 → 写入 demo-store
 function goRootCause() {
+  pendingM19EventId = 'EVT-001'
   router.push({ name: 'app', params: { pid: 'probe', sid: 'probe-interpret', mid: 'cause-list' } })
 }
 
@@ -1047,6 +1050,10 @@ const m19Events = [
   { id:'EVT-002', name:'信号偶发丢包',    probe:'遥测信号探针 P07',   time:'2024-10-18', status:'已关闭', statusClass:'hold' },
   { id:'EVT-003', name:'温度传感器跳变',  probe:'身管温度探针 P04',   time:'2024-10-18', status:'分析中', statusClass:'warn' },
 ]
+if (pendingM19EventId) {
+  m19Detail.value = m19Events.find((item) => item.id === pendingM19EventId) || m19Events[0]
+  pendingM19EventId = null
+}
 
 // ── M22 智能解读报告 ────────────────────────────────────────────────────
 const m22Detail      = ref(null)
@@ -1077,17 +1084,39 @@ const m29FilterDirection = ref('')
 const m29FilterSource    = ref('')
 const m29AppliedDirection = ref('')
 const m29AppliedSource    = ref('')
-const m29DirectionOpts   = ['全部方向', '定位定向技术', '弹道修正技术', '惯导技术', '遥测技术', '气象修正', '信号处理']
+const m29DirectionOpts = ['全部方向', ...new Set(insightMineItems.map((item) => item.directionName))]
 
-// 首条来源挂接 Part3 归档态：录屏指认「含本次试验报告V2」
-const m29Innovations = computed(() => judgeInnovations.map(inn => {
-  if (inn.id !== 'INN-001') return inn
-  const archived = demoStore.trialReportV2Archived || !!demoStore.judgeInputArchivedAt
-  return {
-    ...inn,
-    source: archived ? '3篇（含本次试验报告V2）' : inn.source,
-  }
-}))
+const m29Innovations = computed(() => insightMineItems.map((item) => ({
+  id: item.id,
+  name: item.title,
+  source: `${item.evidence}篇`,
+  sourceText: item.source,
+  direction: item.directionName,
+  confidence: (item.innov / 100).toFixed(2),
+  q: item.problem,
+  qRef: item.code,
+  p: item.principle,
+  pRef: item.stage,
+  i: item.content,
+  iRef: item.tag || item.stage,
+  e: item.value,
+  eRef: `${item.evidence}份资料`,
+  summary: item.summary,
+  quote: item.quote,
+  code: item.code,
+  heat: item.heat,
+  stage: item.stage,
+  tag: item.tag,
+})))
+
+function m29OpenView(row) {
+  if (!row?.id) return
+  router.push({
+    name: 'app',
+    params: { pid: route.params.pid || 'insight', sid: route.params.sid || 'innov', mid: 'mine' },
+    query: { id: row.id },
+  })
+}
 
 const m29Filtered = computed(() => m29Innovations.value.filter(inn => {
   if (m29AppliedDirection.value && m29AppliedDirection.value !== '全部方向' && inn.direction !== m29AppliedDirection.value) return false
@@ -2038,6 +2067,7 @@ onBeforeUnmount(() => {
     m29DirectionOpts,
     m29Innovations,
     m29Filtered,
+    m29OpenView,
     m29ApplyFilter,
     m29ResetFilter,
     m30Tree,

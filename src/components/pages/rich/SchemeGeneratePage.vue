@@ -217,7 +217,6 @@
         <div v-if="m08Snap.doneSteps <= 1" class="m08-panel">
           <div class="m08-panel-head">
             <span class="m08-panel-title">已配置因子：{{ m08FactorCount }} 个</span>
-            <span class="m08-factor-note">{{ m08FactorGapNote }}</span>
           </div>
           <div class="m08-factor-lines">
             <div v-for="(factor, index) in m08Factors" :key="factor.name + index" class="m08-factor-line">
@@ -257,7 +256,7 @@
             >
               <b>{{ item.name }}</b>
               <span>{{ item.brief }}</span>
-              <em v-if="item.name.includes('精度')">推荐</em>
+              <em v-if="item.recommend">推荐</em>
             </button>
           </div>
           <div class="m08-wiz-foot">
@@ -269,9 +268,44 @@
         <div v-else class="m08-panel m08-gen-panel">
           <div class="m08-panel-head"><span class="m08-panel-title">生成预览</span></div>
           <div class="m08-gen-body">
-            <p>将以「{{ m08CurrentRow?.template || '精度试验大纲模板' }}」为骨架，融合已选考核指标与试验因子，装配五章大纲初稿。</p>
-            <el-button v-if="!m08Generating" type="primary" @click="m08StartGenerate">生成初稿</el-button>
-            <div v-else class="m08-gen-run">
+            <div v-if="!m08Generating" class="m08-pick">
+              <div class="m08-pick-tabs">
+                <button type="button" :class="{ on: m08PickTab === 'expert' }" @click="m08SetPickTab('expert')">专家</button>
+                <button type="button" :class="{ on: m08PickTab === 'skill' }" @click="m08SetPickTab('skill')">技能</button>
+                <span>已选 {{ m08ExpertIds.length }} 个专家 · {{ m08SkillIds.length }} 项技能</span>
+              </div>
+              <div class="m08-pick-chips">
+                <button
+                  v-for="chip in m08PickChips"
+                  :key="chip"
+                  type="button"
+                  :class="{ on: m08PickChip === chip }"
+                  @click="m08PickChip = chip"
+                >{{ chip }}</button>
+              </div>
+              <div class="m08-pick-grid">
+                <button
+                  v-for="item in m08PickCards"
+                  :key="item.id"
+                  type="button"
+                  class="m08-pick-card"
+                  :class="{ on: m08PickOn(item.id) }"
+                  @click="m08TogglePick(item.id)"
+                >
+                  <pick-avatar :id="item.id" />
+                  <span class="m08-pick-main">
+                    <b>{{ item.name }}</b>
+                    <small>{{ item.brief }}</small>
+                    <span class="m08-pick-tags"><em v-for="tag in item.tags" :key="tag">{{ tag }}</em></span>
+                  </span>
+                </button>
+              </div>
+            </div>
+            <div class="m08-gen-foot">
+              <p>将以「{{ m08CurrentRow?.template || '装备设计定型性能鉴定试验方案模板' }}」为骨架，由已选专家与技能融合考核指标、试验因子，装配五章大纲初稿。</p>
+              <el-button v-if="!m08Generating" type="primary" @click="m08StartGenerate">生成初稿</el-button>
+            </div>
+            <div v-if="m08Generating" class="m08-gen-run">
               <div
                 v-loading="true"
                 class="m08-gen-loading"
@@ -284,160 +318,112 @@
         </div>
       </div>
 
-      <!-- 因子面板 -->
-      <div v-if="!m08InWizard && !m08CurrentRow?.picked?.length" id="m08-factor-panel" class="m08-panel">
-        <div class="m08-panel-head">
-          <span class="m08-panel-title">试验因子配置</span>
-          <span class="m08-factor-count">已配置因子：{{ m08FactorCount }}个</span>
-          <span class="spacer"></span>
-          <el-button
-            :disabled="m08Snap.readonlyFactors"
-            @click="m08AddFactor"
-          >+ 新增因子</el-button>
-        </div>
-        <div class="m08-factor-grid">
+      <!-- 左问答流式思考，右文档；第一次进入会先打出思考再展开正文 -->
+      <div
+        v-if="!m08InWizard"
+        class="m08-work"
+        :class="{ 'is-split': m08Snap.previewReady || m08Snap.doneSteps >= 4, 'is-open': m08DocShown }"
+      >
+      <div id="m08-chat-panel" class="m08-panel m08-thread">
+        <div class="m08-thread-title">{{ m08CurrentRow?.name || '试验方案' }}</div>
+        <div class="m08-thread-scroll">
+          <div v-if="!(m08Snap.previewReady || m08Snap.doneSteps >= 4)" class="m08-chat-empty">
+            请先完成「生成预览」，再在这里生成并查看文档。
+          </div>
           <div
-            v-for="(f, i) in m08Factors"
-            :key="f.name + i"
-            class="m08-factor"
-            @click="m08Snap.readonlyFactors ? (m08SelFactor = i) : m08OpenFactorDialog(i)"
+            v-for="(round, ri) in m08Rounds"
+            :id="'m08-round-' + ri"
+            :key="ri"
+            class="m08-turn"
           >
-            <div class="m08-factor-name">{{ f.name }}</div>
-            <div class="m08-factor-range">{{ f.levels }}</div>
-            <div class="m08-factor-tag">{{ f.cat }}</div>
+            <div class="m08-ask">{{ round.user }}</div>
+            <div class="m08-agent">
+              <span>{{ (round.expertName || '大纲编制专家').slice(0, 1) }}</span>
+              <b>{{ round.expertName || '大纲编制专家' }}</b>
+            </div>
+            <div class="m08-agent-meta">已处理 {{ round.streaming ? m08StreamElapsed : (round.elapsed || 1) }}s</div>
+            <div v-if="round.streaming && !m08StreamThink.length" class="m08-agent-wait">正在读取指标库、推荐算法、试验因子和大纲…</div>
+            <div v-if="round.streaming" class="m08-quotes">
+              <p v-for="step in m08StreamThink" :key="step.label">
+                <b>{{ step.label }}</b>
+                <span>{{ step.text }}<i v-if="step.live" class="m08-caret"></i></span>
+              </p>
+            </div>
+            <div v-else-if="round.think?.length" class="m08-quotes">
+              <p v-for="step in round.think" :key="step.label">
+                <b>{{ step.label }}</b>
+                <span>{{ step.text }}</span>
+              </p>
+            </div>
+            <div v-else-if="round.bot" class="m08-quotes"><p><span>{{ round.bot }}</span></p></div>
+            <button
+              v-if="!round.streaming && (round.resultVer || round.anchor || m08Snap.previewReady)"
+              type="button"
+              class="m08-doc-card"
+              @click="m08ViewRoundDoc(round)"
+            >
+              <b>{{ m08CurrentRow?.name || '试验方案' }}.docx</b>
+              <span>{{ round.resultVer || m08Snap.previewBadge }} · {{ round.where || '点击查看完整文档' }}</span>
+            </button>
+          </div>
+          <button
+            v-if="(m08Snap.previewReady || m08Snap.doneSteps >= 4) && !m08ChatStreaming"
+            type="button"
+            class="m08-artifacts"
+            @click="m08FoldDoc"
+          >{{ m08DocShown ? '收起文档' : '查看文档' }}</button>
+        </div>
+        <div class="m08-composer">
+          <el-input
+            v-model="m08ChatInput"
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 4 }"
+            :disabled="!m08ChatCanSend"
+            placeholder="继续优化这份大纲，可点名指标、算法或章节"
+            @keydown.enter.exact.prevent="m08SendChat"
+          />
+          <div class="m08-composer-bar">
+            <span class="m08-composer-expert">{{ m08TalkExpert }}</span>
+            <el-button type="primary" :disabled="!m08ChatCanSend" @click="m08SendChat">{{ m08ChatStreaming ? '生成中' : '发送' }}</el-button>
           </div>
         </div>
       </div>
-
-      <!-- 大纲 + 对话 -->
-      <div v-if="!m08InWizard" class="m08-lower">
-        <div id="m08-outline-panel" class="m08-panel m08-outline">
-          <div class="m08-panel-head">
-            <span class="m08-panel-title">大纲预览</span>
-            <span
-              class="badge"
-              :style="m08CurrentRow?.status === '已定稿' ? 'background:#fff8e8;color:#c8902a;margin-left:auto' : 'margin-left:auto'"
-              :class="m08CurrentRow?.status === '已定稿' ? '' : 'on'"
-            >
-              <i :style="m08CurrentRow?.status === '已定稿' ? 'background:#d0ab68' : ''"></i>{{ m08Snap.previewBadge }}
-            </span>
-            <el-button @click="m08ExportWord">导出 Word</el-button>
-          </div>
-          <div v-if="m08Snap.previewReady || m08Snap.doneSteps >= 4" class="m08-doc-wrap">
-            <div v-if="m08ChatStreaming" class="m08-doc-live">正在把本轮修改写入文稿…</div>
-            <div v-if="m08CurrentRow?.fullDoc" class="m08-doc-layout">
-              <aside class="m08-toc">
-                <div class="m08-toc-title">文档目录</div>
-                <button
-                  v-for="item in schemeDocToc"
-                  :key="item.id"
-                  type="button"
-                  :class="{ on: m08TocId === item.id }"
-                  @click="m08JumpDoc(item.id)"
-                >{{ item.title }}</button>
-              </aside>
-              <article class="m08-doc" :class="{ 'is-writing': m08ChatStreaming }">
-                <header>
-                  <b>{{ m08CurrentRow?.name || '试验方案' }}.docx</b>
-                  <span>V4.0 · 11章 · 指标 28 项</span>
-                </header>
-                <section v-for="ch in m08Chapters" :key="ch.id || ch.no">
-                  <div v-html="ch.content"></div>
-                </section>
-              </article>
-            </div>
-            <article v-else class="m08-doc" :class="{ 'is-writing': m08ChatStreaming }">
+      <div v-if="m08DocShown" id="m08-outline-panel" class="m08-panel m08-stage">
+        <div class="m08-panel-head">
+          <span class="m08-panel-title">{{ m08CurrentRow?.name || '试验方案' }}.docx</span>
+          <span class="badge on" style="margin-left:auto"><i></i>{{ m08Snap.previewBadge }}</span>
+          <el-button @click="m08ToggleAllChapters">{{ m08Chapters.every((ch) => m08ChapterOpen[ch.id || ch.no]) ? '全部收起' : '全部展开' }}</el-button>
+          <el-button @click="m08ExportWord">导出 Word</el-button>
+          <el-button @click="m08FoldDoc">收起</el-button>
+        </div>
+        <div class="m08-doc-wrap">
+          <div class="m08-doc-layout" :class="{ 'is-plain': !m08CurrentRow?.fullDoc }">
+            <aside v-if="m08CurrentRow?.fullDoc" class="m08-toc">
+              <div class="m08-toc-title">文档目录</div>
+              <button
+                v-for="item in schemeDocToc"
+                :key="item.id"
+                type="button"
+                :class="{ on: m08TocId === item.id }"
+                @click="m08JumpDoc(item.id)"
+              >{{ item.title }}</button>
+            </aside>
+            <article class="m08-doc">
               <header>
                 <b>{{ m08CurrentRow?.name || '试验方案' }}.docx</b>
-                <span>预览文件</span>
+                <span>{{ m08Snap.previewBadge }} · {{ m08Chapters.length }}章</span>
               </header>
-              <section v-for="(ch, ci) in m08Chapters" :key="ch.no + ci">
-                <h4>{{ ch.no }} {{ ch.title }}</h4>
-                <div v-html="ch.content"></div>
-                <p v-if="m08StreamDoc.index === ci && m08StreamDoc.text" class="m08-hl-live">
-                  <mark class="m08-hl">{{ m08StreamDoc.text }}<i v-if="m08StreamDoc.caret" class="m08-caret"></i></mark>
-                </p>
+              <section v-for="ch in m08Chapters" :key="ch.id || ch.no" class="m08-ch">
+                <button type="button" class="m08-ch-head" @click="m08ToggleChapter(ch.id || ch.no)">
+                  <b>{{ ch.no }} {{ ch.title }}</b>
+                  <span>{{ m08ChapterOpen[ch.id || ch.no] ? '收起' : '展开' }}</span>
+                </button>
+                <div v-show="m08ChapterOpen[ch.id || ch.no]" class="m08-ch-body" v-html="ch.content"></div>
               </section>
             </article>
           </div>
-          <div v-else class="m08-outline-empty">
-            <div class="m08-outline-empty-title">大纲尚未生成</div>
-            <p>请先完成步骤「生成预览」后，此处展示大纲章节与正文。</p>
-            <el-button
-              v-if="m08IsDraft"
-              type="primary"
-              @click="m08ClickStep(3)"
-            >去生成预览</el-button>
-          </div>
         </div>
-
-        <div id="m08-chat-panel" class="m08-panel m08-chat" :class="{ 'is-streaming': m08ChatStreaming }">
-          <div class="m08-panel-head">
-            <span class="m08-panel-title">对话优化</span>
-            <span v-if="m08CurrentRow?.fullDoc" class="m08-chat-flow">指令解析 → 文档定位 → 正文修订 → 版本生成</span>
-            <span v-if="m08ChatStreaming" class="m08-live-tag">生成中</span>
-            <span v-else-if="m08Rounds.length" class="m08-live-tag">{{ m08Rounds.length }} 轮</span>
-          </div>
-          <div class="m08-chat-scroll">
-            <div v-if="!(m08Snap.previewReady || m08Snap.doneSteps >= 4)" class="m08-chat-empty">
-              请先完成「生成预览」后，再进行多轮校核优化。
-            </div>
-            <div v-else-if="!m08Rounds.length" class="m08-chat-empty">
-              暂无校核记录。草稿可在下方输入框追加一轮优化要求。
-            </div>
-            <div
-              v-for="(round, ri) in m08Rounds"
-              :id="'m08-round-' + ri"
-              :key="ri"
-              class="m08-round"
-              :class="{ 'm08-round-focus': m08FocusVer === round.resultVer || m08FocusVer === ('V' + (ri + 2)) }"
-            >
-              <div class="m08-bubble user m08-bubble-in">
-                <div class="m08-bubble-meta">第{{ ['一', '二', '三', '四', '五'][ri] || (ri + 1) }}轮 · {{ round.time }}</div>
-                {{ round.user }}
-              </div>
-              <div v-if="round.streaming" class="m08-bubble bot m08-bubble-live">
-                <div v-if="m08StreamPhase === 'think'" class="m08-typing">
-                  <i></i><i></i><i></i>
-                  <span>正在对照大纲与指标树</span>
-                </div>
-                <template v-else>{{ m08StreamText }}<i class="m08-caret"></i></template>
-              </div>
-              <template v-else-if="round.think?.length">
-                <div class="m08-think">
-                  <div class="m08-think-title">思考与执行</div>
-                  <p v-for="step in round.think" :key="step.label"><b>【{{ step.label }}】</b>{{ step.text }}</p>
-                </div>
-                <div class="m08-made">
-                  <b>已生成 {{ round.resultVer }}</b>
-                  <p>{{ round.resultText }}</p>
-                  <button type="button" @click="m08ViewRoundDoc(round)">查看该版本完整文档</button>
-                </div>
-              </template>
-              <div v-else class="m08-bubble bot">{{ round.bot }}</div>
-              <div v-if="!round.streaming && !round.think?.length && (round.quote || round.diff)" class="m08-diff m08-diff-in">
-                <span>△ 本轮修改</span>
-                <div>
-                  <b v-if="round.where">{{ round.where }}</b>
-                  <p v-if="round.quote"><mark>{{ round.quote }}</mark></p>
-                  <p v-else>{{ round.diff }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="m08-chat-input">
-            <p class="m08-chat-hint">{{ m08Snap.chatHint }}</p>
-            <div class="m08-chat-row">
-              <el-input
-                v-model="m08ChatInput"
-                :disabled="!m08ChatCanSend"
-                placeholder="输入优化要求，如：补充寒区贮存工况…"
-                @keyup.enter="m08SendChat"
-              />
-              <el-button type="primary" :disabled="!m08ChatCanSend" @click="m08SendChat">{{ m08ChatStreaming ? '生成中' : '发送' }}</el-button>
-            </div>
-          </div>
-        </div>
+      </div>
       </div>
 
       <!-- 版本条：V1 初稿 → 各轮对话优化 → 定稿；点击可回溯到对应校核轮次 -->
@@ -531,18 +517,22 @@
         <el-form-item label="方案名称" required>
           <el-input v-model="m08CreateForm.name" maxlength="80" />
         </el-form-item>
-        <el-form-item label="指标树" required>
+        <el-form-item label="选择项目" required>
           <el-select
-            v-model="m08CreateForm.treeVer"
-            placeholder="请选择已发布的指标树"
+            v-model="m08CreateForm.projectId"
+            placeholder="请选择试验项目，自动带出指标树"
             style="width:100%"
-            @change="m08PickedIds.splice(0, m08PickedIds.length)"
+            @change="m08SelectProject"
           >
-            <el-option v-for="op in m08PublishedTrees" :key="op.value" :label="op.label" :value="op.value" />
+            <el-option v-for="item in m08Projects" :key="item.id" :label="item.name" :value="item.id" />
           </el-select>
         </el-form-item>
+        <el-form-item label="指标树" required>
+          <div class="m08-tree-auto" :class="{ on: !!m08AutoTreeLabel }">{{ m08AutoTreeLabel || '选择项目后自动带出' }}</div>
+        </el-form-item>
       </el-form>
-      <div v-if="!m08CreateForm.treeVer" class="m08-ind-empty">请先选择指标树，再勾选本次考核指标</div>
+      <div v-if="!m08CreateForm.projectId" class="m08-ind-empty">请先选择项目，系统将自动带出指标树，再勾选考核指标</div>
+      <div v-else-if="!m08CreateForm.treeVer" class="m08-ind-empty">该项目暂无已发布指标树</div>
       <div v-else class="m08-ind-box">
         <div class="m08-ind-bar">
           <span>从{{ m08CreateForm.treeVer }}勾选本次考核指标（已选 {{ m08PickedIds.length }} 项）</span>
@@ -562,40 +552,46 @@
       </template>
     </el-dialog>
 
-    <el-dialog
-      v-model="m08AlgoVisible"
-      title="选择推荐算法"
-      width="560px"
-      align-center
-      :close-on-click-modal="false"
-    >
-      <div class="m08-algo-list">
-        <button
-          v-for="item in m11Tabs"
-          :key="item.key"
-          type="button"
-          :class="{ on: m08AlgoKey === item.key }"
-          @click="m08AlgoKey = item.key"
-        >{{ item.label }}</button>
-      </div>
-      <template #footer>
-        <el-button @click="m08AlgoVisible = false">取消</el-button>
-        <el-button type="primary" @click="m08ConfirmAlgo">确定</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script>
-import { nextTick, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useRichPage } from '@/composables/rich/useRichPage'
+import { schemeExpertGroups, schemeExperts, schemeSkillGroups, schemeSkills } from '@/data/schemeAgents'
+import PickAvatar from '@/components/PickAvatar.vue'
 
 export default {
+  components: { PickAvatar },
   props: { page: Object, title: String },
   setup(props) {
     const ctx = useRichPage(props)
     const treeSelectRef = ref(null)
     const tplSelectRef = ref(null)
+    const m08PickTab = ref('expert')
+    const m08PickChip = ref('全部')
+    const m08ExpertIds = ref(['ex-fire', 'ex-measure', 'ex-evidence', 'ex-outline'])
+    const m08SkillIds = ref(['sk-outline', 'sk-criteria', 'sk-factor', 'sk-anomaly'])
+    const m08PickChips = computed(() => (m08PickTab.value === 'expert' ? schemeExpertGroups : schemeSkillGroups))
+    const m08PickCards = computed(() => {
+      const source = m08PickTab.value === 'expert' ? schemeExperts : schemeSkills
+      if (m08PickChip.value === '全部') return source
+      return source.filter((item) => item.group === m08PickChip.value)
+    })
+    function m08SetPickTab(tab) {
+      m08PickTab.value = tab
+      m08PickChip.value = '全部'
+    }
+    function m08PickOn(id) {
+      const list = m08PickTab.value === 'expert' ? m08ExpertIds.value : m08SkillIds.value
+      return list.includes(id)
+    }
+    function m08TogglePick(id) {
+      const list = m08PickTab.value === 'expert' ? m08ExpertIds : m08SkillIds
+      const index = list.value.indexOf(id)
+      if (index >= 0) list.value.splice(index, 1)
+      else list.value.push(id)
+    }
 
     function blurSelect() {
       nextTick(() => {
@@ -611,7 +607,22 @@ export default {
       blurSelect()
     }
 
-    return { ...ctx, treeSelectRef, tplSelectRef, blurSelect, onSelectPicked }
+    return {
+      ...ctx,
+      treeSelectRef,
+      tplSelectRef,
+      blurSelect,
+      onSelectPicked,
+      m08PickTab,
+      m08PickChip,
+      m08ExpertIds,
+      m08SkillIds,
+      m08PickChips,
+      m08PickCards,
+      m08SetPickTab,
+      m08PickOn,
+      m08TogglePick,
+    }
   },
 }
 </script>
@@ -780,16 +791,77 @@ export default {
   color: #1668a8;
 }
 
-.m08-lower {
+.m08-work.is-split:not(.is-open) .m08-thread { max-width: 880px; margin: 0 auto; }
+.m08-work.is-open {
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: minmax(380px, 0.9fr) minmax(0, 1.16fr);
   gap: 14px;
   align-items: stretch;
-  min-height: 400px;
+}
+.m08-stage {
+  display: flex; flex-direction: column; min-height: 680px; max-height: 760px; overflow: hidden;
+  animation: m08-doc-in .32s ease;
+}
+.m08-stage .m08-doc-wrap { flex: 1; min-height: 0; }
+.m08-thread { display: flex; flex-direction: column; min-height: 680px; max-height: 760px; background: #fff; }
+@keyframes m08-doc-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+.m08-thread-title {
+  padding: 14px 18px 0; font-size: 16px; font-weight: 600; color: #1f3d5a;
+}
+.m08-thread-scroll { flex: 1; min-height: 0; overflow: auto; padding: 18px 22px 8px; }
+.m08-turn { margin-bottom: 22px; }
+.m08-ask {
+  margin-left: auto; max-width: 72%; width: fit-content;
+  background: #f2f4f7; color: #1f3d5a; border-radius: 12px; padding: 10px 14px;
+  line-height: 1.6; font-size: 14px;
+}
+.m08-agent { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+.m08-agent span {
+  width: 28px; height: 28px; border-radius: 50%; background: #e8f3fb; color: #1668a8;
+  display: grid; place-items: center; font-weight: 700; font-size: 13px;
+}
+.m08-agent b { color: #1f3d5a; font-size: 14px; }
+.m08-agent-meta, .m08-agent-wait { margin: 6px 0 0 36px; color: #98a2b3; font-size: 13px; }
+.m08-quotes { margin: 10px 0 0 36px; display: flex; flex-direction: column; gap: 10px; max-width: 760px; }
+.m08-quotes p { margin: 0; }
+.m08-quotes b { display: block; color: #0d4e83; font-size: 13px; margin-bottom: 2px; }
+.m08-quotes span { color: #3f5062; font-size: 13.5px; line-height: 1.75; white-space: pre-wrap; }
+.m08-doc-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+  margin: 12px 0 0 36px; max-width: 420px; text-align: left;
+  border: 1px solid #d7e3ee; background: #fff; border-radius: 10px; padding: 12px 14px; cursor: pointer;
+}
+.m08-doc-card b { color: #1f3d5a; font-size: 14px; }
+.m08-doc-card span { color: #7d90a3; font-size: 12.5px; }
+.m08-doc-card:hover { border-color: #1668a8; background: #f4f9fd; }
+.m08-artifacts {
+  margin: 2px 0 10px 36px; border: 0; background: transparent; color: #1668a8;
+  cursor: pointer; font-size: 13px; padding: 0;
+}
+.m08-artifacts:hover { text-decoration: underline; }
+.m08-ch { border-top: 1px solid #eef3f8; }
+.m08-ch-head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border: 0; background: transparent; padding: 12px 0 10px; cursor: pointer; text-align: left;
+}
+.m08-ch-head b { color: #0d4e83; font-size: 14.5px; }
+.m08-ch-head span { flex: 0 0 auto; color: #1668a8; font-size: 12px; }
+.m08-ch-body { padding-bottom: 8px; }
+.m08-composer {
+  margin: 0 16px 14px; border: 1px solid #e4ebf2; border-radius: 14px; padding: 10px 12px 8px;
+  box-shadow: 0 8px 24px rgba(15, 55, 95, .05);
+}
+.m08-composer :deep(.el-textarea__inner) { box-shadow: none; border: 0; padding: 4px 2px; resize: none; }
+.m08-stage .m08-panel-head :deep(.el-button + .el-button) { margin-left: 0; }
+.m08-composer-bar { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.m08-composer-expert {
+  margin-right: auto; color: #1668a8; background: #e8f3fb; border-radius: 999px;
+  padding: 4px 10px; font-size: 12.5px;
 }
 .m08-outline, .m08-chat { display: flex; flex-direction: column; min-height: 480px; max-height: 640px; }
 .m08-doc-wrap { flex: 1; min-height: 0; overflow: auto; background: #f4f7fb; padding: 16px; }
 .m08-doc-layout { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 12px; align-items: start; }
+.m08-doc-layout.is-plain { grid-template-columns: 1fr; }
 .m08-toc {
   position: sticky; top: 0; max-height: 640px; overflow: auto;
   background: #fff; border: 1px solid #e4ebf2; border-radius: 8px; padding: 8px 0;
@@ -803,11 +875,20 @@ export default {
 .m08-doc :deep(h5) { margin: 18px 0 8px; color: #0d4e83; font-size: 15px; }
 .m08-doc :deep(h6) { margin: 12px 0 4px; color: #1f3d5a; font-size: 13.5px; }
 .m08-doc :deep(b) { color: #0d4e83; }
-.m08-chat-flow { margin-left: 8px; color: #8a99a8; font-size: 12px; }
+.m08-chat .m08-panel-head { flex-wrap: wrap; }
+.m08-chat-flow { flex: 1 0 100%; margin-left: 0; color: #8a99a8; font-size: 12px; }
+.m08-chat-flow em { font-style: normal; }
+.m08-chat-flow em.on { color: #3f5062; }
+.m08-chat-flow em.now { color: #1668a8; font-weight: 700; }
 .m08-think {
   background: #f4f8fb; border: 1px solid #e4eef6; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
 }
+.m08-think.is-live { border-color: #c5daf0; background: #f7fbfe; }
 .m08-think-title { font-size: 12px; font-weight: 700; color: #1668a8; margin-bottom: 6px; }
+.m08-think-pulse {
+  display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%;
+  background: #1668a8; vertical-align: 1px; animation: m08-pulse 1s ease infinite;
+}
 .m08-think p { margin: 0 0 6px; font-size: 12.5px; line-height: 1.65; color: #3f5062; }
 .m08-think b { color: #0d4e83; }
 .m08-made {
@@ -816,9 +897,10 @@ export default {
 .m08-made b { display: block; color: #1d7a45; font-size: 13px; }
 .m08-made p { margin: 4px 0 8px; font-size: 12.5px; line-height: 1.65; color: #3f5062; }
 .m08-made button {
-  border: 0; background: transparent; color: #1668a8; padding: 0; cursor: pointer; font-size: 12.5px;
+  border: 1px solid #b7d4ea; background: #fff; color: #1668a8;
+  border-radius: 6px; height: 28px; padding: 0 10px; cursor: pointer; font-size: 12.5px;
 }
-.m08-made button:hover { text-decoration: underline; }
+.m08-made button:hover { background: #eaf3fd; }
 .m08-doc {
   background: #fff;
   border: 1px solid #e4ebf2;
@@ -851,7 +933,6 @@ export default {
 }
 .m08-factor-line b { flex: 0 0 128px; color: #1f3d5a; }
 .m08-factor-line span { color: #5c7084; }
-.m08-factor-note { color: #8a6a2b; font-size: 13px; }
 .m08-factor-add { display: flex; align-items: center; gap: 8px; padding: 12px 16px; flex-wrap: wrap; }
 .m08-factor-add .spacer { flex: 1; }
 .m08-factor-add button {
@@ -875,25 +956,74 @@ export default {
   cursor: pointer;
 }
 .m08-tpl-card.on { border-color: #1668a8; background: #f4f9fd; }
-.m08-tpl-card b { display: block; color: #1f3d5a; }
+.m08-tpl-card b { display: block; color: #1f3d5a; padding-right: 40px; }
 .m08-tpl-card span { display: block; margin-top: 4px; color: #7d90a3; font-size: 12.5px; }
 .m08-tpl-card em { position: absolute; right: 12px; top: 12px; font-style: normal; color: #c8902a; font-size: 12px; }
 .m08-gen-body {
   min-height: 240px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 28px;
-  text-align: center;
+  align-items: stretch;
+  gap: 14px;
+  padding: 14px 16px 18px;
   color: #5c7084;
+}
+.m08-pick { display: flex; flex-direction: column; gap: 10px; }
+.m08-pick-tabs { display: flex; align-items: center; gap: 8px; }
+.m08-pick-tabs button {
+  border: 0; background: #f3f6f9; color: #4d6278; border-radius: 8px;
+  height: 32px; padding: 0 14px; cursor: pointer;
+}
+.m08-pick-tabs button.on { background: #1668a8; color: #fff; }
+.m08-pick-tabs span { margin-left: auto; color: #8a99a8; font-size: 12.5px; }
+.m08-pick-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.m08-pick-chips button {
+  border: 1px solid #d7e3ee; background: #fff; color: #4d6982;
+  border-radius: 999px; height: 28px; padding: 0 12px; cursor: pointer;
+}
+.m08-pick-chips button.on { background: #e8f3fb; border-color: #1668a8; color: #1668a8; }
+.m08-pick-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+  max-height: 420px; overflow: auto;
+}
+.m08-pick-card {
+  display: flex; gap: 12px; align-items: flex-start; text-align: left;
+  border: 1px solid #e6edf4; border-radius: 12px; background: #fff;
+  padding: 12px; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 50, 80, .04);
+}
+.m08-pick-card.on { border-color: #1668a8; box-shadow: 0 0 0 1px #1668a8; }
+.m08-pick-main { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.m08-pick-main b { color: #1a2332; font-size: 14px; line-height: 1.4; }
+.m08-pick-main small {
+  color: #7d8b9a; font-size: 12px; line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.m08-pick-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.m08-pick-tags em {
+  font-style: normal; color: #66788a; background: #f4f6f8; border-radius: 6px;
+  padding: 1px 7px; font-size: 12px;
+}
+.m08-gen-foot { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.m08-gen-foot p { margin: 0; text-align: center; line-height: 1.7; }
+@media (max-width: 1100px) {
+  .m08-pick-grid { grid-template-columns: 1fr 1fr; }
 }
 .m08-gen-run { width: 100%; text-align: left; }
 .m08-gen-loading { position: relative; min-height: 148px; }
 .m08-gen-bar { height: 8px; background: #e7eef5; border-radius: 99px; overflow: hidden; margin-top: 4px; }
 .m08-gen-bar i { display: block; height: 100%; background: #1f3d5a; transition: width .25s linear; }
 .m08-gen-run p { margin: 8px 0 0; font-size: 12px; color: #8a99a8; }
+.m08-tree-auto {
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid #dce6ef;
+  border-radius: 4px;
+  background: #f7f9fb;
+  color: #8a99a8;
+  line-height: 22px;
+}
+.m08-tree-auto.on { color: #1f3d5a; background: #f4f9fd; border-color: #d3e4f2; }
 .m08-ind-empty {
   border: 1px dashed #d5e3ef;
   border-radius: 10px;
@@ -1011,6 +1141,10 @@ export default {
   animation: m08-blink .8s steps(1) infinite;
 }
 .m08-doc :deep(.m08-caret) { background: #7a4e00; }
+@keyframes m08-pulse {
+  0%, 100% { opacity: .35; transform: scale(.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
 @keyframes m08-dot {
   0%, 80%, 100% { transform: translateY(0); opacity: .35; }
   40% { transform: translateY(-3px); opacity: 1; }
@@ -1053,24 +1187,6 @@ export default {
 .m08-ver-foot :deep(.el-button + .el-button) {
   margin-left: 0;
 }
-.m08-algo-list { display: flex; flex-direction: column; gap: 8px; }
-.m08-algo-list button {
-  text-align: left;
-  border: 1px solid #e0eaf3;
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px 12px;
-  color: #1f3d5a;
-  cursor: pointer;
-  font-size: 14px;
-}
-.m08-algo-list button.on {
-  border-color: #1668a8;
-  background: #f4f9fd;
-  color: #0d4e83;
-  font-weight: 600;
-}
-
 .m08-remark-cell {
   max-width: 160px;
   color: #5c7084;

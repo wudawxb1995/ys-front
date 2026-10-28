@@ -1,7 +1,16 @@
 <template>
   <div class="aw">
-    <div v-if="page.scene === 'studio'" class="aw-studio">
-      <AgentStudioView embedded :mode="page.focus || 'design'" />
+    <div v-if="page.scene === 'studio' && page.focus === 'create' && !studioTpl" class="aw-templates">
+      <AgentTemplateView embedded @open="openTemplate" />
+    </div>
+    <div v-else-if="page.scene === 'studio'" class="aw-studio">
+      <AgentStudioView
+        embedded
+        :backable="page.focus === 'create'"
+        :template-id="studioTpl"
+        :mode="page.focus || 'design'"
+        @back="studioTpl = ''"
+      />
     </div>
 
     <template v-else>
@@ -119,9 +128,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AgentStudioView from '@/views/AgentStudioView.vue'
+import AgentTemplateView from '@/views/AgentTemplateView.vue'
 import { useUi } from '@/composables/ui'
 import { agentTemplates } from '@/data/agentTemplates'
 import { flowComponents } from '@/data/agentMenus'
@@ -130,6 +140,9 @@ const props = defineProps({ page: Object, title: String })
 const route = useRoute()
 const router = useRouter()
 const { toast } = useUi()
+const studioTpl = ref('')
+watch(() => props.page?.focus, () => { studioTpl.value = '' })
+function openTemplate(item) { studioTpl.value = item?.id || '' }
 
 const sceneCopy = {
   schemes: ['编排方案', '已发布和草稿中的智能体工作流在这里统一管理，可回到画布继续编排。'],
@@ -331,6 +344,7 @@ function openScheme(item) {
 
 <style scoped>
 .aw { min-width: 0; }
+.aw-templates { min-width: 0; }
 .aw-studio { height: calc(100vh - 148px); min-height: 560px; border: 1px solid #e2ebf3; border-radius: 12px; overflow: hidden; background: #fff; }
 .aw-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-end; margin-bottom: 14px; }
 .aw-kicker { color: #8a6a2b; font-size: 12px; font-weight: 700; letter-spacing: .4px; }

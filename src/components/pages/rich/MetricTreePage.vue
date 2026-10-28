@@ -18,6 +18,7 @@
             <span class="badge on"><i></i>已发布</span>
             <span class="pub-meta">发布时间：{{ publishedAt }}　来源：D-01《某型研制总要求》</span>
           </div>
+          <button type="button" class="pub-expand" @click="toggleAllPub">{{ pubAllOpen ? '一键收起' : '一键展开' }}</button>
           <div class="pub-stats">
             <div><b>{{ pubStats.domains }}</b><span>性能域</span></div>
             <div><b>{{ pubStats.classes }}</b><span>指标类</span></div>
@@ -25,18 +26,39 @@
           </div>
         </div>
 
-        <div v-for="domain in pubTree" :key="domain.name" class="pub-domain">
-          <button type="button" class="pub-domain-h" @click="togglePub(domain.name)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ open: pubOpen[domain.name] }"><path d="M9 6l6 6-6 6"/></svg>
-            {{ domain.name }}
-            <em>{{ domain.classes.length }} 类 · {{ domain.count }} 项</em>
-          </button>
-          <div v-show="pubOpen[domain.name]" class="pub-body">
-            <div v-for="klass in domain.classes" :key="klass.name" class="pub-class">
-              <div class="pub-class-name">{{ klass.name }}</div>
-              <div v-for="item in klass.items" :key="item.id" class="pub-item">
-                <span>{{ item.name }}</span>
-                <em>{{ item.criteria }} <small>P{{ item.srcPage }}</small></em>
+        <div class="pub-sheet">
+          <div class="pub-cols">
+            <span>指标名称</span>
+            <span>抽取判据</span>
+            <span>原文依据<i>金色高亮为判据命中内容</i></span>
+          </div>
+          <div v-for="domain in pubTree" :key="domain.name" class="pub-domain">
+            <button type="button" class="pub-domain-h" @click="togglePub(domain.name)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ open: pubOpen[domain.name] }"><path d="M9 6l6 6-6 6"/></svg>
+              {{ domain.name }}
+              <em>{{ domain.classes.length }} 类 · {{ domain.count }} 项</em>
+            </button>
+            <div v-show="pubOpen[domain.name]">
+              <div v-for="klass in domain.classes" :key="klass.name" class="pub-class">
+                <div class="pub-class-name">{{ klass.name }} <em>{{ klass.items.length }}项指标</em></div>
+                <div v-for="item in klass.items" :key="item.id" class="pub-item">
+                  <span>{{ item.name }}</span>
+                  <em>{{ item.criteria }}</em>
+                  <div class="pub-src">
+                    <div class="pub-src-doc">
+                      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.5h6.2L13 5v9.5h-9.5v-13z"/><path d="M9.5 1.5V5H13"/></svg>
+                      《{{ pubTraceDoc(item) }}》
+                      <i>P{{ item.srcPage }}</i>
+                    </div>
+                    <p :class="{ open: pubSrcOpen[item.id] }">
+                      <template v-if="!pubSrcOpen[item.id]">......</template>{{ pubTraceParts(item).before }}<mark>{{ pubTraceParts(item).mark }}</mark>{{ pubTraceParts(item).after }}<template v-if="!pubSrcOpen[item.id]">......</template>
+                    </p>
+                    <button type="button" @click="pubSrcOpen[item.id] = !pubSrcOpen[item.id]">
+                      <svg viewBox="0 0 16 16" aria-hidden="true" :class="{ open: pubSrcOpen[item.id] }"><path d="M4 6.5 8 10.5 12 6.5"/></svg>
+                      {{ pubSrcOpen[item.id] ? '收起原文' : '展开原文' }}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -337,6 +359,60 @@ import { m02IndRows } from '@/data/m02-indicators'
 import MetricTreeNode from '@/components/MetricTreeNode.vue'
 import TextAreaField from '@/components/TextAreaField.vue'
 
+const pubSources = {
+  i01: ['在标准气象条件下，立靶高低偏差应不大于0.30 mil，方向偏差应不大于0.30 mil', '0.30 mil'],
+  i02: ['立靶方向偏差应不大于0.30 mil', '0.30 mil'],
+  i03: ['1000m距离立靶密集度不大于2.6 m × 2.6 m', '2.6 m × 2.6 m'],
+  i04: ['对典型地面目标首发命中概率不低于85%', '85%'],
+  i05: ['战斗射速每分钟6-8发', '6-8'],
+  i06: ['最大射程不小于15 km', '15 km'],
+  i07: ['弹丸初速930 m/s，允许偏差±10 m/s', '930 m/s'],
+  i08: ['最大膛压不大于315 MPa', '315 MPa'],
+  i09: ['最大行驶速度不小于65 km/h', '65 km/h'],
+  i10: ['0至32 km/h加速时间不大于12 s', '12 s'],
+  i11: ['最大爬坡度不小于60%', '60%'],
+  i12: ['最大行程不小于500 km', '500 km'],
+  i13: ['越壕宽度不小于2.5 m', '2.5 m'],
+  i14: ['涉水深度不小于1.2 m', '1.2 m'],
+  i15: ['正面装甲抗弹能力满足战术技术要求', '战术技术要求'],
+  i16: ['三防密封性满足三防防护要求', '三防防护要求'],
+  i17: ['昼间对典型目标发现距离不小于5.0 km', '5.0 km'],
+  i18: ['夜间对典型目标发现距离不小于3.0 km', '3.0 km'],
+  i19: ['激光测距误差不大于5 m', '5 m'],
+  i20: ['电台通信距离不小于25 km', '25 km'],
+  i21: ['数传传输速率不小于9.6 kbps', '9.6 kbps'],
+  i22: ['平均故障间隔里程不小于800 km', '800 km'],
+  i23: ['任务可靠度不低于0.92', '0.92'],
+  i24: ['平均修复时间不大于30 min', '30 min'],
+  i25: ['在+55℃条件下能正常工作', '+55℃'],
+  i26: ['在-41℃条件下能正常启动', '-41℃'],
+  i27: ['电磁兼容性满足GJB 151B要求', 'GJB 151B'],
+  i28: ['电源瞬态耐受满足GJB 181A要求', 'GJB 181A'],
+}
+
+function pubTraceDoc(row) {
+  const raw = String(row?.srcDoc || '某型装备研制总要求')
+  if (/研制总要求/.test(raw)) return '某型装备研制总要求'
+  return raw.replace(/^D-\d+/, '').replace(/[《》]/g, '').trim() || raw
+}
+
+function pubTraceSentence(row) {
+  if (!row) return ''
+  return pubSources[row.id]?.[0] || `${row.name}应满足${row.criteria || ''}`
+}
+
+function pubTraceMark(row) {
+  return pubSources[row.id]?.[1] || ''
+}
+
+function pubTraceParts(row) {
+  const sentence = pubTraceSentence(row)
+  const mark = pubTraceMark(row)
+  const index = mark ? sentence.indexOf(mark) : -1
+  if (index < 0) return { before: sentence, mark: '', after: '' }
+  return { before: sentence.slice(0, index), mark, after: sentence.slice(index + mark.length) }
+}
+
 function buildPublishedTree(rows) {
   const domains = []
   rows.forEach((row) => {
@@ -370,10 +446,16 @@ export default {
       classes: pubTree.reduce((n, domain) => n + domain.classes.length, 0),
       items: pubTree.reduce((n, domain) => n + domain.count, 0),
     }
-    const pubOpen = reactive(Object.fromEntries(pubTree.map((domain) => [domain.name, true])))
+    const pubOpen = reactive(Object.fromEntries(pubTree.map((domain) => [domain.name, false])))
+    const pubAllOpen = computed(() => pubTree.every((domain) => pubOpen[domain.name]))
+    const pubSrcOpen = reactive({})
     const publishedAt = '2026-10-26 16:21:51'
     function togglePub(name) {
       pubOpen[name] = !pubOpen[name]
+    }
+    function toggleAllPub() {
+      const next = !pubAllOpen.value
+      pubTree.forEach((domain) => { pubOpen[domain.name] = next })
     }
     onMounted(() => {
       if (!published.value) return
@@ -385,8 +467,13 @@ export default {
       pubTree,
       pubStats,
       pubOpen,
+      pubAllOpen,
+      pubTraceDoc,
+      pubTraceParts,
+      pubSrcOpen,
       publishedAt,
       togglePub,
+      toggleAllPub,
     }
   },
 }
@@ -421,24 +508,77 @@ export default {
 }
 .pub-ver b { color: #1f3d5a; font-size: 15px; }
 .pub-meta { color: #8a99a8; font-size: 13px; }
+.pub-expand {
+  margin-left: auto; border: 1px solid #8eb4d4; background: #fff; color: #1668a8;
+  border-radius: 6px; height: 32px; padding: 0 12px; cursor: pointer; white-space: nowrap;
+}
+.pub-expand:hover { background: #f3f8fc; }
 .pub-stats { display: flex; gap: 28px; flex: 0 0 auto; }
 .pub-stats div { text-align: center; }
 .pub-stats b { display: block; font-size: 22px; color: #0d4e83; line-height: 1.1; }
 .pub-stats span { color: #8a99a8; font-size: 12px; }
-.pub-domain { background: #fff; border: 1px solid #e6eef6; border-radius: 12px; overflow: hidden; }
+.pub-sheet { background: #fff; border: 1px solid #e6eef6; border-radius: 12px; overflow: hidden; }
+.pub-cols, .pub-item {
+  display: grid;
+  grid-template-columns: minmax(200px, 26%) 168px minmax(0, 1fr);
+  column-gap: 28px;
+  align-items: center;
+}
+.pub-cols {
+  padding: 11px 20px;
+  background: #f5f8fb;
+  color: #8a99a8;
+  font-size: 13px;
+  border-bottom: 1px solid #e7eef5;
+}
+.pub-cols span:last-child { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pub-cols i { font-style: normal; font-size: 12px; color: #a0aebb; white-space: nowrap; }
+.pub-domain + .pub-domain { border-top: 1px solid #e7eef5; }
 .pub-domain-h {
   width: 100%; display: flex; align-items: center; gap: 8px;
-  border: 0; background: #fff; padding: 14px 16px; cursor: pointer;
+  border: 0; background: #fbfcfe; padding: 13px 16px; cursor: pointer;
   color: #1f3d5a; font-size: 15px; font-weight: 700; text-align: left;
 }
 .pub-domain-h svg { width: 14px; height: 14px; color: #8a99a8; transition: transform .15s; }
 .pub-domain-h svg.open { transform: rotate(90deg); }
 .pub-domain-h em { margin-left: 8px; font-style: normal; font-weight: 500; color: #8a99a8; font-size: 12.5px; }
-.pub-body { padding: 0 18px 12px 38px; }
-.pub-class-name { color: #1668a8; font-size: 13.5px; font-weight: 600; margin: 8px 0 4px; }
-.pub-item { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; font-size: 13.5px; color: #3f5062; }
-.pub-item em { font-style: normal; color: #1668a8; font-weight: 600; white-space: nowrap; }
-.pub-item small { margin-left: 8px; color: #8a99a8; font-weight: 500; }
+.pub-class-name {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 20px 2px 40px; color: #3f5062; font-size: 13px; font-weight: 650;
+}
+.pub-class-name::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%; background: #d4a017; flex: 0 0 auto;
+}
+.pub-class-name em { font-style: normal; font-weight: 500; color: #8a99a8; font-size: 12px; }
+.pub-item {
+  padding: 14px 20px 14px 54px;
+  border-bottom: 1px solid #f0f4f8;
+  font-size: 13.5px; color: #1f3d5a;
+}
+.pub-class:last-child .pub-item:last-child { border-bottom: 0; }
+.pub-item > em { font-style: normal; color: #1668a8; font-weight: 700; white-space: nowrap; }
+.pub-src { min-width: 0; }
+.pub-src-doc { display: flex; align-items: center; gap: 6px; color: #5c7084; font-size: 12.5px; }
+.pub-src-doc svg {
+  width: 14px; height: 14px; flex: 0 0 auto; fill: none; stroke: #1668a8;
+  stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round;
+}
+.pub-src-doc i {
+  font-style: normal; background: #e8f3fb; color: #1668a8; border-radius: 4px;
+  padding: 0 6px; height: 18px; line-height: 18px; font-size: 12px;
+}
+.pub-src p {
+  margin: 4px 0 2px; color: #3e4e60; font-size: 13px; line-height: 1.7;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.pub-src p.open { white-space: normal; }
+.pub-src mark { padding: 0 3px; border-radius: 3px; background: #f3e4c0; color: #6a5630; }
+.pub-src button {
+  display: inline-flex; align-items: center; gap: 2px;
+  border: 0; background: transparent; color: #1668a8; padding: 0; cursor: pointer; font-size: 12px;
+}
+.pub-src button svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pub-src button svg.open { transform: rotate(180deg); }
 .m03-detail-shell {
   display: flex;
   flex-direction: column;

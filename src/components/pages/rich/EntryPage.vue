@@ -70,8 +70,17 @@
             <div class="entry-form">
               <label>资源名称<span class="req">*</span></label>
               <input v-model="meta.name" placeholder="某型定型技术资料" />
-              <label>所属项目<span class="req">*</span></label>
-              <select-field v-model="meta.project" :options="projects" placeholder="请选择项目" />
+              <label>项目名称<span class="req">*</span></label>
+              <el-select
+                v-model="meta.project"
+                filterable
+                allow-create
+                default-first-option
+                placeholder="输入或选择已有项目"
+                style="width:100%"
+              >
+                <el-option v-for="name in projectOptions" :key="name" :label="name" :value="name" />
+              </el-select>
 
               <label>资料类别<span class="req">*</span></label>
               <select-field v-model="meta.cat" :options="catOptions" placeholder="请选择类别" />
@@ -115,45 +124,88 @@
 
       <div class="panel task-card">
         <div class="task-frame">
-        <h3><i></i>录入任务</h3>
+        <h3><i></i>项目列表</h3>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>文件名称</th>
-                <th>资源类型</th>
-                <th>文件大小</th>
-                <th>资源版本</th>
+                <th>项目名称</th>
+                <th>文件数</th>
                 <th>录入状态</th>
                 <th style="text-align:center">操作</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="!tasks.length">
-                <td colspan="6" class="empty">暂无录入任务，请选择文件并完善资源信息后点击「确定录入并解析」</td>
+              <tr v-if="!projectGroups.length">
+                <td colspan="4" class="empty">暂无项目，请选择文件并填写项目名称后点击「确定录入并解析」</td>
               </tr>
-              <tr v-for="row in tasks" :key="row.id">
-                <td>
-                  <div class="file-cell">
-                    <span class="file-ico" :class="iconKind(row.fmt)">{{ iconText(row.fmt) }}</span>
-                    <span>{{ row.name }}</span>
-                  </div>
-                </td>
-                <td>{{ row.catLabel }}</td>
-                <td>{{ row.size }}</td>
-                <td>{{ row.version }}</td>
-                <td>
-                  <span class="dot-status" :class="statusClass(row.status)">
-                    <i></i>{{ row.status }}
-                  </span>
-                </td>
-                <td>
-                  <div class="ops" style="justify-content:center">
-                    <a @click="viewTask(row)">查看</a>
-                    <a class="danger" @click="removeTask(row)">移除</a>
-                  </div>
-                </td>
-              </tr>
+              <template v-for="group in projectGroups" :key="group.name">
+                <tr class="project-row">
+                  <td>
+                    <button
+                      type="button"
+                      class="expand-btn"
+                      :class="{ open: expanded[group.name] }"
+                      :aria-expanded="!!expanded[group.name]"
+                      @click="toggleProject(group.name)"
+                    >
+                      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 11 8 6 12.5" /></svg>
+                    </button>
+                    <span class="project-name">{{ group.name }}</span>
+                  </td>
+                  <td>{{ group.files.length }}</td>
+                  <td>
+                    <span class="dot-status" :class="statusClass(group.status)">
+                      <i></i>{{ group.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="ops" style="justify-content:center">
+                      <a @click="toggleProject(group.name)">{{ expanded[group.name] ? '收起' : '展开' }}</a>
+                    </div>
+                  </td>
+                </tr>
+                <tr v-if="expanded[group.name]" class="file-row">
+                  <td colspan="4">
+                    <table class="file-table">
+                      <thead>
+                        <tr>
+                          <th>文件名称</th>
+                          <th>资源类型</th>
+                          <th>文件大小</th>
+                          <th>资源版本</th>
+                          <th>录入状态</th>
+                          <th style="text-align:center">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="row in group.files" :key="row.id">
+                          <td>
+                            <div class="file-cell">
+                              <span class="file-ico" :class="iconKind(row.fmt)">{{ iconText(row.fmt) }}</span>
+                              <span>{{ row.name }}</span>
+                            </div>
+                          </td>
+                          <td>{{ row.catLabel }}</td>
+                          <td>{{ row.size }}</td>
+                          <td>{{ row.version }}</td>
+                          <td>
+                            <span class="dot-status" :class="statusClass(row.status)">
+                              <i></i>{{ row.status }}
+                            </span>
+                          </td>
+                          <td>
+                            <div class="ops" style="justify-content:center">
+                              <a @click="viewTask(row)">查看</a>
+                              <a class="danger" @click="removeTask(row)">移除</a>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </table>
         </div>
@@ -281,7 +333,7 @@ export default {
 
     const isResourceEntry = computed(() => !props.page?.entryKey && props.page?.dataset === 'resources')
 
-    /** 已选文件暂存区：确认录入前不进入「录入任务」表 */
+    /** 已选文件暂存区：确认录入前不进入「项目列表」 */
     const pendingFiles = ref([])
 
     const meta = reactive({
@@ -299,7 +351,35 @@ export default {
       { id: 2, name: '某型装备性能鉴定试验报告V2.pdf', cat: '试验鉴定', catLabel: '试验鉴定', size: '16.80 MB', version: 'V2.0', status: '已完成', fmt: 'PDF', org: '试验鉴定机构', project: '某型装备性能鉴定试验', date: '2026-10-22' },
     ])
 
-    const projects = ['定型试验项目', '性能鉴定试验项目', '可靠性试验项目']
+    const baseProjects = ['某型装备性能鉴定试验', '定型试验项目', '性能鉴定试验项目', '可靠性试验项目']
+    const expanded = reactive({})
+    const projectOptions = computed(() => {
+      const names = new Set(baseProjects)
+      tasks.value.forEach((row) => { if (row.project) names.add(row.project) })
+      if (meta.project) names.add(meta.project)
+      return [...names]
+    })
+    const projectGroups = computed(() => {
+      const order = []
+      const map = new Map()
+      tasks.value.forEach((row) => {
+        const name = row.project || '未命名项目'
+        if (!map.has(name)) {
+          map.set(name, [])
+          order.push(name)
+        }
+        map.get(name).push(row)
+      })
+      return order.map((name) => {
+        const files = map.get(name)
+        const status = files.every((file) => file.status === '已完成')
+          ? '已完成'
+          : files.some((file) => file.status === '处理中')
+            ? '处理中'
+            : '待确认'
+        return { name, files, status }
+      })
+    })
     const catOptions = TYPE_TABS.map((t) => ({ value: t.key, label: t.label }))
 
     const stats = computed(() => {
@@ -334,6 +414,9 @@ export default {
       if (status === '已完成') return 'ok'
       if (status === '处理中') return 'run'
       return 'wait'
+    }
+    function toggleProject(name) {
+      expanded[name] = !expanded[name]
     }
 
     function openPicker() {
@@ -471,7 +554,7 @@ export default {
 
     function requiredOk() {
       if (!meta.name?.trim() || !meta.project || !meta.cat || !meta.version?.trim() || !meta.org?.trim() || !meta.date) {
-        toast('请填写资源名称、所属项目、资料类别、资源版本、来源单位与资料日期', 'error')
+        toast('请填写资源名称、项目名称、资料类别、资源版本、来源单位与资料日期', 'error')
         return false
       }
       return true
@@ -610,7 +693,7 @@ export default {
         toast('请先选择文件后再暂存', 'warning')
         return
       }
-      toast('资源信息已暂存，确定录入并解析后才会写入录入任务', 'success')
+      toast('资源信息已暂存，确定录入并解析后才会写入项目列表', 'success')
     }
 
     function formTask() {
@@ -657,7 +740,7 @@ export default {
           const task = tasks.value.find((t) => t.name === name)
           if (task) finishParse(task)
         })
-        toast('解析完成，已写入录入任务与数据资源管理', 'success')
+        toast('解析完成，已写入项目列表与数据资源管理', 'success')
         setTimeout(() => {
           const pid = route.params.pid
           const sid = route.params.sid
@@ -691,7 +774,10 @@ export default {
       ...rich,
       isResourceEntry,
       meta,
-      projects,
+      projectOptions,
+      projectGroups,
+      expanded,
+      toggleProject,
       catOptions,
       pendingFiles,
       removePending,
@@ -901,7 +987,7 @@ export default {
 }
 .entry-form input:focus, .entry-form textarea:focus { border-color: #7eadd4; }
 .entry-form :deep(.sf-select),
-.entry-form :deep(.sf-select),
+.entry-form :deep(.el-select),
 .entry-form :deep(.date-field) { width: 100%; }
 .entry-form :deep(.ta-field) { grid-column: 2 / -1; }
 .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: auto; padding-top: 16px; }
@@ -941,6 +1027,38 @@ export default {
 }
 .task-frame h3 { margin-bottom: 12px; }
 .task-card .table-wrap { border: 0; box-shadow: none; border-radius: 0; }
+.project-row td:first-child { display: flex; align-items: center; gap: 8px; }
+.project-name { font-weight: 650; color: #1a3f66; }
+.expand-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #1668a8;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.expand-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .15s ease;
+}
+.expand-btn.open svg { transform: rotate(90deg); }
+.expand-btn:hover { background: #eaf3fa; }
+.file-row > td { padding: 0 12px 12px 36px; background: #f8fbfe; }
+.file-table { width: 100%; border: 1px solid #e3edf6; border-radius: 8px; overflow: hidden; background: #fff; }
+.file-table th { background: #f3f8fc; font-size: 13px; }
+.file-table td, .file-table th { padding: 8px 12px; }
 .file-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .file-ico {
   width: 26px; height: 26px; border-radius: 4px;

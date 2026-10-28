@@ -1,7 +1,7 @@
 <template>
   <div class="studio" :class="{ embedded }">
     <header class="top" :class="{ embed: embedded }">
-      <button v-if="!embedded" class="back" @click="router.push({ name: 'agent-templates' })">← 返回模板</button>
+      <button v-if="!embedded || backable" class="back" @click="goBack">← 返回模板</button>
       <div class="title">
         <b>{{ graph.name }} · 智能体编排</b>
         <span>{{ modeHint || graph.desc }}</span>
@@ -108,8 +108,11 @@ import { agentTemplates } from '@/data/agentTemplates'
 
 const props = defineProps({
   embedded: Boolean,
+  backable: Boolean,
+  templateId: { type: String, default: '' },
   mode: { type: String, default: '' },
 })
+const emit = defineEmits(['back'])
 const router = useRouter()
 const route = useRoute()
 const modeHint = computed(() => ({
@@ -294,9 +297,18 @@ for (const item of [...agentTemplates, ...savedMine]) {
   if (!templates.some(graph => graph.id === item.id)) templates.push(workflowFromTemplate(item))
 }
 
-const picked = templates.some((item) => item.id === route.query.tpl) ? route.query.tpl : 'extract'
+const picked = templates.some((item) => item.id === (props.templateId || route.query.tpl)) ? (props.templateId || route.query.tpl) : 'extract'
 current.value = picked
 selectedId.value = templates.find((item) => item.id === picked).nodes.find((item) => item.type === 'llm')?.id || ''
+
+function goBack() {
+  if (props.backable) emit('back')
+  else router.push({ name: 'agent-templates' })
+}
+
+watch(() => props.templateId, (id) => {
+  if (id && templates.some((item) => item.id === id)) switchTo(id)
+})
 
 const NODE_W = 176
 const stageRef = ref(null)
