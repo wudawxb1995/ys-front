@@ -123,6 +123,7 @@ import { computed, ref, watch } from 'vue'
 import { Search } from '@element-plus/icons-vue'
 import { useUi } from '@/composables/ui'
 import { registerResourceDetail } from '@/composables/resourceRegistry'
+import { buildTank99aDetail, isTank99aDoc } from '@/data/tank99a'
 import { useRows } from '@/composables/tables'
 import { resourceCategories } from '@/data/resourceCorpus'
 
@@ -307,7 +308,9 @@ function onImport(e) {
       fresh: true,
     }
     rows.unshift(record)
-    registerResourceDetail(name, {
+    registerResourceDetail(name, isTank99aDoc(name)
+      ? buildTank99aDetail({ ...record, parsedAt: time })
+      : {
       name,
       fmt,
       size: record.size,

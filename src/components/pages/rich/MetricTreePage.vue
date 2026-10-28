@@ -16,7 +16,7 @@
             <span class="pub-ok">✓</span>
             <b>指标树 V1.0</b>
             <span class="badge on"><i></i>已发布</span>
-            <span class="pub-meta">发布时间：{{ publishedAt }}　来源：D-01《某型研制总要求》</span>
+            <span class="pub-meta">发布时间：{{ publishedAt }}　来源：《99A式主战坦克研制总案-模拟数据》</span>
           </div>
           <button type="button" class="pub-expand" @click="toggleAllPub">{{ pubAllOpen ? '一键收起' : '一键展开' }}</button>
           <div class="pub-stats">
@@ -355,7 +355,7 @@ import { computed, onMounted, reactive } from 'vue'
 import { useRoute } from 'vue-router'
 import { useRichPage } from '@/composables/rich/useRichPage'
 import { useUi } from '@/composables/ui'
-import { m02IndRows } from '@/data/m02-indicators'
+import { tank99aIndicatorRows, TANK99A_SAMPLE_NAME } from '@/data/tank99a'
 import MetricTreeNode from '@/components/MetricTreeNode.vue'
 import TextAreaField from '@/components/TextAreaField.vue'
 
@@ -398,11 +398,19 @@ function pubTraceDoc(row) {
 
 function pubTraceSentence(row) {
   if (!row) return ''
+  if (row.quote) return row.quote
   return pubSources[row.id]?.[0] || `${row.name}应满足${row.criteria || ''}`
 }
 
 function pubTraceMark(row) {
-  return pubSources[row.id]?.[1] || ''
+  const sentence = pubTraceSentence(row)
+  const preset = pubSources[row.id]?.[1]
+  if (preset && sentence.includes(preset)) return preset
+  const criteria = String(row?.criteria || '')
+  if (criteria && sentence.includes(criteria)) return criteria
+  const num = criteria.match(/[\d.]+/)
+  if (num && sentence.includes(num[0])) return num[0]
+  return ''
 }
 
 function pubTraceParts(row) {
@@ -440,7 +448,7 @@ export default {
     const route = useRoute()
     const { toast } = useUi()
     const published = computed(() => route.query.published === '1')
-    const pubTree = buildPublishedTree(m02IndRows)
+    const pubTree = buildPublishedTree(tank99aIndicatorRows(TANK99A_SAMPLE_NAME))
     const pubStats = {
       domains: pubTree.length,
       classes: pubTree.reduce((n, domain) => n + domain.classes.length, 0),
@@ -449,7 +457,7 @@ export default {
     const pubOpen = reactive(Object.fromEntries(pubTree.map((domain) => [domain.name, false])))
     const pubAllOpen = computed(() => pubTree.every((domain) => pubOpen[domain.name]))
     const pubSrcOpen = reactive({})
-    const publishedAt = '2026-10-26 16:21:51'
+    const publishedAt = '2026-10-28 16:26'
     function togglePub(name) {
       pubOpen[name] = !pubOpen[name]
     }

@@ -47,7 +47,7 @@
               :key="item.id"
               class="chap-item"
               :class="[item.level === 1 ? 'lv1' : 'lv2', { open: item.expandable && expanded[item.id], active: activeChap === item.id }]"
-              @click="item.expandable ? toggleChap(item) : (activeChap = item.id)"
+              @click="selectChap(item)"
             >
               <svg v-if="item.expandable" class="chap-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                 <path d="M9 6l6 6-6 6"/>
@@ -61,7 +61,7 @@
           <iframe
             v-if="detail.fileUrl && /PDF/i.test(detail.fmt || '')"
             class="pdf-frame"
-            :src="detail.fileUrl"
+            :src="pdfView || detail.fileUrl"
             :title="detail.name"
           />
           <div v-else class="origin-empty">
@@ -182,7 +182,11 @@ function goExtract() {
   setTimeout(() => {
     loading.close()
     extracting.value = false
-    router.push({ name: 'app', params: { pid: route.params.pid, sid: 'extract', mid: 'ind-data' } })
+    router.push({
+      name: 'app',
+      params: { pid: route.params.pid, sid: 'extract', mid: 'ind-data' },
+      query: { doc: props.detail.name },
+    })
   }, 5000)
 }
 
@@ -208,6 +212,13 @@ function goVecTask() {
 const expanded = reactive({})
 props.detail.chapters?.forEach((c) => { expanded[c.id] = true })
 const activeChap = ref(props.detail.chapters?.[0]?.id || '')
+const chapterPage = ref(1)
+const pdfView = computed(() => {
+  const url = props.detail.fileUrl
+  if (!url) return ''
+  const base = String(url).split('#')[0]
+  return chapterPage.value > 1 ? `${base}#page=${chapterPage.value}` : base
+})
 
 const flatChapters = computed(() => {
   const result = []
@@ -230,9 +241,10 @@ const treeItems = computed(() => {
   return result
 })
 
-function toggleChap(item) {
-  expanded[item.id] = !expanded[item.id]
+function selectChap(item) {
   activeChap.value = item.id
+  if (item.page) chapterPage.value = item.page
+  if (item.expandable) expanded[item.id] = !expanded[item.id]
 }
 
 function iconKind(fmt) {
@@ -335,7 +347,7 @@ const maxEntCount = computed(() => Math.max(...entitySummary.map((e) => e.count)
 
 .parse-split {
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 292px minmax(0, 1fr);
   gap: 12px;
   height: min(62vh, 640px);
   min-height: 420px;
@@ -408,17 +420,18 @@ const maxEntCount = computed(() => Math.max(...entitySummary.map((e) => e.count)
   padding: 2px 4px 4px 0;
 }
 .chap-item {
-  display: flex; align-items: center; gap: 7px;
+  display: flex; align-items: flex-start; gap: 7px;
   padding: 8px 8px; cursor: pointer; font-size: 13.5px; color: #3e5163;
   border-radius: 6px;
 }
+.chap-item span { line-height: 1.4; }
 .chap-item:hover { background: #f4f8fc; }
 .chap-item.active { background: #e8f2fb; color: #1668a8; font-weight: 600; }
 .chap-item.lv2 { padding-left: 28px; font-size: 13px; color: #55677a; }
 .chap-item.lv2.active { color: #1668a8; font-weight: 600; }
-.chap-arrow { width: 13px; height: 13px; color: #8a99a8; flex: none; transition: transform .15s; }
+.chap-arrow { width: 13px; height: 13px; color: #8a99a8; flex: none; margin-top: 3px; transition: transform .15s; }
 .chap-item.open .chap-arrow { transform: rotate(90deg); }
-.chap-dot { width: 13px; height: 13px; color: #c5d4e0; flex: none; }
+.chap-dot { width: 13px; height: 13px; color: #c5d4e0; flex: none; margin-top: 3px; }
 
 .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .stat {

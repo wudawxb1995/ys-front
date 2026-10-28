@@ -288,6 +288,7 @@ import {
   buildEquipmentReqDetail,
   isEquipmentReqDoc,
 } from '@/data/equipmentReqDetail'
+import { buildTank99aDetail, isTank99aDoc } from '@/data/tank99a'
 import { nowText } from '@/utils/format'
 import SelectField from '@/components/SelectField.vue'
 import DateField from '@/components/DateField.vue'
@@ -647,7 +648,12 @@ export default {
       const time = nowText()
       target.status = '已解析'
       target.time = time
-      if (isEquipmentReqDoc(row.name)) {
+      if (isTank99aDoc(row.name)) {
+        target.pages = '14'
+        target.fileUrl = target.fileUrl || '/samples/99A式主战坦克研制总案-模拟数据.pdf'
+        target.size = target.size === '—' ? '0.32 MB' : target.size
+        registerResourceDetail(target.name, buildTank99aDetail({ ...target, time }))
+      } else if (isEquipmentReqDoc(row.name)) {
         target.pages = '48'
         target.fileUrl = target.fileUrl || '/samples/某型装备研制总要求.pdf'
         target.size = target.size === '—' ? '0.35 MB' : target.size

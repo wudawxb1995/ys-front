@@ -13,6 +13,7 @@ export const resourceCategoryTargets = [
 export const resourceCategories = resourceCategoryTargets.map(item => item.name)
 
 const showcase = [
+  ['99A式主战坦克研制总案-模拟数据.pdf', '方案设计', 'PDF', '文本', '0.32 MB', '14', '已解析'],
   ['某型主战坦克研制立项论证报告.pdf', '论证立项', 'PDF', '文本', '12.4 MB', '—', '已解析'],
   ['某型轮式装甲车作战需求分析报告.docx', '论证立项', 'DOCX', '文本', '3.8 MB', '—', '已解析'],
   ['某型自行火炮武器系统战术技术指标论证报告.pdf', '论证立项', 'PDF', '文本', '8.6 MB', '—', '已解析'],

@@ -1,8 +1,10 @@
 /**
  * M02 关键指标抽取结果（D-01 / 某型装备研制总要求 · 28 项）
+ * 99A 研制总案按配套分类抽取稿返回 44 项。
  * 列表「抽取指标数」必须与 getM02RowsForDoc(name).length 一致。
  * domain 仍用七域口径，供新建任务筛选；klass 为详情表「性能域/指标类」。
  */
+import { isTank99aDoc, tank99aIndicatorRows } from './tank99a'
 export const m02Domains = ['机动', '火力', '防护', '可靠性', '环境适应性', '电磁兼容', '信息能力']
 
 /** 非研制总要求类文档的抽取条数（详情用切片，数量与列表联动） */
@@ -80,6 +82,7 @@ function copyMasterRows(name) {
 export function getM02RowsForDoc(docName = '') {
   const name = String(docName || '')
   if (!name) return []
+  if (isTank99aDoc(name)) return tank99aIndicatorRows(name)
   const mapped = m02CountMap[name]
   if (mapped != null && !isM02MasterDoc(name)) {
     const n = Math.min(mapped, m02IndRows.length)

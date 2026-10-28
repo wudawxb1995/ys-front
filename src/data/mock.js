@@ -1,11 +1,16 @@
 import { equipmentReqChapters, EQUIPMENT_REQ_SAMPLE_URL } from './equipmentReqDetail'
+import { isTank99aDoc, TANK99A_SAMPLE_URL } from './tank99a'
 import { resourceCorpus, resourceCategories } from './resourceCorpus'
 
 const resources = resourceCorpus
 
 function resourceRow([name, cat, fmt, modal, size, pages, status, by, time]) {
   const row = { name, cat, fmt, modal, size, pages, status, by, time }
-  if (/某型装备研制总要求|某型研制总要求/.test(name)) {
+  if (isTank99aDoc(name)) {
+    row.fileUrl = TANK99A_SAMPLE_URL
+    row.pages = '14'
+    row.time = '2026-10-28 16:11'
+  } else if (/某型装备研制总要求|某型研制总要求/.test(name)) {
     row.fileUrl = '/samples/某型装备研制总要求.pdf'
   }
   return row

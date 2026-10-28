@@ -282,13 +282,14 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElLoading } from 'element-plus'
 import { useUi } from '@/composables/ui'
 import { useRows } from '@/composables/tables'
 import { useDemoStore } from '@/composables/demo-store'
 import { m02Domains, getM02RowsForDoc, getM02CountForDoc } from '@/data/m02-indicators'
+import { isTank99aDoc } from '@/data/tank99a'
 
 defineProps({ page: Object, title: String })
 const { toast, confirm } = useUi()
@@ -424,6 +425,7 @@ function traceDocTitle(row) {
 
 function traceSentence(row) {
   if (!row) return ''
+  if (row.quote) return row.quote
   if (traceSentences[row.id]) return traceSentences[row.id]
   const criteria = String(row.criteria || '')
   if (/^[≤<]/.test(criteria)) return `${row.name}不大于${criteria.replace(/^[≤<]\s*/, '')}`
@@ -445,6 +447,16 @@ function openDetail(task) {
   resultRows.value = list.map((r) => ({ ...r, status: '待审核' }))
   demoStore.lastM02Task = task.doc || task.name
 }
+function openFromQuery() {
+  const doc = String(route.query.doc || '')
+  if (!doc) return
+  if (detail.value && (detail.value.doc === doc || detail.value.name === doc)) return
+  const task = tasks.value.find((item) => item.doc === doc || item.name === doc)
+    || tasks.value.find((item) => isTank99aDoc(doc) && isTank99aDoc(item.doc || item.name))
+  if (task?.status === '已完成') openDetail(task)
+}
+onMounted(openFromQuery)
+watch(() => route.query.doc, openFromQuery)
 function closeDetail() {
   detail.value = null
   resultRows.value = []

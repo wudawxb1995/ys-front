@@ -3,6 +3,7 @@ import {
   buildEquipmentReqDetail,
   isEquipmentReqDoc,
 } from '@/data/equipmentReqDetail'
+import { buildTank99aDetail, isTank99aDoc, TANK99A_SAMPLE_URL } from '@/data/tank99a'
 
 /** 录入后动态注册的解析详情（key = 资源名称） */
 const detailMap = reactive({})
@@ -18,6 +19,7 @@ export function getRegisteredDetail(name) {
 
 export function buildParsedDetail(row) {
   if (!row) return null
+  if (isTank99aDoc(row.name)) return buildTank99aDetail(row)
   const registered = getRegisteredDetail(row.name)
   if (registered) {
     return {
@@ -37,6 +39,7 @@ export function buildParsedDetail(row) {
 }
 
 export function guessFileUrl(fileName, file) {
+  if (isTank99aDoc(fileName)) return TANK99A_SAMPLE_URL
   if (isEquipmentReqDoc(fileName)) {
     return '/samples/某型装备研制总要求.pdf'
   }
