@@ -17,7 +17,7 @@ export const datasets = {
       { key: 'name', label: '资源名称', type: 'search' },
       { key: 'cat', label: '资源类别', options: resourceCategories },
       { key: 'status', label: '解析状态', options: ['已解析', '解析中', '暂存', '解析失败'] },
-      { key: 'modal', label: '数据模态', options: ['文本', '图像', '表格', '音视频'] },
+      { key: 'modal', label: '数据模态', options: ['文本', '表格', '图纸', '图像', '视频'] },
     ],
     columns: [
       { key: 'name', label: '资源名称' },
@@ -83,7 +83,7 @@ export const datasets = {
   entities: {
     filters: [
       { key: 'text', label: '实体文本', type: 'search' },
-      { key: 'type', label: '实体类型', options: ['农业机械型号', '性能指标', '指标数值', '试验项目', '标准编号', '部件名称', '试验机构'] },
+      { key: 'type', label: '实体类型', options: ['ZB型号', '性能指标', '指标数值', '试验项目', '标准编号', '部件名称', '试验机构'] },
       { key: 'src', label: '标注来源', options: ['自动识别', '手动标注'] },
     ],
     columns: [
@@ -95,7 +95,7 @@ export const datasets = {
       { key: 'score', label: '置信度' },
     ],
     rows: [
-      { text: '东方红-LF2204', type: '农业机械型号', res: '东方红-LF2204定型试验报告', src: '自动识别', page: 'P.3', score: '98%' },
+      { text: '东方红-LF2204', type: 'ZB型号', res: '东方红-LF2204定型试验报告', src: '自动识别', page: 'P.3', score: '98%' },
       { text: '发动机标定功率', type: '性能指标', res: '东方红-LF2204定型试验报告', src: '自动识别', page: 'P.17', score: '96%' },
       { text: '162 kW', type: '指标数值', res: '东方红-LF2204定型试验报告', src: '自动识别', page: 'P.17', score: '99%' },
       { text: '动力输出轴标定转速', type: '性能指标', res: '东方红-LF2204定型试验报告', src: '自动识别', page: 'P.22', score: '97%' },
@@ -104,7 +104,7 @@ export const datasets = {
       { text: '最大牵引力', type: '性能指标', res: '东方红-LF2204定型试验报告', src: '自动识别', page: 'P.36', score: '96%' },
       { text: '38.6 kN', type: '指标数值', res: '东方红-LF2204定型试验报告', src: '自动识别', page: 'P.36', score: '98%' },
       { text: 'DG/T 001-2025', type: '标准编号', res: '农业轮式拖拉机鉴定技术规范', src: '自动识别', page: 'P.1', score: '99%' },
-      { text: '雷沃谷神4LZ-8', type: '农业机械型号', res: '雷沃谷神4LZ-8鉴定大纲', src: '手动标注', page: 'P.2', score: '100%' },
+      { text: '雷沃谷神4LZ-8', type: 'ZB型号', res: '雷沃谷神4LZ-8鉴定大纲', src: '手动标注', page: 'P.2', score: '100%' },
       { text: '洛阳拖拉机试验鉴定站', type: '试验机构', res: '东方红-LF2204定型试验报告', src: '自动识别', page: 'P.1', score: '94%' },
       { text: '滑转率', type: '性能指标', res: '2BMQ-6田间试验数据', src: '自动识别', page: '—', score: '93%' },
     ],
@@ -128,7 +128,7 @@ export const datasets = {
     rows: [
       { name: '某型研制总要求（D-01）', progress: 100, status: '已完成', dim: '1024', chunks: '96', cost: '11.2s', ok: '达标（≤15s）', time: '2026-10-09 14:20' },
       { name: '雷沃谷神4LZ-8谷物联合收割机鉴定大纲', progress: 100, status: '已完成', dim: '1024', chunks: '64', cost: '8.6s', ok: '达标', time: '2026-10-10 09:32' },
-      { name: 'NY/T 2090-2025 农业机械试验鉴定通则', progress: 100, status: '已完成', dim: '1024', chunks: '32', cost: '5.1s', ok: '达标', time: '2026-10-10 10:15' },
+      { name: 'NY/T 2090-2025 ZB试验鉴定通则', progress: 100, status: '已完成', dim: '1024', chunks: '32', cost: '5.1s', ok: '达标', time: '2026-10-10 10:15' },
       { name: '五征4YZP-4可靠性试验报告', progress: 46, status: '进行中', dim: '1024', chunks: '—', cost: '—', ok: '—', time: '2026-10-16 15:02' },
     ],
     ops: ['详情', '重跑'],
@@ -158,8 +158,8 @@ export const datasets = {
       { res: '某型装备研制总要求.pdf', no: '#045', text: '试验与鉴定应覆盖性能、五性、环境、电磁兼容、软件与安全性等科目。', vec: '[-0.03, 0.29, 0.37, 0.08]', dim: '1024', time: '2026-10-09 14:21' },
       { res: '雷沃谷神4LZ-8谷物联合收割机鉴定大纲', no: '#008', text: '总损失率、含杂率、破碎率作为收获性能核心指标。', vec: '[-0.05, 0.28, 0.33, 0.11]', dim: '1024', time: '2026-10-10 09:33' },
       { res: '雷沃谷神4LZ-8谷物联合收割机鉴定大纲', no: '#019', text: '可靠性试验按累计作业时间与故障分类统计，给出 MTBF 点估计与区间估计。', vec: '[0.21, 0.04, 0.39, -0.15]', dim: '1024', time: '2026-10-10 09:33' },
-      { res: 'NY/T 2090-2025 农业机械试验鉴定通则', no: '#005', text: '可靠性试验累计作业时间不少于规定值，MTBF 作为定型判定依据。', vec: '[0.12, -0.08, 0.44, 0.19]', dim: '1024', time: '2026-10-10 10:15' },
-      { res: 'NY/T 2090-2025 农业机械试验鉴定通则', no: '#014', text: '试验条件应明确气象、地表、负载与测量不确定度要求。', vec: '[0.06, 0.31, -0.11, 0.42]', dim: '1024', time: '2026-10-10 10:15' },
+      { res: 'NY/T 2090-2025 ZB试验鉴定通则', no: '#005', text: '可靠性试验累计作业时间不少于规定值，MTBF 作为定型判定依据。', vec: '[0.12, -0.08, 0.44, 0.19]', dim: '1024', time: '2026-10-10 10:15' },
+      { res: 'NY/T 2090-2025 ZB试验鉴定通则', no: '#014', text: '试验条件应明确气象、地表、负载与测量不确定度要求。', vec: '[0.06, 0.31, -0.11, 0.42]', dim: '1024', time: '2026-10-10 10:15' },
       { res: '东方红-LF2204报告', no: '#017', text: '发动机标定功率 162 kW，动力输出轴输出功率 138.5 kW。', vec: '[0.31, 0.02, -0.17, 0.55]', dim: '1024', time: '2026-10-09 14:21' },
       { res: '东方红-LF2204报告', no: '#036', text: '混凝土路面最大牵引力 38.6 kN，对应滑转率 8.2%。', vec: '[0.22, 0.41, 0.06, -0.13]', dim: '1024', time: '2026-10-09 14:21' },
     ],
@@ -272,7 +272,7 @@ export const datasets = {
       { key: 'stage', label: '阶段', options: ['研发设计', '性能试验设计', '性能试验鉴定', '成果验收'] },
     ],
     columns: [
-      { key: 'machine', label: '农业机械' },
+      { key: 'machine', label: 'ZB' },
       { key: 'stage', label: '生命周期阶段' },
       { key: 'docs', label: '归集资料' },
       { key: 'state', label: '技术状态' },
@@ -318,7 +318,7 @@ export const datasets = {
       { key: 'count', label: '实例数' },
     ],
     rows: [
-      { name: '农业机械', attrs: '型号、类别、生产企业', color: '藏青', icon: '农机', count: '128' },
+      { name: 'ZB', attrs: '型号、类别、生产企业', color: '藏青', icon: '农机', count: '128' },
       { name: '性能指标', attrs: '名称、单位、阈值', color: '金', icon: '仪表', count: '860' },
       { name: '试验', attrs: '项目、场地、时间', color: '蓝', icon: '烧杯', count: '342' },
       { name: '事件', attrs: '类型、时间、结论', color: '橙', icon: '旗帜', count: '219' },
@@ -336,8 +336,8 @@ export const datasets = {
       { key: 'builtin', label: '来源' },
     ],
     rows: [
-      { name: '具备指标', from: '农业机械', to: '性能指标', kind: '组成', builtin: '内置' },
-      { name: '开展试验', from: '农业机械', to: '试验', kind: '组成', builtin: '内置' },
+      { name: '具备指标', from: 'ZB', to: '性能指标', kind: '组成', builtin: '内置' },
+      { name: '开展试验', from: 'ZB', to: '试验', kind: '组成', builtin: '内置' },
       { name: '产生事件', from: '试验', to: '事件', kind: '因果', builtin: '内置' },
       { name: '依据标准', from: '试验', to: '标准规范', kind: '条件', builtin: '内置' },
       { name: '导致变更', from: '事件', to: '技术状态', kind: '因果', builtin: '自定义' },
@@ -933,7 +933,7 @@ export const datasets = {
     ],
     rows: [
       { name: '领域通识库', cat: '领域通识', docs: '2400', owner: '平台', ver: 'v6', status: '启用' },
-      { name: '定型资料库', cat: '农业机械定型资料', docs: '8600', owner: '鉴定处', ver: 'v12', status: '启用' },
+      { name: '定型资料库', cat: 'ZB定型资料', docs: '8600', owner: '鉴定处', ver: 'v12', status: '启用' },
       { name: '试验资料库', cat: '试验资料', docs: '5100', owner: '试验室', ver: 'v8', status: '启用' },
       { name: '研究成果库', cat: '试验鉴定研究成果', docs: '1320', owner: '研究室', ver: 'v4', status: '启用' },
       { name: '个人-李慧敏', cat: '个人知识库', docs: '86', owner: '李慧敏', ver: 'v3', status: '启用' },
@@ -965,7 +965,7 @@ export const datasets = {
       { key: 'status', label: '状态', kind: 'badge' },
     ],
     rows: [
-      { name: '综合服务平台-生产许可', owner: '农业机械试验鉴定总站', start: '2026-01-01', end: '2027-12-31', status: '已激活' },
+      { name: '综合服务平台-生产许可', owner: 'ZB试验鉴定总站', start: '2026-01-01', end: '2027-12-31', status: '已激活' },
       { name: '训推资源包-32B', owner: '模型组', start: '2026-06-01', end: '2027-05-31', status: '已激活' },
     ],
     ops: ['续期', '变更'],
@@ -1003,7 +1003,7 @@ export const resourceDetails = {
     indexStatus: '已建立', indexName: 'idx-zbzy-20261008', indexAt: '2026-10-08 09:27:03',
     fileUrl: EQUIPMENT_REQ_SAMPLE_URL,
     entities: [
-      { label: '农业机械型号', count: 8 },
+      { label: 'ZB型号', count: 8 },
       { label: '性能指标', count: 26 },
       { label: '指标数值', count: 34 },
       { label: '试验项目', count: 12 },
@@ -1020,7 +1020,7 @@ export const resourceDetails = {
     indexStatus: '已建立', indexName: 'idx-d01-20261008', indexAt: '2026-10-08 09:27:03',
     fileUrl: EQUIPMENT_REQ_SAMPLE_URL,
     entities: [
-      { label: '农业机械型号', count: 8 },
+      { label: 'ZB型号', count: 8 },
       { label: '性能指标', count: 26 },
       { label: '指标数值', count: 34 },
       { label: '试验项目', count: 12 },
@@ -1036,7 +1036,7 @@ export const resourceDetails = {
     tableCount: 8, imageCount: 5, paraCount: 214,
     indexStatus: '已建立', indexName: 'idx-4lz8-20261009', indexAt: '2026-10-09 10:13:02',
     entities: [
-      { label: '农业机械型号', count: 5 },
+      { label: 'ZB型号', count: 5 },
       { label: '性能指标', count: 18 },
       { label: '指标数值', count: 29 },
       { label: '试验项目', count: 22 },
@@ -1048,22 +1048,24 @@ export const resourceDetails = {
       { id: 'c2', title: '2 规范性引用文件', level: 1 },
       { id: 'c3', title: '3 术语与定义', level: 1 },
       { id: 'c4', title: '4 试验条件', level: 1 },
-      { id: 'c5', title: '5 试验项目与方法', level: 1, children: [
-        { id: 'c5-1', title: '5.1 收获性能试验', level: 2 },
-        { id: 'c5-2', title: '5.2 可靠性试验', level: 2 },
-        { id: 'c5-3', title: '5.3 安全性检查', level: 2 },
-      ]},
+      {
+        id: 'c5', title: '5 试验项目与方法', level: 1, children: [
+          { id: 'c5-1', title: '5.1 收获性能试验', level: 2 },
+          { id: 'c5-2', title: '5.2 可靠性试验', level: 2 },
+          { id: 'c5-3', title: '5.3 安全性检查', level: 2 },
+        ]
+      },
       { id: 'c6', title: '6 判定规则', level: 1 },
     ],
   },
-  'NY/T 2090-2025 农业机械试验鉴定通则': {
-    name: 'NY/T 2090-2025 农业机械试验鉴定通则',
+  'NY/T 2090-2025 ZB试验鉴定通则': {
+    name: 'NY/T 2090-2025 ZB试验鉴定通则',
     fmt: 'PDF', size: '6.8 MB', pages: 42,
     parsedAt: '2026-09-28 14:03:31',
     tableCount: 4, imageCount: 2, paraCount: 118,
     indexStatus: '已建立', indexName: 'idx-nyt2090-20260928', indexAt: '2026-09-28 14:03:52',
     entities: [
-      { label: '农业机械型号', count: 3 },
+      { label: 'ZB型号', count: 3 },
       { label: '性能指标', count: 11 },
       { label: '指标数值', count: 16 },
       { label: '试验项目', count: 8 },
@@ -1075,11 +1077,13 @@ export const resourceDetails = {
       { id: 'c2', title: '2 规范性引用文件', level: 1 },
       { id: 'c3', title: '3 术语和定义', level: 1 },
       { id: 'c4', title: '4 基本要求', level: 1 },
-      { id: 'c5', title: '5 鉴定程序', level: 1, children: [
-        { id: 'c5-1', title: '5.1 申请与受理', level: 2 },
-        { id: 'c5-2', title: '5.2 试验实施', level: 2 },
-        { id: 'c5-3', title: '5.3 结果评定', level: 2 },
-      ]},
+      {
+        id: 'c5', title: '5 鉴定程序', level: 1, children: [
+          { id: 'c5-1', title: '5.1 申请与受理', level: 2 },
+          { id: 'c5-2', title: '5.2 试验实施', level: 2 },
+          { id: 'c5-3', title: '5.3 结果评定', level: 2 },
+        ]
+      },
       { id: 'c6', title: '附录 A 鉴定数据记录表', level: 1 },
     ],
   },
@@ -1087,82 +1091,82 @@ export const resourceDetails = {
 
 // ── D-08：探针配置包（12个探针，全部已启用） ──────────────────────────
 export const probes = [
-  { id:'P01', name:'弹着点散布探针',   obj:'立靶偏差',      criteria:'|dH|≤0.30mil & |dL|≤0.30mil', srcNode:'散布精度指标', metrics:5, hits:3,  severity:'高', updated:'2024-10-10' },
-  { id:'P02', name:'初速一致性探针',   obj:'炮口初速',      criteria:'v0 ≥ 820 m/s',                 srcNode:'初速指标',     metrics:3, hits:1,  severity:'高', updated:'2024-10-10' },
-  { id:'P03', name:'姿态角漂移探针',   obj:'飞行姿态角',    criteria:'|Δpitch|≤0.20°',              srcNode:'姿态稳定性',   metrics:4, hits:1,  severity:'中', updated:'2024-10-10' },
-  { id:'P04', name:'身管温度探针',     obj:'身管温度',      criteria:'ΔT≤15℃',                      srcNode:'热变形指标',   metrics:2, hits:0,  severity:'中', updated:'2024-10-10' },
-  { id:'P05', name:'温补系数探针',     obj:'定位定向温补',  criteria:'偏差≤5%',                      srcNode:'温补系数',     metrics:2, hits:2,  severity:'高', updated:'2024-10-10' },
-  { id:'P06', name:'气象修正探针',     obj:'气象修正有效性',criteria:'修正残差≤0.05mil',              srcNode:'气象修正',     metrics:3, hits:0,  severity:'低', updated:'2024-10-11' },
-  { id:'P07', name:'遥测信号探针',     obj:'遥测链路',      criteria:'丢包率≤0.1%',                  srcNode:'信号完整性',   metrics:3, hits:0,  severity:'中', updated:'2024-10-11' },
-  { id:'P08', name:'定向精度探针',     obj:'方位定向',      criteria:'方位误差≤0.15mil',             srcNode:'定向精度',     metrics:3, hits:1,  severity:'高', updated:'2024-10-11' },
-  { id:'P09', name:'时统精度探针',     obj:'时间同步',      criteria:'时差≤10μs',                   srcNode:'时间同步',     metrics:2, hits:0,  severity:'低', updated:'2024-10-11' },
-  { id:'P10', name:'惯导精度探针',     obj:'惯导漂移',      criteria:'漂移≤0.01°/h',                srcNode:'惯导误差',     metrics:4, hits:0,  severity:'中', updated:'2024-10-12' },
-  { id:'P11', name:'供电稳定性探针',   obj:'弹载供电',      criteria:'电压波动≤±5%',                 srcNode:'供电指标',     metrics:2, hits:0,  severity:'低', updated:'2024-10-12' },
-  { id:'P12', name:'弹道偏差探针',     obj:'弹道CEP',       criteria:'CEP≤0.50mil',                  srcNode:'弹道偏差',     metrics:4, hits:1,  severity:'高', updated:'2024-10-12' },
+  { id: 'P01', name: '弹着点散布探针', obj: '立靶偏差', criteria: '|dH|≤0.30mil & |dL|≤0.30mil', srcNode: '散布精度指标', metrics: 5, hits: 3, severity: '高', updated: '2024-10-10' },
+  { id: 'P02', name: '初速一致性探针', obj: '炮口初速', criteria: 'v0 ≥ 820 m/s', srcNode: '初速指标', metrics: 3, hits: 1, severity: '高', updated: '2024-10-10' },
+  { id: 'P03', name: '姿态角漂移探针', obj: '飞行姿态角', criteria: '|Δpitch|≤0.20°', srcNode: '姿态稳定性', metrics: 4, hits: 1, severity: '中', updated: '2024-10-10' },
+  { id: 'P04', name: '身管温度探针', obj: '身管温度', criteria: 'ΔT≤15℃', srcNode: '热变形指标', metrics: 2, hits: 0, severity: '中', updated: '2024-10-10' },
+  { id: 'P05', name: '温补系数探针', obj: '定位定向温补', criteria: '偏差≤5%', srcNode: '温补系数', metrics: 2, hits: 2, severity: '高', updated: '2024-10-10' },
+  { id: 'P06', name: '气象修正探针', obj: '气象修正有效性', criteria: '修正残差≤0.05mil', srcNode: '气象修正', metrics: 3, hits: 0, severity: '低', updated: '2024-10-11' },
+  { id: 'P07', name: '遥测信号探针', obj: '遥测链路', criteria: '丢包率≤0.1%', srcNode: '信号完整性', metrics: 3, hits: 0, severity: '中', updated: '2024-10-11' },
+  { id: 'P08', name: '定向精度探针', obj: '方位定向', criteria: '方位误差≤0.15mil', srcNode: '定向精度', metrics: 3, hits: 1, severity: '高', updated: '2024-10-11' },
+  { id: 'P09', name: '时统精度探针', obj: '时间同步', criteria: '时差≤10μs', srcNode: '时间同步', metrics: 2, hits: 0, severity: '低', updated: '2024-10-11' },
+  { id: 'P10', name: '惯导精度探针', obj: '惯导漂移', criteria: '漂移≤0.01°/h', srcNode: '惯导误差', metrics: 4, hits: 0, severity: '中', updated: '2024-10-12' },
+  { id: 'P11', name: '供电稳定性探针', obj: '弹载供电', criteria: '电压波动≤±5%', srcNode: '供电指标', metrics: 2, hits: 0, severity: '低', updated: '2024-10-12' },
+  { id: 'P12', name: '弹道偏差探针', obj: '弹道CEP', criteria: 'CEP≤0.50mil', srcNode: '弹道偏差', metrics: 4, hits: 1, severity: '高', updated: '2024-10-12' },
 ]
 
 // ── D-07：精度试验数据集（30发弹道数据，第19发预置异常；含身管温度/姿态角） ────────────────
 export const shots30 = [
-  { id:1,  ts:'09:04:12', v0:822.1, dH: 0.08, dL:-0.05, barrelTemp:28.2, pitch:0.04, anomaly:false },
-  { id:2,  ts:'09:06:38', v0:821.8, dH:-0.11, dL: 0.03, barrelTemp:29.1, pitch:-0.02, anomaly:false },
-  { id:3,  ts:'09:09:15', v0:823.4, dH: 0.14, dL:-0.08, barrelTemp:30.0, pitch:0.06, anomaly:false },
-  { id:4,  ts:'09:12:02', v0:820.9, dH:-0.07, dL: 0.12, barrelTemp:30.8, pitch:0.03, anomaly:false },
-  { id:5,  ts:'09:15:44', v0:822.6, dH: 0.19, dL:-0.10, barrelTemp:31.6, pitch:0.05, anomaly:false },
-  { id:6,  ts:'09:19:31', v0:821.3, dH:-0.15, dL: 0.08, barrelTemp:32.4, pitch:-0.01, anomaly:false },
-  { id:7,  ts:'09:23:07', v0:823.1, dH: 0.22, dL:-0.14, barrelTemp:33.1, pitch:0.07, anomaly:false },
-  { id:8,  ts:'09:27:52', v0:820.5, dH:-0.09, dL: 0.06, barrelTemp:33.9, pitch:0.02, anomaly:false },
-  { id:9,  ts:'09:32:18', v0:822.8, dH: 0.17, dL:-0.11, barrelTemp:34.6, pitch:0.05, anomaly:false },
-  { id:10, ts:'09:36:44', v0:821.6, dH:-0.13, dL: 0.09, barrelTemp:35.2, pitch:-0.03, anomaly:false },
-  { id:11, ts:'09:41:29', v0:823.0, dH: 0.20, dL:-0.07, barrelTemp:35.9, pitch:0.06, anomaly:false },
-  { id:12, ts:'09:46:03', v0:820.7, dH:-0.18, dL: 0.15, barrelTemp:36.5, pitch:0.01, anomaly:false },
-  { id:13, ts:'09:51:37', v0:822.3, dH: 0.12, dL:-0.09, barrelTemp:37.1, pitch:0.04, anomaly:false },
-  { id:14, ts:'09:56:12', v0:821.1, dH:-0.21, dL: 0.13, barrelTemp:37.8, pitch:-0.02, anomaly:false },
-  { id:15, ts:'10:02:44', v0:823.7, dH: 0.25, dL:-0.06, barrelTemp:38.4, pitch:0.08, anomaly:false },
-  { id:16, ts:'10:08:19', v0:820.4, dH:-0.10, dL: 0.17, barrelTemp:39.0, pitch:0.03, anomaly:false },
-  { id:17, ts:'10:14:55', v0:822.5, dH: 0.16, dL:-0.12, barrelTemp:39.6, pitch:0.05, anomaly:false },
-  { id:18, ts:'10:21:08', v0:821.9, dH:-0.23, dL: 0.10, barrelTemp:40.2, pitch:-0.04, anomaly:false },
-  { id:19, ts:'11:22:07', v0:818.3, dH: 0.42, dL: 0.18, barrelTemp:42.8, pitch:0.38, anomaly:true  },
-  { id:20, ts:'11:28:41', v0:822.0, dH:-0.08, dL: 0.05, barrelTemp:41.1, pitch:0.04, anomaly:false },
-  { id:21, ts:'11:34:16', v0:821.4, dH: 0.13, dL:-0.10, barrelTemp:40.6, pitch:0.02, anomaly:false },
-  { id:22, ts:'11:40:52', v0:823.2, dH:-0.17, dL: 0.08, barrelTemp:40.0, pitch:-0.01, anomaly:false },
-  { id:23, ts:'11:47:28', v0:820.8, dH: 0.21, dL:-0.13, barrelTemp:39.5, pitch:0.06, anomaly:false },
-  { id:24, ts:'11:54:03', v0:822.7, dH:-0.12, dL: 0.16, barrelTemp:39.1, pitch:0.03, anomaly:false },
-  { id:25, ts:'12:01:39', v0:821.5, dH: 0.18, dL:-0.07, barrelTemp:38.7, pitch:0.05, anomaly:false },
-  { id:26, ts:'12:08:14', v0:823.3, dH:-0.14, dL: 0.11, barrelTemp:38.2, pitch:-0.02, anomaly:false },
-  { id:27, ts:'12:15:50', v0:820.6, dH: 0.09, dL:-0.15, barrelTemp:37.8, pitch:0.04, anomaly:false },
-  { id:28, ts:'12:23:26', v0:822.4, dH:-0.20, dL: 0.07, barrelTemp:37.4, pitch:0.01, anomaly:false },
-  { id:29, ts:'12:31:01', v0:821.2, dH: 0.15, dL:-0.09, barrelTemp:37.0, pitch:0.05, anomaly:false },
-  { id:30, ts:'14:05:44', v0:821.5, dH:-0.07, dL: 0.04, barrelTemp:35.6, pitch:0.02, anomaly:false },
+  { id: 1, ts: '09:04:12', v0: 822.1, dH: 0.08, dL: -0.05, barrelTemp: 28.2, pitch: 0.04, anomaly: false },
+  { id: 2, ts: '09:06:38', v0: 821.8, dH: -0.11, dL: 0.03, barrelTemp: 29.1, pitch: -0.02, anomaly: false },
+  { id: 3, ts: '09:09:15', v0: 823.4, dH: 0.14, dL: -0.08, barrelTemp: 30.0, pitch: 0.06, anomaly: false },
+  { id: 4, ts: '09:12:02', v0: 820.9, dH: -0.07, dL: 0.12, barrelTemp: 30.8, pitch: 0.03, anomaly: false },
+  { id: 5, ts: '09:15:44', v0: 822.6, dH: 0.19, dL: -0.10, barrelTemp: 31.6, pitch: 0.05, anomaly: false },
+  { id: 6, ts: '09:19:31', v0: 821.3, dH: -0.15, dL: 0.08, barrelTemp: 32.4, pitch: -0.01, anomaly: false },
+  { id: 7, ts: '09:23:07', v0: 823.1, dH: 0.22, dL: -0.14, barrelTemp: 33.1, pitch: 0.07, anomaly: false },
+  { id: 8, ts: '09:27:52', v0: 820.5, dH: -0.09, dL: 0.06, barrelTemp: 33.9, pitch: 0.02, anomaly: false },
+  { id: 9, ts: '09:32:18', v0: 822.8, dH: 0.17, dL: -0.11, barrelTemp: 34.6, pitch: 0.05, anomaly: false },
+  { id: 10, ts: '09:36:44', v0: 821.6, dH: -0.13, dL: 0.09, barrelTemp: 35.2, pitch: -0.03, anomaly: false },
+  { id: 11, ts: '09:41:29', v0: 823.0, dH: 0.20, dL: -0.07, barrelTemp: 35.9, pitch: 0.06, anomaly: false },
+  { id: 12, ts: '09:46:03', v0: 820.7, dH: -0.18, dL: 0.15, barrelTemp: 36.5, pitch: 0.01, anomaly: false },
+  { id: 13, ts: '09:51:37', v0: 822.3, dH: 0.12, dL: -0.09, barrelTemp: 37.1, pitch: 0.04, anomaly: false },
+  { id: 14, ts: '09:56:12', v0: 821.1, dH: -0.21, dL: 0.13, barrelTemp: 37.8, pitch: -0.02, anomaly: false },
+  { id: 15, ts: '10:02:44', v0: 823.7, dH: 0.25, dL: -0.06, barrelTemp: 38.4, pitch: 0.08, anomaly: false },
+  { id: 16, ts: '10:08:19', v0: 820.4, dH: -0.10, dL: 0.17, barrelTemp: 39.0, pitch: 0.03, anomaly: false },
+  { id: 17, ts: '10:14:55', v0: 822.5, dH: 0.16, dL: -0.12, barrelTemp: 39.6, pitch: 0.05, anomaly: false },
+  { id: 18, ts: '10:21:08', v0: 821.9, dH: -0.23, dL: 0.10, barrelTemp: 40.2, pitch: -0.04, anomaly: false },
+  { id: 19, ts: '11:22:07', v0: 818.3, dH: 0.42, dL: 0.18, barrelTemp: 42.8, pitch: 0.38, anomaly: true },
+  { id: 20, ts: '11:28:41', v0: 822.0, dH: -0.08, dL: 0.05, barrelTemp: 41.1, pitch: 0.04, anomaly: false },
+  { id: 21, ts: '11:34:16', v0: 821.4, dH: 0.13, dL: -0.10, barrelTemp: 40.6, pitch: 0.02, anomaly: false },
+  { id: 22, ts: '11:40:52', v0: 823.2, dH: -0.17, dL: 0.08, barrelTemp: 40.0, pitch: -0.01, anomaly: false },
+  { id: 23, ts: '11:47:28', v0: 820.8, dH: 0.21, dL: -0.13, barrelTemp: 39.5, pitch: 0.06, anomaly: false },
+  { id: 24, ts: '11:54:03', v0: 822.7, dH: -0.12, dL: 0.16, barrelTemp: 39.1, pitch: 0.03, anomaly: false },
+  { id: 25, ts: '12:01:39', v0: 821.5, dH: 0.18, dL: -0.07, barrelTemp: 38.7, pitch: 0.05, anomaly: false },
+  { id: 26, ts: '12:08:14', v0: 823.3, dH: -0.14, dL: 0.11, barrelTemp: 38.2, pitch: -0.02, anomaly: false },
+  { id: 27, ts: '12:15:50', v0: 820.6, dH: 0.09, dL: -0.15, barrelTemp: 37.8, pitch: 0.04, anomaly: false },
+  { id: 28, ts: '12:23:26', v0: 822.4, dH: -0.20, dL: 0.07, barrelTemp: 37.4, pitch: 0.01, anomaly: false },
+  { id: 29, ts: '12:31:01', v0: 821.2, dH: 0.15, dL: -0.09, barrelTemp: 37.0, pitch: 0.05, anomaly: false },
+  { id: 30, ts: '14:05:44', v0: 821.5, dH: -0.07, dL: 0.04, barrelTemp: 35.6, pitch: 0.02, anomaly: false },
 ]
 
 // D-07：对接任务列表（3条）
 export const dockTasks = [
-  { id:'T01', name:'精度试验数据回传接入', srcType:'弹道测量+遥测文件', count:'30发', status:'成功', time:'2024-10-18 14:30' },
-  { id:'T02', name:'气象数据同步接入',     srcType:'气象站接口',         count:'30组', status:'成功', time:'2024-10-18 08:00' },
-  { id:'T03', name:'标定台检测数据接入',   srcType:'标定台导出文件',     count:'12项', status:'成功', time:'2024-10-17 16:20' },
+  { id: 'T01', name: '精度试验数据回传接入', srcType: '弹道测量+遥测文件', count: '30发', status: '成功', time: '2024-10-18 14:30' },
+  { id: 'T02', name: '气象数据同步接入', srcType: '气象站接口', count: '30组', status: '成功', time: '2024-10-18 08:00' },
+  { id: 'T03', name: '标定台检测数据接入', srcType: '标定台导出文件', count: '12项', status: '成功', time: '2024-10-17 16:20' },
 ]
 
 // ── D-11：异常事件与证据链 ──────────────────────────────────────────────
 export const causeChain = [
-  { id:'C1', level:0, label:'弹着点散布异常',       type:'effect',       confidence:0.86, detail:'第19发立靶高低偏差+0.42 mil，触发弹着点散布探针P01告警' },
-  { id:'C2', level:1, label:'立靶高低偏差超限',     type:'feature',      confidence:0.86, detail:'偏差值+0.42 mil，超判据≤0.30 mil，超出40%' },
-  { id:'C3', level:1, label:'初速偏低',             type:'feature',      confidence:0.72, detail:'初速818.3 m/s，低于下限820 m/s' },
-  { id:'C4', level:2, label:'姿态角pitch漂移',      type:'intermediate', confidence:0.86, detail:'飞行段pitch偏差+0.38°，超阈值0.20°' },
-  { id:'C5', level:2, label:'温度传感器跳变',       type:'intermediate', confidence:0.86, detail:'TH-03在T+4.2s出现+2.1℃跳变' },
-  { id:'C6', level:3, label:'定位定向系统温补失效', type:'root',         confidence:0.86, detail:'温补系数与出厂标定值偏差12.4%，超容差5%' },
+  { id: 'C1', level: 0, label: '弹着点散布异常', type: 'effect', confidence: 0.86, detail: '第19发立靶高低偏差+0.42 mil，触发弹着点散布探针P01告警' },
+  { id: 'C2', level: 1, label: '立靶高低偏差超限', type: 'feature', confidence: 0.86, detail: '偏差值+0.42 mil，超判据≤0.30 mil，超出40%' },
+  { id: 'C3', level: 1, label: '初速偏低', type: 'feature', confidence: 0.72, detail: '初速818.3 m/s，低于下限820 m/s' },
+  { id: 'C4', level: 2, label: '姿态角pitch漂移', type: 'intermediate', confidence: 0.86, detail: '飞行段pitch偏差+0.38°，超阈值0.20°' },
+  { id: 'C5', level: 2, label: '温度传感器跳变', type: 'intermediate', confidence: 0.86, detail: 'TH-03在T+4.2s出现+2.1℃跳变' },
+  { id: 'C6', level: 3, label: '定位定向系统温补失效', type: 'root', confidence: 0.86, detail: '温补系数与出厂标定值偏差12.4%，超容差5%' },
 ]
 
 export const evidence = [
-  { id:'E1', text:'第19发飞行段pitch角偏差0.38°，超出阈值0.20°', source:'遥测通道T-07',    relNode:'C4' },
-  { id:'E2', text:'温度传感器TH-03在T+4.2s后出现2.1℃跳变',      source:'弹载记录仪',      relNode:'C5' },
-  { id:'E3', text:'温补系数与出厂标定值偏差12.4%，超出容差5%',   source:'标定台检测报告',  relNode:'C6' },
-  { id:'E4', text:'2019年同型某次试验同类温补失效案例',       source:'历史案例库D-06 · 某型装甲车A精度试验2019',  relNode:'C6' },
+  { id: 'E1', text: '第19发飞行段pitch角偏差0.38°，超出阈值0.20°', source: '遥测通道T-07', relNode: 'C4' },
+  { id: 'E2', text: '温度传感器TH-03在T+4.2s后出现2.1℃跳变', source: '弹载记录仪', relNode: 'C5' },
+  { id: 'E3', text: '温补系数与出厂标定值偏差12.4%，超出容差5%', source: '标定台检测报告', relNode: 'C6' },
+  { id: 'E4', text: '2019年同型某次试验同类温补失效案例', source: '历史案例库D-06 · 某型装甲车A精度试验2019', relNode: 'C6' },
 ]
 
 export const candidates = [
-  { rank:1, name:'定位定向系统温补失效', confidence:0.86, basis:'温度跳变记录+姿态角时序异常+历史案例吻合' },
-  { rank:2, name:'火控解算软件异常',     confidence:0.41, basis:'姿态角偏差但无温度异常支撑' },
-  { rank:3, name:'气象修正误差',         confidence:0.22, basis:'前18发正常，排除批次因素' },
+  { rank: 1, name: '定位定向系统温补失效', confidence: 0.86, basis: '温度跳变记录+姿态角时序异常+历史案例吻合' },
+  { rank: 2, name: '火控解算软件异常', confidence: 0.41, basis: '姿态角偏差但无温度异常支撑' },
+  { rank: 3, name: '气象修正误差', confidence: 0.22, basis: '前18发正常，排除批次因素' },
 ]
 
 // ════════════════════════════════════════════════════════════════════
@@ -1592,27 +1596,27 @@ export const trainTask = {
 }
 
 export const lossChartData = {
-  xData: ['E1','E2','E3','E4','E5','E6','E7','E8'],
+  xData: ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8'],
   yData: [2.84, 2.21, 1.76, 1.42, 1.18, 1.02, 0.91, 0.83],
   valLoss: [2.91, 2.28, 1.88, 1.55, 1.32, 1.16, 1.05, 0.97],
 }
 
 export const evalChartData = {
-  xData: ['E1','E2','E3','E4','E5','E6','E7','E8'],
+  xData: ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8'],
   accuracy: [0.72, 0.76, 0.79, 0.82, 0.84, 0.86, 0.87, 0.88],
-  recall:   [0.68, 0.71, 0.74, 0.77, 0.80, 0.82, 0.83, 0.85],
-  f1:       [0.70, 0.73, 0.76, 0.79, 0.82, 0.84, 0.85, 0.86],
+  recall: [0.68, 0.71, 0.74, 0.77, 0.80, 0.82, 0.83, 0.85],
+  f1: [0.70, 0.73, 0.76, 0.79, 0.82, 0.84, 0.85, 0.86],
 }
 
 export const gpuChartData = {
-  xData: ['GPU0','GPU1','GPU2','GPU3','GPU4','GPU5','GPU6','GPU7'],
+  xData: ['GPU0', 'GPU1', 'GPU2', 'GPU3', 'GPU4', 'GPU5', 'GPU6', 'GPU7'],
   yData: [87, 92, 85, 89, 91, 84, 88, 86],
   temp: [68, 74, 66, 71, 73, 65, 70, 67],
   memUsed: [62, 68, 58, 64, 66, 56, 63, 60],
 }
 
 export const memChartData = {
-  xData: ['E1','E2','E3','E4','E5','E6','E7','E8'],
+  xData: ['E1', 'E2', 'E3', 'E4', 'E5', 'E6', 'E7', 'E8'],
   yData: [38, 41, 43, 42, 44, 43, 45, 44],
   reserved: [48, 48, 48, 48, 48, 48, 48, 48],
 }
@@ -1664,14 +1668,14 @@ export const resourceKpis = [
 
 /** 近30日资产增长：分项堆叠末日=文献326+文书38+创新点58+图谱247+数据集14+探针12=695 */
 export const resGrowthData = {
-  xData: ['10-1','10-3','10-5','10-7','10-9','10-11','10-13','10-15','10-17','10-19','10-21','10-23','10-25','10-27','10-29'],
+  xData: ['10-1', '10-3', '10-5', '10-7', '10-9', '10-11', '10-13', '10-15', '10-17', '10-19', '10-21', '10-23', '10-25', '10-27', '10-29'],
   series: {
-    文献:     [286, 292, 298, 304, 308, 312, 316, 318, 320, 321, 322, 323, 324, 325, 326],
-    文书:     [ 28,  29,  30,  31,  32,  33,  34,  34,  35,  36,  36,  37,  37,  38,  38],
-    创新点:   [ 42,  44,  46,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  57,  58],
+    文献: [286, 292, 298, 304, 308, 312, 316, 318, 320, 321, 322, 323, 324, 325, 326],
+    文书: [28, 29, 30, 31, 32, 33, 34, 34, 35, 36, 36, 37, 37, 38, 38],
+    创新点: [42, 44, 46, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 57, 58],
     图谱节点: [148, 162, 172, 184, 192, 202, 210, 218, 224, 230, 234, 238, 242, 245, 247],
-    数据集:   [ 10,  11,  11,  12,  12,  12,  13,  13,  13,  13,  14,  14,  14,  14,  14],
-    探针模型: [  6,   7,   8,   8,   9,   9,  10,  10,  11,  11,  11,  12,  12,  12,  12],
+    数据集: [10, 11, 11, 12, 12, 12, 13, 13, 13, 13, 14, 14, 14, 14, 14],
+    探针模型: [6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 11, 12, 12, 12, 12],
   },
 }
 // 兼容旧单线口径：各日分项合计

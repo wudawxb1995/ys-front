@@ -445,7 +445,7 @@ function goReportList() {
 }
 function newReport() {
   editingReportId.value = ''
-  form.title = '某型装备性能鉴定试验报告'
+  form.title = ''
   form.projectId = ''
   form.treeId = ''
   form.templateId = 'qualification'

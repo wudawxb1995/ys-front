@@ -4,11 +4,11 @@ export function rebuildSystems() {
   return [
     {
       id: 'quant',
-      name: '实验判定异构数据智能量化',
-      full: '实验判定异构数据智能量化系统',
+      name: '试验鉴定异构数据智能量化',
+      full: '试验鉴定异构数据智能量化系统',
       menus: [
         leaf('home', '首页', home(
-          '欢迎使用 实验判定异构数据智能量化系统',
+          '欢迎使用 试验鉴定异构数据智能量化系统',
           '面向论证立项、方案设计、工程研制、试验鉴定、定型验收及成果沉淀等业务阶段，统一管理资料并完成解析、清洗、语义量化与成果导出。',
           [
             { name: '资源录入', to: 'res-add', desc: '统一汇聚多模态资料' },
@@ -262,8 +262,8 @@ export function rebuildSystems() {
     },
     {
       id: 'situation',
-      name: '能力牵引的实验判定态势综合展示',
-      full: '能力牵引的实验判定态势综合展示系统',
+      name: '能力牵引的试验鉴定态势综合展示',
+      full: '能力牵引的试验鉴定态势综合展示系统',
       menus: [
         leaf('home', '首页', { type: 'stats', statsKey: 'situation', desc: '覆盖试验任务、资源、环境的综合信息面板，融合试验情况与测试数据，快速定位问题与结果。' }),
         g('trace-g', '技术状态追溯', 'timeline', reuse(
@@ -283,7 +283,7 @@ export function rebuildSystems() {
           leaf('cap-matrix', '能力矩阵展示', { type: 'radar', desc: '以能力矩阵展示各维度评估结果。' }),
           leaf('cap-bar', '能力柱状图展示', { type: 'radar', desc: '以柱状图对比各能力维度得分。' }),
         ]),
-        g('panel-g', '实验判定态势综合查看', 'chart', [
+        g('panel-g', '试验鉴定态势综合查看', 'chart', [
           leaf('task-panel', '试验任务态势展示', { type: 'stats', statsKey: 'taskPanel', desc: '展示试验任务进度、完成率与资源占用等态势信息。' }),
           leaf('res-panel', '试验资源态势展示', { type: 'stats', statsKey: 'resPanel', desc: '展示试验资源分布、使用率与可用状态等态势信息。' }),
           leaf('env-panel', '试验环境态势展示', { type: 'stats', statsKey: 'envPanel', desc: '展示试验环境参数、气候条件与保障状态等态势信息。' }),

@@ -26,11 +26,11 @@ export const flowComponents = [
 export const agentSystems = [
   {
     id: 'flow',
-    name: '实验判定领域智能体工作流编排平台',
-    full: '实验判定领域智能体工作流编排平台',
+    name: '试验鉴定领域智能体工作流编排平台',
+    full: '试验鉴定领域智能体工作流编排平台',
     menus: [
       g('build', '智能体可视化构建与流程编排模块', 'flow', [
-        leaf('build-create', '实验判定智能体创建功能', work('studio', 'create')),
+        leaf('build-create', '试验鉴定智能体创建功能', work('studio', 'create')),
         leaf('build-design', '智能体可视化设计功能', work('studio', 'design')),
         leaf('build-drag', '预置功能拖拽组合功能', work('studio', 'drag')),
         leaf('build-link', '智能体工作流程连接功能', work('studio', 'link')),
@@ -99,8 +99,8 @@ export const agentSystems = [
   },
   {
     id: 'tool',
-    name: '实验判定领域智能体工具调用平台',
-    full: '实验判定领域智能体工具调用平台',
+    name: '试验鉴定领域智能体工具调用平台',
+    full: '试验鉴定领域智能体工具调用平台',
     menus: [
       g('call', '智能体封装与调用管理模块', 'spark', fns('call', 'invoke', [
         ['fetch', '已编排工作流获取功能'],

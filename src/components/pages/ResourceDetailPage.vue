@@ -253,7 +253,7 @@ function iconText(fmt = '') {
 
 // 实体识别数据（与资源绑定的 mock 统计）
 const entitySummary = [
-  { type: '农业机械型号', count: 8,  cls: 'ent-model' },
+  { type: 'ZB型号', count: 8,  cls: 'ent-model' },
   { type: '性能指标',    count: 26, cls: 'ent-ind' },
   { type: '指标数值',    count: 34, cls: 'ent-val' },
   { type: '试验项目',    count: 12, cls: 'ent-item' },

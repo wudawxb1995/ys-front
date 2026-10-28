@@ -114,11 +114,11 @@ const open = reactive({})
 const showNotice = ref(false)
 const sidebarName = (name = '') => name.replace(/(?:模块|功能)$/, '')
 const trainSystemNames = {
-  pretrain: '实验判定专域预训练',
-  conf: '实验判定领域大模型置信度评估',
-  lora: '细粒度实验判定知识微调',
-  mgr: '实验判定大模型管理',
-  quant: '实验判定领域模型量化推理',
+  pretrain: '试验鉴定专域预训练',
+  conf: '试验鉴定领域大模型置信度评估',
+  lora: '细粒度试验鉴定知识微调',
+  mgr: '试验鉴定大模型管理',
+  quant: '试验鉴定领域模型量化推理',
   prompt: '智能提示模版生成',
   eval: '模型评估与调试',
 }

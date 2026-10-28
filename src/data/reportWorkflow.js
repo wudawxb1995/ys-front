@@ -17,7 +17,7 @@ export const reviewRulePacks = ['术语规范', '数据勾稽', '判据引用']
 export const reviewTypes = ['全部', '语义规则', '核文勘误', '跨文档联合', '本体逻辑', '标准符合性']
 export const cloneReportData = (value) => JSON.parse(JSON.stringify(value))
 export const workflowTime = () => new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Shanghai', hour12: false })
-const storageKey = 'ys-report-workflow-v3'
+const storageKey = 'ys-report-workflow-v5'
 let saved
 try { saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null') } catch { saved = null }
 const initial = saved && Array.isArray(saved.reports) && Array.isArray(saved.reviews) ? saved : { reports: [], reviews: [], seeded: false }
@@ -269,22 +269,35 @@ export function seedWorkflow(store) {
   if (reportWorkflow.seeded) return
   const tree = (store.m03List || []).find((row) => row.status === '已发布') || { id: 'v1', version: '指标树 V1.0', srcDoc: 'D-01《某型研制总要求》', count: 28, status: '已发布' }
   const materials = collectReportMaterials(tree, store)
-  const make = (title, stage, status, time, withSections, index) => {
-    const report = createWorkflowReport(title, 'qualification', materials)
+  const make = (title, templateId, stage, status, time, withSections, index) => {
+    const report = createWorkflowReport(title, templateId, materials)
+    const template = reportTemplates.find((item) => item.id === templateId) || reportTemplates[0]
     report.id = `REPORT-SEED-${index}`
     report.stage = stage
     report.status = status
     report.createdAt = time
     report.updatedAt = time
-    report.outlineNotes = outlineBlurbs(reportTemplates[0], report.materials)
+    report.outlineNotes = outlineBlurbs(template, report.materials)
     if (withSections) report.sections = generateReportSections(report)
     return report
   }
   reportWorkflow.reports.push(
-    make('某型装备性能鉴定试验报告（28项指标揭示）', 'draft', '进行中', '2026-10-26 20:46:03', true, 1),
-    make('某型装备性能鉴定试验报告', 'materials', '进行中', '2026-10-26 16:16:09', false, 2),
-    make('某型装备性能鉴定试验报告', 'draft', '已完成', '2026-10-26 12:44:47', true, 3),
-    make('某型装备性能鉴定试验报告', 'draft', '进行中', '2026-10-26 12:43:02', true, 4),
+    make('某型主战坦克性能鉴定试验报告', 'qualification', 'draft', '进行中', '2026-10-28 15:42:18', true, 1),
+    make('某型轮式装甲车机动性能试验报告', 'analysis', 'draft', '已完成', '2026-10-28 11:06:33', true, 2),
+    make('某型自行火炮射击精度试验报告', 'precision', 'draft', '已完成', '2026-10-27 17:28:41', true, 3),
+    make('某型防空导弹武器系统环境适应性试验报告', 'env', 'outline', '进行中', '2026-10-27 09:15:22', false, 4),
+    make('某型车载雷达电磁兼容性试验报告', 'analysis', 'materials', '进行中', '2026-10-26 16:48:07', false, 5),
+    make('某型无人机高原环境试飞报告', 'env', 'draft', '进行中', '2026-10-26 10:22:54', true, 6),
+    make('某型装甲车辆可靠性增长试验报告', 'analysis', 'outline', '进行中', '2026-10-25 14:37:19', false, 7),
+    make('某型主战坦克设计定型试验报告', 'qualification', 'draft', '已完成', '2026-10-24 18:05:46', true, 8),
+    make('某型轮式装甲车产品验收试验报告', 'compliance', 'materials', '进行中', '2026-10-24 09:41:12', false, 9),
+    make('某型自行火炮寒区射击试验数据汇总', 'databook', 'draft', '已完成', '2026-10-23 15:19:28', true, 10),
+    make('某型主战坦克第12发立靶超差事件复盘报告', 'event', 'draft', '进行中', '2026-10-22 11:08:55', true, 11),
+    make('某型防空导弹火力单元接口联调报告', 'analysis', 'outline', '进行中', '2026-10-21 16:33:40', false, 12),
+    make('某型车载通信设备定型遗留问题归零报告', 'zeroing', 'draft', '已完成', '2026-10-20 10:26:14', true, 13),
+    make('某型装甲车辆小批量试生产工艺验证报告', 'compliance', 'materials', '进行中', '2026-10-18 14:52:03', false, 14),
+    make('某型无人机飞控系统联调试验报告', 'analysis', 'draft', '进行中', '2026-10-17 09:17:36', true, 15),
+    make('某型主战坦克鉴定结论简报', 'brief', 'draft', '已完成', '2026-10-15 16:44:21', true, 16),
   )
   const makeReview = (report, index, time) => {
     const review = inspectReport(report, [...reviewRulePacks])
@@ -294,7 +307,7 @@ export function seedWorkflow(store) {
   }
   const first = reportWorkflow.reports.find((row) => row.id === 'REPORT-SEED-1')
   const third = reportWorkflow.reports.find((row) => row.id === 'REPORT-SEED-3')
-  if (third) reportWorkflow.reviews.push(makeReview(third, 1, '2026-10-26 12:43:18'))
-  if (first) reportWorkflow.reviews.push(makeReview(first, 2, '2026-10-26 12:45:03'))
+  if (third) reportWorkflow.reviews.push(makeReview(third, 1, '2026-10-27 18:02:16'))
+  if (first) reportWorkflow.reviews.push(makeReview(first, 2, '2026-10-28 16:05:40'))
   reportWorkflow.seeded = true
 }

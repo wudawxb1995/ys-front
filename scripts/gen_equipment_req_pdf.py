@@ -309,7 +309,7 @@ def cover_page():
         story.append(p(line, "CoverMeta"))
         story.append(Spacer(1, 0.15 * cm))
     story.append(Spacer(1, 2.5 * cm))
-    story.append(p("农业机械试验鉴定数智化示范工程", "CoverSub"))
+    story.append(p("ZB试验鉴定数智化示范工程", "CoverSub"))
     story.append(p("领域文档自动编写与审校平台 · 演示样例", "CoverMeta"))
     story.append(PageBreak())
     return story
@@ -426,9 +426,9 @@ def chapter_2():
         "GJB 2116　武器装备研制项目工作分解结构",
         "GJB/Z 768A　故障树分析指南",
         "GJB/Z 1391　故障模式、影响及危害性分析指南",
-        "QB/NY-SY-01　农业机械试验鉴定通用技术条件（示范）",
-        "QB/NY-SY-02　农业机械田间试验方法（示范）",
-        "QB/NY-SY-03　农业机械可靠性试验与评价方法（示范）",
+        "QB/NY-SY-01　ZB试验鉴定通用技术条件（示范）",
+        "QB/NY-SY-02　ZB田间试验方法（示范）",
+        "QB/NY-SY-03　ZB可靠性试验与评价方法（示范）",
     ]
     for r in refs:
         story.append(p(r, "BodyNoIndent"))

@@ -197,7 +197,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
   const graphs = {
     resume: {
       nodes: [
-        { id: 'm', label: '东方红-LF2204', type: '农业机械', x: 380, y: 250, color: '#0d4e83', detail: '轮式拖拉机，技术状态 B2，定型试验已完成。' },
+        { id: 'm', label: '东方红-LF2204', type: 'ZB', x: 380, y: 250, color: '#0d4e83', detail: '轮式拖拉机，技术状态 B2，定型试验已完成。' },
         { id: 'i', label: '标定功率 162 kW', type: '性能指标', x: 180, y: 120, color: '#d0ab68', detail: '来源定型报告 P.17，已人工确认。' },
         { id: 't', label: '牵引性能试验', type: '试验', x: 580, y: 130, color: '#3f88bd', detail: '混凝土路面，最大牵引力 38.6 kN。' },
         { id: 'e', label: '滑转率归零', type: '事件', x: 600, y: 360, color: '#d48806', detail: '配重调整后复测合格。' },
@@ -207,8 +207,8 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
     },
     schema: {
       nodes: [
-        { id: 'a', label: '农业机械', type: '节点类型', x: 380, y: 80, color: '#0d4e83', detail: '属性：型号、类别、企业。' },
-        { id: 'b', label: '性能指标', type: '节点类型', x: 160, y: 240, color: '#d0ab68', detail: '关系：农业机械—具备指标。' },
+        { id: 'a', label: 'ZB', type: '节点类型', x: 380, y: 80, color: '#0d4e83', detail: '属性：型号、类别、企业。' },
+        { id: 'b', label: '性能指标', type: '节点类型', x: 160, y: 240, color: '#d0ab68', detail: '关系：ZB—具备指标。' },
         { id: 'c', label: '试验', type: '节点类型', x: 380, y: 400, color: '#3f88bd', detail: '关系：开展试验、依据标准。' },
         { id: 'd', label: '事件', type: '节点类型', x: 600, y: 240, color: '#d48806', detail: '内置因果、条件、组成。' },
       ],

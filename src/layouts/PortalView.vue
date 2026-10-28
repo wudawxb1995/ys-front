@@ -26,7 +26,7 @@
       <div class="hero">
         <div class="pill">数智驱动 · 智慧鉴定</div>
         <h1>汇聚试验数据，赋能智能鉴定</h1>
-        <p>面向农业机械试验鉴定领域的一站式数智化服务，五大应用平台协同，让数据价值充分释放</p>
+        <p>面向ZB试验鉴定领域的一站式数智化服务，五大应用平台协同，让数据价值充分释放</p>
       </div>
       <section class="cards">
         <article v-for="app in apps" :key="app.id" class="pcard" @click="enter(app)">
