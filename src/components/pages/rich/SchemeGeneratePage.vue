@@ -401,19 +401,19 @@
             <aside v-if="m08CurrentRow?.fullDoc" class="m08-toc">
               <div class="m08-toc-title">文档目录</div>
               <button
-                v-for="item in schemeDocToc"
-                :key="item.id"
+                v-for="ch in m08Chapters"
+                :key="ch.id || ch.no"
                 type="button"
-                :class="{ on: m08TocId === item.id }"
-                @click="m08JumpDoc(item.id)"
-              >{{ item.title }}</button>
+                :class="{ on: m08TocId === (ch.id || ch.no) }"
+                @click="m08JumpDoc(ch.id || ch.no)"
+              >{{ ch.no }} {{ ch.title }}</button>
             </aside>
             <article class="m08-doc">
               <header>
                 <b>{{ m08CurrentRow?.name || '试验方案' }}.docx</b>
                 <span>{{ m08Snap.previewBadge }} · {{ m08Chapters.length }}章</span>
               </header>
-              <section v-for="ch in m08Chapters" :key="ch.id || ch.no" class="m08-ch">
+              <section v-for="ch in m08Chapters" :id="`doc-${ch.id || ch.no}`" :key="ch.id || ch.no" class="m08-ch">
                 <button type="button" class="m08-ch-head" @click="m08ToggleChapter(ch.id || ch.no)">
                   <b>{{ ch.no }} {{ ch.title }}</b>
                   <span>{{ m08ChapterOpen[ch.id || ch.no] ? '收起' : '展开' }}</span>

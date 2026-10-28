@@ -15,9 +15,10 @@ import {
   setMatchContext,
   useDemoStore,
 } from '@/composables/demo-store'
-import { m03TreeData } from '@/data/m03-tree'
+import { m03DomainAlias, m03TreeData } from '@/data/m03-tree'
 import { m02Domains, m02IndRows, getM02RowsForDoc, getM02CountForDoc } from '@/data/m02-indicators'
-import { schemeDocToc, schemeDocChapters, schemeDocRounds, schemeDocVersions } from '@/data/schemeFullDoc'
+import { schemeDocRounds, schemeDocVersions } from '@/data/schemeFullDoc'
+import { buildFullSchemeDoc } from '@/data/schemeOutline'
 import { schemeExperts, schemeSkills } from '@/data/schemeAgents'
 import { recommendForIndicator } from '@/data/resourceRecommend'
 
@@ -690,7 +691,11 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
       : null
     const root = tree[0]
     if (domainSet && root?.children) {
-      root.children = root.children.filter((d) => domainSet.has(d.name))
+      const names = new Set()
+      domainSet.forEach((key) => {
+        (m03DomainAlias[key] || [key]).forEach((name) => names.add(name))
+      })
+      root.children = root.children.filter((d) => names.has(d.name))
     }
 
     // 用 M02 抽取结果回填叶子指标值 / 页码，保证与「指标数据提取」同源
@@ -772,7 +777,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
     }
     const version = (row?.version || 'V1.0').replace(/^指标树\s*/, '')
     const leafCount = m03FlatNodes(m03Tree.value).filter((n) => n.level === 3).length
-    const count = leafCount || row?.count || 28
+    const count = leafCount || row?.count || 44
     row.count = count
     row.status = '已发布'
     row.publishedAt = nowText()
@@ -802,7 +807,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
         count: getM02CountForDoc(r.name),
       }))
     const extras = [
-      { value: 'D-01《某型研制总要求》', label: 'D-01《某型研制总要求》', count: 28 },
+      { value: '《99A式主战坦克研制总案-模拟数据》', label: '《99A式主战坦克研制总案-模拟数据》', count: 44 },
     ]
     const seen = new Set()
     return [...extras, ...fromRes].filter((o) => {
@@ -821,7 +826,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
       return rows.filter((r) => set.has(r.domain)).length
     }
     // D-01 展示名无扩展名时按全量 × 域占比估算
-    const total = getM02CountForDoc(key) || (isD01Label(key) ? 28 : 0)
+    const total = getM02CountForDoc(key) || (isD01Label(key) ? 44 : 0)
     if (!total) return 0
     if (m03CreateForm.domains.length >= m02Domains.length) return total
     return Math.max(1, Math.round((total * m03CreateForm.domains.length) / m02Domains.length))
@@ -1079,36 +1084,36 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
   const m08FactorsFull = [
     { name: '温度', levels: '−41℃贮存 / −41℃工作 / 常温 / +55℃', cat: '环境' },
     { name: '路面', levels: '硬路面 / 砂石 / 泥泞', cat: '环境' },
-    { name: '最大公路速度', levels: '≥ 65 km/h', cat: '机动' },
-    { name: '最大越野速度', levels: '≥ 35 km/h', cat: '机动' },
-    { name: '最大行程', levels: '≥ 500 km', cat: '机动' },
-    { name: '爬坡度', levels: '≥ 30°', cat: '机动' },
-    { name: '涉水深度', levels: '≥ 1.2 m', cat: '机动' },
-    { name: '主炮口径', levels: '125 mm', cat: '火力' },
-    { name: '穿甲弹初速', levels: '≥ 1700 m/s', cat: '火力' },
-    { name: '射速', levels: '6–8 发/min', cat: '火力' },
-    { name: '最大射程', levels: '≥ 4000 m', cat: '火力' },
-    { name: '首发命中概率', levels: '≥ 0.85', cat: '火力' },
-    { name: 'MTBF', levels: '≥ 320 h', cat: '可靠性' },
-    { name: 'MTTR', levels: '≤ 2 h', cat: '可靠性' },
-    { name: '使用可用度', levels: '≥ 0.92', cat: '可靠性' },
-    { name: '防护等级', levels: 'RHA 600 mm / 核生化', cat: '防护' },
-    { name: '防尘防水', levels: 'IP67 / IP6X', cat: '环境' },
-    { name: '传导发射', levels: '≤ RE102 B类', cat: '电磁' },
-    { name: '辐射敏感度', levels: '≥ RS103 C类', cat: '电磁' },
-    { name: '态势感知刷新率', levels: '≥ 2 Hz', cat: '信息' },
-    { name: '通信距离', levels: '≥ 30 km', cat: '信息' },
-    { name: '目标识别距离', levels: '≥ 3000 m', cat: '信息' },
+    { name: '最大公路速度', levels: '≥70 km/h', cat: '机动' },
+    { name: '越野平均速度', levels: '≥40 km/h', cat: '机动' },
+    { name: '最大行驶里程', levels: '≥450 km', cat: '机动' },
+    { name: '最大爬坡度', levels: '≥60 %', cat: '机动' },
+    { name: '无准备涉水深度', levels: '≥1.2 m', cat: '机动' },
+    { name: '火控系统反应时间', levels: '≤6 s', cat: '火力' },
+    { name: '首发命中概率', levels: '≥85 %', cat: '火力' },
+    { name: '立靶高低中间偏差', levels: '≤0.30 m', cat: '火力' },
+    { name: '立靶方向中间偏差', levels: '≤0.30 m', cat: '火力' },
+    { name: '动对动射击验证距离', levels: '≥2000 m', cat: '火力' },
+    { name: '平均故障间隔里程', levels: '≥500 km', cat: '可靠性' },
+    { name: '平均修复时间', levels: '≤2.5 h', cat: '可靠性' },
+    { name: '任务可靠度', levels: '≥0.90', cat: '可靠性' },
+    { name: '灭火抑爆系统响应时间', levels: '≤150 ms', cat: '防护' },
+    { name: '湿热试验持续时间', levels: '≥96 h', cat: '环境' },
+    { name: '电磁兼容仿真试验等级', levels: 'E2 级', cat: '电磁' },
+    { name: '工作温度范围', levels: '-40～+55 ℃', cat: '环境' },
+    { name: '态势信息更新周期', levels: '≤2 s', cat: '信息' },
+    { name: '车际数据链节点接入数量', levels: '≥16 个', cat: '信息' },
+    { name: '开阔环境定位误差', levels: '≤10 m', cat: '信息' },
   ]
 
   const m08LinkIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="#1668a8" stroke-width="2" style="width:13px;height:13px;display:inline;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
 
   const m08ChaptersFull = [
-    { no: '第一章', title: '试验目的', content: '本试验旨在对某型进行全面性能鉴定，验证各项技术指标是否满足研制总要求（D-01）规定的性能指标，为定型提供依据。<br><br>试验依据：《某型研制总要求》（D-01）、军标 GJB 4239-2001。' },
+    { no: '第一章', title: '试验目的', content: '本试验旨在对某型进行全面性能鉴定，验证 44 项指标是否满足《99A式主战坦克研制总案-模拟数据》的要求，为定型提供依据。<br><br>试验依据：《99A式主战坦克研制总案-模拟数据》、指标树 V1.0。' },
     { no: '第二章', title: '试验条件', content: '2.1 环境条件<br>试验在标准试验场地进行，温度范围 −41℃ 至 +55℃，分贮存工况与工作工况两类。路面条件覆盖硬路面、砂石路面、泥泞路面三类。<br><br>2.2 试验<br>受试编号：SB-2026-001，配置标准弹药基数，燃油满载。' },
-    { no: '第三章', title: '试验项目与方法', content: `3.1 机动性能试验<br>3.1.1 最大公路速度：在硬路面直线段测量，取三次均值，判据 <b style="color:#0d4e83">≥ 65 km/h ${m08LinkIcon}</b>（引自指标树 D-01·4.1.1）<br><br>3.1.2 最大越野速度：砂石路面测量，判据 <b style="color:#0d4e83">≥ 35 km/h ${m08LinkIcon}</b>（引自指标树 D-01·4.1.2）<br><br>3.2 电磁兼容考核（第1轮对话新增）<br>按 GJB 1389B 执行传导发射与辐射敏感度测试，判据 ≤ RE102 B类 / ≥ RS103 C类。` },
+    { no: '第三章', title: '试验项目与方法', content: `3.1 机动性能试验<br>3.1.1 最大公路速度：在硬路面直线段测量，取三次均值，判据 <b style="color:#0d4e83">≥70 km/h ${m08LinkIcon}</b>（引自指标树 V1.0 · 行驶与通过性）<br><br>3.1.2 越野平均速度：规定越野路线测量，判据 <b style="color:#0d4e83">≥40 km/h ${m08LinkIcon}</b>（引自指标树 V1.0 · 行驶与通过性）<br><br>3.2 电磁兼容考核<br>电磁兼容仿真试验等级判据 <b style="color:#0d4e83">E2 级 ${m08LinkIcon}</b>。` },
     { no: '第四章', title: '测量要求', content: '4.1 速度测量：使用标定 GPS 测速仪，精度 ±0.2 km/h。<br>4.2 火力测量：弹道测量仪精度 ±0.5 m/s，计时精度 ±0.01 s。<br>4.3 可靠性记录：故障严格按 GJB 451A 分类，A 类故障单独统计。' },
-    { no: '第五章', title: '数据处理与判据', content: `5.1 判据引用自指标树 V1.0<br><br><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr style="background:#eaf3fa"><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">指标名称</th><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">判据</th><th style="padding:6px 10px;border:1px solid #dce8f2">来源</th></tr></thead><tbody><tr><td style="padding:6px 10px;border:1px solid #dce8f2">最大公路速度</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 65 km/h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">首发命中概率</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 0.85</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">MTBF</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥ 320 h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr></tbody></table>` },
+    { no: '第五章', title: '数据处理与判据', content: `5.1 判据引用自指标树 V1.0<br><br><table style="border-collapse:collapse;width:100%;font-size:13px"><thead><tr style="background:#eaf3fa"><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">指标名称</th><th style="padding:6px 10px;text-align:left;border:1px solid #dce8f2">判据</th><th style="padding:6px 10px;border:1px solid #dce8f2">来源</th></tr></thead><tbody><tr><td style="padding:6px 10px;border:1px solid #dce8f2">最大公路速度</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥70 km/h</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">首发命中概率</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≥85 %</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr><tr><td style="padding:6px 10px;border:1px solid #dce8f2">立靶高低中间偏差</td><td style="padding:6px 10px;border:1px solid #dce8f2;font-weight:600;color:#0d4e83">≤0.30 m</td><td style="padding:6px 10px;border:1px solid #dce8f2;text-align:center">${m08LinkIcon}</td></tr></tbody></table>` },
   ]
 
   /** 按大纲模板 + 历史案例生成有差异的草稿大纲（生成预览用） */
@@ -1133,7 +1138,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
         {
           no: '第三章',
           title: '试验项目与方法',
-          content: `3.1 可靠性增长与鉴定<br>3.1.1 MTBF：判据 <b style="color:#0d4e83">≥ 320 h ${ik}</b>（引自 ${tree}）<br>3.1.2 MTTR：判据 <b style="color:#0d4e83">≤ 2 h ${ik}</b><br>3.1.3 使用可用度：判据 <b style="color:#0d4e83">≥ 0.92 ${ik}</b><br><br>3.2 故障分类<br>按 GJB 451A 区分 A/B/C 类故障；参考案例「${cs}」中 A 类故障处置流程纳入本大纲。`,
+          content: `3.1 可靠性增长与鉴定<br>3.1.1 平均故障间隔里程：判据 <b style="color:#0d4e83">≥500 km ${ik}</b>（引自 ${tree}）<br>3.1.2 平均修复时间：判据 <b style="color:#0d4e83">≤2.5 h ${ik}</b><br>3.1.3 任务可靠度：判据 <b style="color:#0d4e83">≥0.90 ${ik}</b><br><br>3.2 故障分类<br>按 GJB 451A 区分 A/B/C 类故障；参考案例「${cs}」中 A 类故障处置流程纳入本大纲。`,
         },
       ]
     }
@@ -1174,7 +1179,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
         {
           no: '第三章',
           title: '试验项目与方法',
-          content: `3.1 寒区机动<br>3.1.1 最大公路速度：判据 <b style="color:#0d4e83">≥ 65 km/h ${ik}</b><br>3.1.2 涉水深度：判据 <b style="color:#0d4e83">≥ 1.2 m ${ik}</b><br><br>3.2 电磁兼容（案例强化）<br>传导发射 ≤ RE102 B类；辐射敏感度 ≥ RS103 C类；条目结构参考「${cs}」。`,
+          content: `3.1 寒区机动<br>3.1.1 最大公路速度：判据 <b style="color:#0d4e83">≥70 km/h ${ik}</b><br>3.1.2 无准备涉水深度：判据 <b style="color:#0d4e83">≥1.2 m ${ik}</b><br><br>3.2 电磁兼容（案例强化）<br>电磁兼容仿真试验等级 E2 级；条目结构参考「${cs}」。`,
         },
       ]
     }
@@ -1194,7 +1199,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
         {
           no: '第三章',
           title: '试验项目与方法',
-          content: `3.1 高原机动<br>3.1.1 最大越野速度：判据 <b style="color:#0d4e83">≥ 35 km/h ${ik}</b>（高原修正）<br>3.1.2 爬坡度：判据 <b style="color:#0d4e83">≥ 30° ${ik}</b><br><br>3.2 信息与测控<br>遥测链路与态势刷新率按「${cs}」补充高原丢包容限说明。`,
+          content: `3.1 高原机动<br>3.1.1 越野平均速度：判据 <b style="color:#0d4e83">≥40 km/h ${ik}</b>（高原修正）<br>3.1.2 最大爬坡度：判据 <b style="color:#0d4e83">≥60 % ${ik}</b><br><br>3.2 信息与测控<br>态势信息更新周期按「${cs}」补充高原丢包容限说明。`,
         },
       ]
     }
@@ -1214,7 +1219,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
         {
           no: '第三章',
           title: '试验项目与方法',
-          content: `3.1 湿热后机动复测<br>恢复常温后复查最大公路速度、最大行程等关键机动指标 ${ik}<br><br>3.2 防护与密封<br>防尘防水等级复查（IP67 / IP6X）；霉菌与凝露检查条目引自案例「${cs}」。`,
+          content: `3.1 湿热后机动复测<br>恢复常温后复查最大公路速度、最大行驶里程等关键机动指标 ${ik}<br><br>3.2 防护与三防<br>三防系统超压建立时间复查（≤60 s）；霉菌与凝露检查条目引自案例「${cs}」。`,
         },
       ]
     }
@@ -1234,7 +1239,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
       {
         no: '第三章',
         title: '试验项目与方法',
-        content: `3.1 机动性能试验<br>3.1.1 最大公路速度：判据 <b style="color:#0d4e83">≥ 65 km/h ${ik}</b>（引自 ${tree}）<br>3.1.2 最大越野速度：判据 <b style="color:#0d4e83">≥ 35 km/h ${ik}</b><br><br>3.2 火力与命中<br>首发命中概率判据 <b style="color:#0d4e83">≥ 0.85 ${ik}</b>；章节编排参考「${cs}」。`,
+        content: `3.1 机动性能试验<br>3.1.1 最大公路速度：判据 <b style="color:#0d4e83">≥70 km/h ${ik}</b>（引自 ${tree}）<br>3.1.2 越野平均速度：判据 <b style="color:#0d4e83">≥40 km/h ${ik}</b><br><br>3.2 火力与命中<br>首发命中概率判据 <b style="color:#0d4e83">≥85 % ${ik}</b>；立靶高低中间偏差判据 <b style="color:#0d4e83">≤0.30 m ${ik}</b>；章节编排参考「${cs}」。`,
       },
     ]
   }
@@ -1255,7 +1260,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
     {
       time: '10-07 16:08',
       user: '判据与指标树核对',
-      bot: '已对第五章判据表全面核对并自动回填：最大公路速度 ≥ 65 km/h、首发命中概率 ≥ 0.85、MTBF ≥ 320 h 等 22 项指标值均引用自指标树 V1.0，每项右侧标注来源链接。',
+      bot: '已对判据表全面核对并自动回填：最大公路速度 ≥ 70 km/h、首发命中概率 ≥ 85 %、立靶高低中间偏差 ≤ 0.30 m 等 44 项指标值均引用自指标树 V1.0，每项右侧标注来源链接。',
       diff: '判据表新增来源引用标注：22 项指标值与指标树 V1.0 完成映射，3 项低置信度指标以橙色标注',
     },
   ]
@@ -1275,7 +1280,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
         doneSteps: 4,
         factors: m08FactorsFull,
         factorOk: true,
-        chapters: schemeDocChapters.map((item) => ({ ...item })),
+        chapters: buildFullSchemeDoc(row),
         activeChapter: 2,
         rounds: m08CloneRounds(schemeDocRounds),
         versions: schemeDocVersions.map((item) => ({ ...item })),
@@ -1458,7 +1463,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
         status: r.status,
       }))
     const fallback = [
-      { value: '指标树 V1.0', label: '指标树 V1.0', count: 28, status: '已发布' },
+      { value: '指标树 V1.0', label: '指标树 V1.0', count: 44, status: '已发布' },
       { value: '指标树 V0.9', label: '指标树 V0.9', count: 24, status: '草稿' },
     ]
     const seen = new Set()
@@ -1487,7 +1492,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
     .map((item) => ({
       ...item,
       label: item.count >= 28
-        ? `${item.value}（7 个性能域 / 11 个指标类 / ${item.count} 项指标）`
+        ? `${item.value}（7 个性能域 / 13 个指标类 / ${item.count} 项指标）`
         : `${item.value}（${item.count || 0} 项指标）`,
     })))
 
@@ -1669,7 +1674,7 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
   function m08ApplyFullDoc(row) {
     if (!row) return
     row.fullDoc = true
-    row.chapters = schemeDocChapters.map((item) => ({ ...item }))
+    row.chapters = buildFullSchemeDoc(row)
     row.rounds = []
     row.versions = [{ ver: 'V1.0', label: '初稿', time: nowText().slice(5, 16), final: true }]
     row.ver = 'V1.0'
@@ -1691,6 +1696,8 @@ export function buildRichPartA({ toast, router, route, props, bag }) {
     if (id && !next[id] && chapters[0]) next[m08ChapterKey(chapters[0])] = true
     Object.keys(m08ChapterOpen).forEach((key) => { delete m08ChapterOpen[key] })
     Object.assign(m08ChapterOpen, next)
+    const opened = Object.keys(next).find((key) => next[key])
+    if (opened) m08TocId.value = opened
   }
 
   function m08ToggleChapter(id) {
@@ -2955,7 +2962,7 @@ ${body}
     const domains = Array.isArray(ctx?.domains) ? ctx.domains : []
 
     if (tpl.includes('可靠性')) {
-      tags.push('MTBF ≥ 320 h', '使用可用度 ≥ 0.92', '二级维修保障能力')
+      tags.push('平均故障间隔里程 ≥500 km', '平均修复时间 ≤2.5 h', '任务可靠度 ≥0.90')
     } else if (tpl.includes('环境')) {
       tags.push('−41℃ 寒区贮存/工作', '湿热循环考核', '砂尘密封 IP6X')
     } else {
@@ -3324,7 +3331,6 @@ ${body}
     m08ViewRoundDoc,
     m08JumpDoc,
     m08TocId,
-    schemeDocToc,
     m08SendChat,
     m08AddFactor,
     m08OpenFactorDialog,

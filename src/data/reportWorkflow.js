@@ -37,8 +37,8 @@ export function resultSummary(materials) {
 
 export function collectReportMaterials(tree, store) {
   const dock = store.trialDataDock || {}
-  const shot = { shotNo: 19, firstDh: 0.42, retestDh: 0.18, criterion: 0.3, unit: 'mil', ...(dock.shot19 || {}) }
-  const metrics = cloneReportData(postTrialMetrics).slice(0, Number(tree.count) || 28).map((row) => ({ ...row, source: tree.version }))
+  const shot = { shotNo: 19, firstDh: 0.42, retestDh: 0.18, criterion: 0.3, unit: 'm', ...(dock.shot19 || {}) }
+  const metrics = cloneReportData(postTrialMetrics).slice(0, Number(tree.count) || 44).map((row) => ({ ...row, source: tree.version }))
   const anomaly = metrics.find((row) => row.linkedShot === shot.shotNo)
   if (anomaly) {
     anomaly.value = `首测 ${shot.firstDh} / 复测 ${shot.retestDh} ${shot.unit}`
@@ -51,7 +51,7 @@ export function collectReportMaterials(tree, store) {
     outline: store.matchContext?.schemeName || '某型装备性能鉴定试验大纲 V4',
     eventId: store.confirmedRootCause?.eventId || 'EVT-001',
     cause: store.confirmedRootCause?.name || '定位定向系统温补失效', confidence: store.confirmedRootCause?.confidence || 0.86,
-    analysisTitle: store.reportArchived?.title || `第${shot.shotNo}发立靶高低偏差异常解读报告`,
+    analysisTitle: store.reportArchived?.title || `第${shot.shotNo}发立靶高低中间偏差异常解读报告`,
     analysisVersion: store.reportArchived?.version || 'V1.1',
     linkedAt: workflowTime(),
   })
@@ -89,7 +89,7 @@ export function outlineBlurbs(template, materials) {
   dict['指标实测对照'] = dict['符合性判定']
   dict['异常样本说明'] = dict['异常与处置']
   dict['汇总结论'] = dict['结论']
-  dict['事件概况'] = `记录事件 ${m.eventId}：第 ${m.shot.shotNo} 发立靶高低偏差首测 ${m.shot.firstDh} ${m.shot.unit}，超过 ≤${m.shot.criterion.toFixed(2)} ${m.shot.unit}。`
+  dict['事件概况'] = `记录事件 ${m.eventId}：第 ${m.shot.shotNo} 发立靶高低中间偏差首测 ${m.shot.firstDh} ${m.shot.unit}，超过 ≤${m.shot.criterion.toFixed(2)} ${m.shot.unit}。`
   dict['超差事实'] = dict['事件概况']
   dict['根因与证据'] = `首位候选根因是「${m.cause}」，置信度 ${m.confidence}。证据来自姿态、温度和标定资料，不能代替复测结论。`
   dict['复测闭环'] = `处置后复测为 ${m.shot.retestDh} ${m.shot.unit}，满足判据。首测记录继续保留，不回写为合格。`
@@ -140,7 +140,7 @@ function buildBodies(m) {
   const p = (id, text, source) => ({ id, text, source, kind: 'paragraph' })
   return {
     overview: [
-      p('overview-scope', `本次性能鉴定依据《某型装备研制总要求》和${m.outline}组织实施，受试对象为本批次定型样机。报告按${m.tree.version}汇总 ${count} 项试验结果，覆盖环境适应、机动性能、火控精度、供电通信和安全联锁。精度试验正式样本 ${m.shotCount} 发；第 ${m.shot.shotNo} 发立靶高低偏差超限后，另完成 1 发同工况复测。正式样本与复测样本分开编号，不在概述中把复测结果算进首测合格数。`, '指标树判据、试验结果汇总'),
+      p('overview-scope', `本次性能鉴定依据《某型装备研制总要求》和${m.outline}组织实施，受试对象为本批次定型样机。报告按${m.tree.version}汇总 ${count} 项试验结果，覆盖环境适应、机动性能、火控精度、供电通信和安全联锁。精度试验正式样本 ${m.shotCount} 发；第 ${m.shot.shotNo} 发立靶高低中间偏差超限后，另完成 1 发同工况复测。正式样本与复测样本分开编号，不在概述中把复测结果算进首测合格数。`, '指标树判据、试验结果汇总'),
       p('overview-samples', `样本来自${m.sourceName}（${m.taskId}），批次 ${m.batch}。${passed.length} 项指标在规定工况下直接判定符合，${retested.length} 项经复测后符合。第 ${m.shot.shotNo} 发首测高低偏差 ${m.shot.firstDh} ${m.shot.unit}，复测 ${m.shot.retestDh} ${m.shot.unit}，两条记录都保留，供后续审校核对处置是否闭环。`, `${m.sourceName} · ${m.taskId}`),
       p('overview-organization', `鉴定工作由承试单位组织，使用单位派员见证，测量设备在检定有效期内使用。科目顺序、样本数量、暂停与恢复条件按${m.outline}执行；现场变更须经技术负责人确认并记入试验日志，避免后续用回忆或补记替代原始记录。`, '试验大纲、试验日志'),
       p('overview-purpose', `本报告用于固定本批次试验事实，不替代签署后的正式结论。正文中的判据、实测值和异常根因均回链到已关联材料：${m.tree.version}、${count} 项结果汇总、${m.shotCount} 发原始记录和《${m.analysisTitle}》。任一判定句都可以顺着发次编号回到源文件。`, '试验结果汇总'),
@@ -155,12 +155,12 @@ function buildBodies(m) {
     ],
     execution: [
       p('execution-process', `试验按审定科目顺序实施，形成 ${count} 项结果。数据经测量链路回传后，先核对发次编号和字段完整性，再与${m.tree.version}匹配。异常发次保留原始编号。复测使用独立记录，不覆盖首测字段，也不改变正式样本的发次顺序。`, `${m.sourceName} · ${m.taskId}`),
-      p('execution-event', `第 ${m.shot.shotNo} 发触发立靶高低偏差告警，首测 ${m.shot.firstDh} ${m.shot.unit}，判据为 ≤${m.shot.criterion.toFixed(2)} ${m.shot.unit}。现场建立异常事件 ${m.eventId}，关联《${m.analysisTitle}》记录定位和处置。该发方向偏差、初速和其余批次指标仍按各自判据单独判定，不因这一发超差整批否决。`, '试验原始数据、异常分析报告'),
+      p('execution-event', `第 ${m.shot.shotNo} 发触发立靶高低中间偏差告警，首测 ${m.shot.firstDh} ${m.shot.unit}，判据为 ≤${m.shot.criterion.toFixed(2)} ${m.shot.unit}。现场建立异常事件 ${m.eventId}，关联《${m.analysisTitle}》记录定位和处置。该发方向偏差、初速和其余批次指标仍按各自判据单独判定，不因这一发超差整批否决。`, '试验原始数据、异常分析报告'),
       p('execution-records', `原始记录按“批次－科目－发次”三级编号，靶纸、测量文件与设备日志同号存放。记录现场填写、当场签字，涂改处保留原值并签注原因。汇总表的每一行都能反查到具体发次，复测记录使用独立编号，不与首测共用行。`, '试验原始数据、记录台账'),
       p('execution-quality', `过程质量控制包括班前设备自检、班中数据完整性抽查和班后交叉复核。温补处置后先做功能检查再进入复测，避免带故障状态继续取样。所有暂停、恢复和参数调整都记入试验日志，作为后续解释异常的依据。`, '试验日志、设备自检记录'),
     ],
     data: [
-      p('data-fields', `${m.shotCount} 发正式试验原始数据与 1 发复测数据汇总成表，逐发记录立靶高低偏差、方向偏差、炮口初速、膛压和射速。第 ${m.shot.shotNo} 发首测高低偏差 ${m.shot.firstDh} ${m.shot.unit}、复测 ${m.shot.retestDh} ${m.shot.unit}，均可按发次和事件 ${m.eventId} 检索。表中炮口初速取弹道测量文件，与指标树中的初速判据对应。`, `${m.sourceName} · ${m.taskId}`),
+      p('data-fields', `${m.shotCount} 发正式试验原始数据与 1 发复测数据汇总成表，逐发记录立靶高低中间偏差、方向偏差、炮口初速、膛压和射速。第 ${m.shot.shotNo} 发首测高低偏差 ${m.shot.firstDh} ${m.shot.unit}、复测 ${m.shot.retestDh} ${m.shot.unit}，均可按发次和事件 ${m.eventId} 检索。表中炮口初速取弹道测量文件，与指标树中的初速判据对应。`, `${m.sourceName} · ${m.taskId}`),
       p('data-statistics', `批次统计以 ${m.shotCount} 发正式记录为对象，第 ${m.shot.shotNo} 发的 1 条复测记录单独列表。高低偏差的批次分布不把复测值写回首测位置。各项汇总值应能回到对应发次，单发超差不并进“全部直接符合”的计数。`, '试验结果汇总'),
       p('data-distribution', `剔除第 ${m.shot.shotNo} 发后，其余 ${others} 发高低偏差集中在 0.12～0.24 ${m.shot.unit} 区间，方向偏差波动更小，离散度未随发次顺序出现趋势性放大。第 ${m.shot.shotNo} 发 0.42 ${m.shot.unit} 作为离群点单独标注，复测 0.18 ${m.shot.unit} 回落到该区间内，说明偏差来源与单发状态有关，不具备批次共性。`, '试验原始数据、统计分析结果'),
       p('data-quality', `完整性检查覆盖 ${m.shotCount} 发正式记录和独立复测记录，缺项不补造。当前判定使用关联材料中的实测值。若后续修订措辞，需同时注明原因、来源版本和修改时间，不能只改结论句。`, '数据回传任务'),
@@ -171,9 +171,9 @@ function buildBodies(m) {
       { id: 'judgment-table', kind: 'metrics', text: `${count} 项符合性判定表。判据来源：${m.tree.version}。复测项与直接符合项分列，表中保留首测和复测两个值。`, source: m.tree.version, rows: cloneReportData(m.metrics) },
     ],
     abnormal: [
-      p('anomaly-facts', `异常事件 ${m.eventId} 对应第 ${m.shot.shotNo} 发立靶高低偏差 ${m.shot.firstDh} ${m.shot.unit}。分析报告将「${m.cause}」列为首位候选根因，置信度 ${m.confidence}。证据包括飞行段姿态角偏差、温度传感器跳变和标定台温补系数偏差。置信度只说明候选排序，不能替代复测结论，也不能写成已经定性的唯一原因。`, `《${m.analysisTitle}》`),
+      p('anomaly-facts', `异常事件 ${m.eventId} 对应第 ${m.shot.shotNo} 发立靶高低中间偏差 ${m.shot.firstDh} ${m.shot.unit}。分析报告将「${m.cause}」列为首位候选根因，置信度 ${m.confidence}。证据包括飞行段姿态角偏差、温度传感器跳变和标定台温补系数偏差。置信度只说明候选排序，不能替代复测结论，也不能写成已经定性的唯一原因。`, `《${m.analysisTitle}》`),
       p('anomaly-evidence', `证据链分三层：原始层为靶纸、测量文件和设备日志；分析层为姿态角、温度与初速的时序对比；处置层为温补标定记录和处置前后的功能检查。三层证据按发次和事件编号串联，任一环节缺失都不能得出闭环结论。`, '异常分析报告、标定资料'),
-      p('anomaly-retest', `完成温补处置后组织复验，立靶高低偏差为 ${m.shot.retestDh} ${m.shot.unit}，满足 ≤${m.shot.criterion.toFixed(2)} ${m.shot.unit}。首测 ${m.shot.firstDh} ${m.shot.unit} 继续保留在原始记录和判定表中。异常记录、处置单和复测记录共同构成闭环，归档时核对三者的发次和事件编号一致。`, '异常分析报告、复测记录'),
+      p('anomaly-retest', `完成温补处置后组织复验，立靶高低中间偏差为 ${m.shot.retestDh} ${m.shot.unit}，满足 ≤${m.shot.criterion.toFixed(2)} ${m.shot.unit}。首测 ${m.shot.firstDh} ${m.shot.unit} 继续保留在原始记录和判定表中。异常记录、处置单和复测记录共同构成闭环，归档时核对三者的发次和事件编号一致。`, '异常分析报告、复测记录'),
       p('anomaly-closure', `处置后对同批次其余发次做回溯排查，未发现同类温补漂移特征，判定为单发状态类异常。后续试验将温补系数检查纳入班前自检项，并在数据回传环节增加立靶偏差阈值提醒，避免类似偏差进入汇总表后才被发现。`, '异常分析报告、处置单'),
     ],
     conclusion: [
@@ -199,16 +199,16 @@ function buildBodies(m) {
       p('hot-records', `高温工况各项结果满足判据，温漂在处置阈值以内。高温与常温数据对比后未发现趋势性劣化，记录按温度点分别归档，作为后续批次复现的对照基线。`, '高温工况记录、试验结果汇总'),
     ],
     recheck: [
-      p('recheck-task', `本次复核对象为本批次精度类指标实测结果，复核基线为${m.tree.version}。复核范围包括立靶高低偏差、方向偏差、初速与射速，样本为 ${m.shotCount} 发正式记录加 1 发复测记录。`, `${m.tree.version}、${m.sourceName}`),
+      p('recheck-task', `本次复核对象为本批次精度类指标实测结果，复核基线为${m.tree.version}。复核范围包括立靶高低中间偏差、方向偏差、初速与射速，样本为 ${m.shotCount} 发正式记录加 1 发复测记录。`, `${m.tree.version}、${m.sourceName}`),
       p('recheck-basis', `复核依据《某型装备研制总要求》、${m.outline}与已发布指标树。复核只对已有记录做比对和追溯，不重新取样，也不改写原始记录；如需补测，另立任务编号并单独说明。`, '研制总要求、试验大纲'),
     ],
     facts: [
-      p('facts-event', `第 ${m.shot.shotNo} 发立靶高低偏差首测 ${m.shot.firstDh} ${m.shot.unit}，超过 ≤${m.shot.criterion.toFixed(2)} ${m.shot.unit} 的判据要求，触发异常事件 ${m.eventId}。同发方向偏差、初速与其他指标未出现同步异常，试验按预案暂停并转入定位流程。`, '试验原始数据、异常分析报告'),
+      p('facts-event', `第 ${m.shot.shotNo} 发立靶高低中间偏差首测 ${m.shot.firstDh} ${m.shot.unit}，超过 ≤${m.shot.criterion.toFixed(2)} ${m.shot.unit} 的判据要求，触发异常事件 ${m.eventId}。同发方向偏差、初速与其他指标未出现同步异常，试验按预案暂停并转入定位流程。`, '试验原始数据、异常分析报告'),
       p('facts-impact', `该发异常影响本发次的高低偏差判定，不影响同批次其余发次的取样与统计。按判定口径，本发首测不合格、复测后符合，报告需同时体现两个值与处置过程，避免被读成首测合格。`, '符合性判定表'),
     ],
     retest: [
       p('retest-action', `处置措施为重新标定温补系数并复检传感器回路，处置前后各做一次功能检查。处置内容、执行人和时间记入处置单，与事件 ${m.eventId} 绑定，确保措施可复现。`, '处置单、标定资料'),
-      p('retest-verify', `处置后按原工况复测，立靶高低偏差为 ${m.shot.retestDh} ${m.shot.unit}，满足判据要求。复测使用独立编号，首测记录保持原样；同时对其余发次做回溯排查，未发现同类特征，验证措施有效。`, '复测记录、异常分析报告'),
+      p('retest-verify', `处置后按原工况复测，立靶高低中间偏差为 ${m.shot.retestDh} ${m.shot.unit}，满足判据要求。复测使用独立编号，首测记录保持原样；同时对其余发次做回溯排查，未发现同类特征，验证措施有效。`, '复测记录、异常分析报告'),
     ],
     scope: [
       p('scope-range', `核查范围为报告正文的全部 ${count} 项判定及其引用材料，重点核对科目覆盖是否完整、样本数量是否与大纲一致、判定是否逐项回链判据版本。`, `${m.tree.version}、试验大纲`),
@@ -267,7 +267,7 @@ export function inspectReport(report, packs) {
 
 export function seedWorkflow(store) {
   if (reportWorkflow.seeded) return
-  const tree = (store.m03List || []).find((row) => row.status === '已发布') || { id: 'v1', version: '指标树 V1.0', srcDoc: 'D-01《某型研制总要求》', count: 28, status: '已发布' }
+  const tree = (store.m03List || []).find((row) => row.status === '已发布') || { id: 'v1', version: '指标树 V1.0', srcDoc: '《99A式主战坦克研制总案-模拟数据》', count: 44, status: '已发布' }
   const materials = collectReportMaterials(tree, store)
   const make = (title, templateId, stage, status, time, withSections, index) => {
     const report = createWorkflowReport(title, templateId, materials)

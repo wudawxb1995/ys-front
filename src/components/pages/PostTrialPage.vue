@@ -747,12 +747,12 @@ const eventBridge = computed(() => {
     reportTitle: report.value.title || '第19发超差事件解读报告',
     reportSource: report.value.source || '探针设计与智能定位平台',
     reportVersion: report.value.version || 'V1.1',
-    narrative: `第${s.shotNo}发试验中发现立靶高低偏差超差（首测 ${s.firstDh} ${s.unit}，判据 ≤ ${s.criterion} ${s.unit}）。经探针设计与智能定位平台定位，根因为${root}；完成温补校准后，对同一工况组织复测，复测值为 ${s.retestDh} ${s.unit}，符合判据要求。数据来源：${dock.value.taskName || '精度试验数据回传接入'}（${dock.value.batch || 'D-07'}）。`,
+    narrative: `第${s.shotNo}发试验中发现立靶高低中间偏差超差（首测 ${s.firstDh} ${s.unit}，判据 ≤ ${s.criterion} ${s.unit}）。经探针设计与智能定位平台定位，根因为${root}；完成温补校准后，对同一工况组织复测，复测值为 ${s.retestDh} ${s.unit}，符合判据要求。数据来源：${dock.value.taskName || '精度试验数据回传接入'}（${dock.value.batch || 'D-07'}）。`,
   }
 })
 
 const judgmentNarrative = computed(() =>
-  `依据${metricTreeLabel.value}、${dockLabel.value}及复测记录，对${demoStore.metricTreeCount}项性能指标逐项完成符合性判定。${demoStore.metricTreeCount - 1}项直接符合，立靶高低偏差经温补校准后${shot19.value.conclusion}（关联${cause.value.eventName || '第19发超差事件'}）。`
+  `依据${metricTreeLabel.value}、${dockLabel.value}及复测记录，对${demoStore.metricTreeCount}项性能指标逐项完成符合性判定。${demoStore.metricTreeCount - 1}项直接符合，立靶高低中间偏差经温补校准后${shot19.value.conclusion}（关联${cause.value.eventName || '第19发超差事件'}）。`
 )
 
 const selectedChapterMeta = computed(() => {
@@ -808,15 +808,15 @@ const chapterBody = computed(() => {
     试验结果: {
       lead: `本章给出原始结果、统计结果与图表汇总，数据基线为 ${batch}（${shots}发）及复测记录。`,
       blocks: [
-        { title: '原始结果', text: `30 发原始记录已汇集；其中第19发立靶高低偏差首测 ${shot19.value.firstDh} ${shot19.value.unit}。` },
-        { title: '统计结果', text: '除立靶高低偏差外，其余指标统计量均落在判据区间内。' },
+        { title: '原始结果', text: `30 发原始记录已汇集；其中第19发立靶高低中间偏差首测 ${shot19.value.firstDh} ${shot19.value.unit}。` },
+        { title: '统计结果', text: '除立靶高低中间偏差外，其余指标统计量均落在判据区间内。' },
         { title: '图表汇总', text: '弹着点散布、时序曲线等图表见附件；复测数据单列，不重复计入 30 发统计量。' },
       ],
     },
     结论与建议: {
       lead: `综合${tree}判定结果与「${rpt}」，形成鉴定结论与后续建议。`,
       blocks: [
-        { title: '鉴定结论', text: `${demoStore.metricTreeCount} 项指标中 ${demoStore.metricTreeCount - 1} 项直接符合，立靶高低偏差经处置后${shot19.value.conclusion}，总体满足鉴定要求。` },
+        { title: '鉴定结论', text: `${demoStore.metricTreeCount} 项指标中 ${demoStore.metricTreeCount - 1} 项直接符合，立靶高低中间偏差经处置后${shot19.value.conclusion}，总体满足鉴定要求。` },
         { title: '遗留事项', text: `「${evt}」已闭环，复测记录与审查意见需随定稿一并留痕。` },
         { title: '后续建议', text: '建议将温补校准规程纳入例行维护，并在后续批次试验中加强温漂监测。' },
       ],
@@ -919,7 +919,7 @@ const traceRows = computed(() => {
   const s = shot19.value
   const tree = `指标树 ${demoStore.metricTreeVersion}`
   return [
-    { clause: `立靶高低偏差 ≤ ${s.criterion} ${s.unit}`, type: '指标树判据', source: tree, location: '6.5.19' },
+    { clause: `立靶高低中间偏差 ≤ ${s.criterion} ${s.unit}`, type: '指标树判据', source: tree, location: '6.5.19' },
     { clause: `首测${s.firstDh} / 复测${s.retestDh} ${s.unit}`, type: '试验数据', source: dock.value.taskName || '精度试验数据回传接入', location: `D-07 第${s.shotNo}发及复测记录` },
     { clause: `${cause.value.name || '温补失效'}及校准处置`, type: '异常解读', source: report.value.title || '第19发超差事件解读报告', location: `${cause.value.eventId || 'EVT-001'} 根因结论` },
     { clause: '越壕宽 ≥ 1.8 m', type: '指标树判据', source: tree, location: '6.3.9' },

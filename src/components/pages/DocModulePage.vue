@@ -265,7 +265,7 @@ const currentReviewBody = computed(() => {
 })
 const rows = ref([
   { id:1, name:`${featureName.value}任务A`, object:'高温启动时间', source:'GJB 150.3A / R-HT-024', status:'已启用', tone:'ok', time:'2026-10-22 14:25' },
-  { id:2, name:`${featureName.value}任务B`, object:'立靶高低偏差', source:'指标树 V1.0', status:'已完成', tone:'ok', time:'2026-10-22 11:32' },
+  { id:2, name:`${featureName.value}任务B`, object:'立靶高低中间偏差', source:'指标树 V1.0', status:'已完成', tone:'ok', time:'2026-10-22 11:32' },
   { id:3, name:`${featureName.value}任务C`, object:'试验样本量', source:'性能试验提纲 V4', status:'待复核', tone:'warn', time:'2026-10-21 17:03' },
   { id:4, name:`${featureName.value}任务D`, object:'越壕宽', source:'审查知识库 V2.3', status:'草稿', tone:'muted', time:'2026-10-20 09:18' },
 ])

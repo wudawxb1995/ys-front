@@ -1,4 +1,5 @@
 import { reactive } from 'vue'
+import { tank99aIndicators } from './tank99a'
 
 export const postTrialState = reactive({
   generated: true,
@@ -12,7 +13,7 @@ export const postTrialState = reactive({
 })
 
 export const postTrialMaterials = [
-  { id: 'rule', name: '指标树判据', meta: '指标树 V1.0 · 28 项', source: '试验指标树（Part1）', status: '已关联', tone: 'blue' },
+  { id: 'rule', name: '指标树判据', meta: '指标树 V1.0 · 44 项', source: '试验指标树（Part1）', status: '已关联', tone: 'blue' },
   { id: 'data', name: '精度试验数据汇总', meta: 'D-07 · 30 发回传 + 1 组复测', source: '精度试验数据回传接入 T01', status: '已汇集', tone: 'blue' },
   { id: 'event', name: '第19发超差事件解读报告', meta: '温补失效根因 · 温补校准后复测', source: '探针设计与智能定位平台', status: '已引用', tone: 'blue' },
 ]
@@ -23,52 +24,39 @@ export const postTrialOutline = [
   { no: '3', name: '试验条件', source: '数据汇总表', children: ['环境条件', '设备与保障', '人员分工'] },
   { no: '4', name: '试验实施', source: '试验记录', children: ['样本与工况', '实施过程', '数据质量'] },
   { no: '5', name: '试验结果', source: '精度试验数据回传 T01', children: ['原始结果', '统计结果', '图表汇总'] },
-  { no: '6', name: '符合性判定', source: '指标树 + D-07 汇总', children: ['28项指标判定', '复测结论', '判据引用'] },
+  { no: '6', name: '符合性判定', source: '指标树 + D-07 汇总', children: ['44项指标判定', '复测结论', '判据引用'] },
   { no: '7', name: '异常事件与处置', source: '第19发超差事件解读报告', children: ['超差现象', '根因定位', '校准与复测'] },
   { no: '8', name: '结论与建议', source: '自动装配', children: ['鉴定结论', '遗留事项', '后续建议'] },
 ]
 
-const metricNames = [
-  ['环境温度适应性', '-40 ℃～55 ℃', '全工况运行正常'],
-  ['连续运行时间', '≥ 8 h', '8.6 h'],
-  ['高温启动时间', '≤ 30 s', '26.4 s'],
-  ['低温启动时间', '≤ 45 s', '39.8 s'],
-  ['最大行驶速度', '≥ 42 km/h', '44.1 km/h'],
-  ['最小稳定速度', '≤ 4.0 km/h', '3.6 km/h'],
-  ['最大爬坡度', '≥ 30°', '31.8°'],
-  ['侧倾稳定角', '≥ 25°', '27.2°'],
-  ['越壕宽', '≥ 1.8 m', '1.92 m'],
-  ['越垂直墙高', '≥ 0.55 m', '0.58 m'],
-  ['涉水深度', '≥ 1.1 m', '1.16 m'],
-  ['最小转弯半径', '≤ 8.5 m', '8.1 m'],
-  ['制动距离', '≤ 12.0 m', '10.8 m'],
-  ['燃油消耗率', '≤ 218 g/kW·h', '211 g/kW·h'],
-  ['动力输出稳定性', '波动 ≤ 3%', '2.1%'],
-  ['供电电压稳定性', '波动 ≤ 5%', '3.2%'],
-  ['通信链路时延', '≤ 80 ms', '63 ms'],
-  ['定位精度', '≤ 0.5 m', '0.31 m'],
-  ['立靶高低偏差', '≤ 0.30 mil', '首测 0.42 / 复测 0.18 mil'],
-  ['立靶方向偏差', '≤ 0.30 mil', '0.21 mil'],
-  ['目标识别准确率', '≥ 90%', '93.6%'],
-  ['故障告警响应时间', '≤ 2 s', '1.3 s'],
-  ['平均无故障时间', '≥ 120 h', '136 h'],
-  ['维护恢复时间', '≤ 30 min', '24 min'],
-  ['噪声限值', '≤ 85 dB(A)', '81.7 dB(A)'],
-  ['振动强度', '≤ 4.5 mm/s', '3.8 mm/s'],
-  ['电磁兼容性', '满足 GJB 151B', '通过'],
-  ['安全联锁有效性', '100% 有效', '30/30 有效'],
-]
+function measuredValue(item) {
+  if (item.code === 'HC-007') return '首测 0.42 / 复测 0.18 m'
+  const text = String(item.criteria || '')
+  const upper = text.match(/^[≤<]\s*([\d.]+)/)
+  if (upper) {
+    const n = Number(upper[1])
+    const next = n >= 10 ? Math.round(n * 0.92 * 10) / 10 : Math.round(n * 0.9 * 100) / 100
+    return text.replace(/[\d.]+/, String(next)).replace(/^[≤<]\s*/, '')
+  }
+  const lower = text.match(/^[≥>]\s*([\d.]+)/)
+  if (lower) {
+    const n = Number(lower[1])
+    const next = n >= 10 ? Math.round(n * 1.06 * 10) / 10 : Math.round(n * 1.08 * 100) / 100
+    return text.replace(/[\d.]+/, String(next)).replace(/^[≥>]\s*/, '')
+  }
+  return text
+}
 
-export const postTrialMetrics = metricNames.map((item, index) => ({
+export const postTrialMetrics = tank99aIndicators.map((item, index) => ({
   no: index + 1,
-  name: item[0],
-  criterion: item[1],
-  value: item[2],
-  conclusion: index === 18 ? '复测后符合' : '符合',
+  code: item.code,
+  name: item.name,
+  criterion: item.criteria,
+  value: measuredValue(item),
+  conclusion: item.code === 'HC-007' ? '复测后符合' : '符合',
   source: '指标树 V1.0',
-  event: index === 18 ? '关联第19发超差事件 EVT-001' : '',
-  // 立靶高低偏差：实测值由 Part2 shots30 / 复测闭环写入，页面侧可覆盖
-  linkedShot: index === 18 ? 19 : null,
+  event: item.code === 'HC-007' ? '关联第19发超差事件 EVT-001' : '',
+  linkedShot: item.code === 'HC-007' ? 19 : null,
 }))
 
 export const reviewTasks = [

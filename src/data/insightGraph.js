@@ -21,7 +21,7 @@ export const insightGraphChips = [
 const evidence30005 = {
   title: '立靶偏差多源光测融合测量与误差溯源研究',
   source: '领域科技文献库 · 2025年',
-  quote: '以多站光测观测和标靶图像为共同证据，经时间同步、坐标统一转换和弹着点像素定位计算立靶高低偏差，并同步给出测量不确定度及原始证据索引。',
+  quote: '以多站光测观测和标靶图像为共同证据，经时间同步、坐标统一转换和弹着点像素定位计算立靶高低中间偏差，并同步给出测量不确定度及原始证据索引。',
 }
 
 function node(partial) {
@@ -83,27 +83,27 @@ function baseNodes(item) {
     }),
     node({
       id: 'ind', group: '验证指标', angle: 324, radius: 0.58, size: 56,
-      label: '立靶高低偏差', title: '立靶高低偏差', rel: '验证指标', rels: '验证指标',
+      label: '立靶高低中间偏差', title: '立靶高低中间偏差', rel: '验证指标', rels: '验证指标',
       text: '本创新点直接服务的验证指标，判读结果需同时保留首测、复测和不确定度。',
     }),
     node({
       id: 'judge', group: '指标判据', angle: 306, radius: 0.94, size: 32, hollow: true,
-      label: '高低 ≤0.30 mil', title: '高低 ≤0.30 mil', rel: '指标判据', rels: '指标判据',
-      text: '指标树判据。第19发首测 0.42 mil，超出 0.30 mil，复测 0.18 mil。',
+      label: '高低 ≤0.30 m', title: '高低 ≤0.30 m', rel: '指标判据', rels: '指标判据',
+      text: '指标树判据。第19发首测 0.42 m，超出 0.30 m，复测 0.18 m。',
     }),
     node({
       id: 'evt', group: '异常发次', angle: 18, radius: 0.94, size: 34, hollow: true,
       label: '第19发 EVT-001', title: '第19发 EVT-001', rel: '异常发次', rels: '异常发次',
-      text: '立靶高低偏差超差事件。首测与复测分开保留，不回写为首测合格。',
+      text: '立靶高低中间偏差超差事件。首测与复测分开保留，不回写为首测合格。',
     }),
     node({
       id: 'over', group: '异常发次', angle: 198, radius: 0.94, size: 26, hollow: true,
-      label: '首测 0.42 mil', title: '首测 0.42 mil', rel: '首测记录', rels: '首测记录',
-      text: '第19发首测高低偏差 0.42 mil，超过判据 0.30 mil。',
+      label: '首测 0.42 m', title: '首测 0.42 m', rel: '首测记录', rels: '首测记录',
+      text: '第19发首测高低中间偏差 0.42 m，超过判据 0.30 m。',
     }),
     node({
       id: 're', group: '复测结果', angle: 216, radius: 0.94, size: 30, hollow: true,
-      label: '复测 0.18 mil', title: '复测 0.18 mil', rel: '复测结果', rels: '复测结果',
+      label: '复测 0.18 m', title: '复测 0.18 m', rel: '复测结果', rels: '复测结果',
       text: '复测记录单独保留，符合判据，但不回写为首测合格。',
     }),
     node({
@@ -124,7 +124,7 @@ function baseNodes(item) {
     node({
       id: 'scene', group: '应用场景', angle: 180, radius: 0.76, size: 40,
       label: '正式试验判读复核', title: '正式试验判读与复核', rel: '工程应用', rels: '工程应用',
-      text: '用于立靶高低偏差指标的智能判读与复核，辅助区分测量误差、气象修正误差与装备状态异常。',
+      text: '用于立靶高低中间偏差指标的智能判读与复核，辅助区分测量误差、气象修正误差与装备状态异常。',
     }),
     node({
       id: 'std', group: '标准规范', angle: 72, radius: 0.94, size: 30, hollow: true,

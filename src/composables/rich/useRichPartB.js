@@ -25,7 +25,7 @@ export function buildRichPartB({ toast, router, route, props, bag }) {
 // ── M14 探针配置管理 ────────────────────────────────────────────────────
 
 const probeDisplay = {
-  P01: { bindParam: '立靶高低偏差', dataSrc: '弹道测量文件', sampleMode: '逐发触发', alarmLevel: '告警' },
+  P01: { bindParam: '立靶高低中间偏差', dataSrc: '弹道测量文件', sampleMode: '逐发触发', alarmLevel: '告警' },
   P02: { bindParam: '炮口初速', dataSrc: '弹道测量文件', sampleMode: '逐发触发', alarmLevel: '告警' },
   P03: { bindParam: '飞行姿态角', dataSrc: '弹道测量文件', sampleMode: '逐发触发', alarmLevel: '告警' },
   P04: { bindParam: '身管温度', dataSrc: '遥测数据流', sampleMode: '定时采集', alarmLevel: '提示' },
@@ -88,7 +88,7 @@ const m14TreeOptions = computed(() => {
   return (published.length ? published : list).map((row) => ({
     value: row.version,
     label: `${row.version} · ${row.count} 项`,
-    count: Number(row.count) || 28,
+    count: Number(row.count) || 44,
     srcDoc: row.srcDoc || '',
   }))
 })
@@ -392,8 +392,8 @@ function initV0Chart() {
         return `<div style="font-size:13px">
           <b style="color:${color}">第 ${shot.id} 发</b>${shot.anomaly ? ' · 异常' : ''}<br/>
           初速：<b style="color:${color}">${shot.v0} m/s</b><br/>
-          高低偏：${shot.dH > 0 ? '+' : ''}${shot.dH} mil<br/>
-          方向偏：${shot.dL > 0 ? '+' : ''}${shot.dL} mil<br/>
+          高低偏：${shot.dH > 0 ? '+' : ''}${shot.dH} m<br/>
+          方向偏：${shot.dL > 0 ? '+' : ''}${shot.dL} m<br/>
           身管温度：${shot.barrelTemp ?? '—'} ℃
         </div>`
       },
@@ -499,8 +499,8 @@ const m15DetailMeta = computed(() => {
     scanLabel: '启动智能检测',
     scanDone: '检测完成',
     scanRun: '检测中…',
-    alertTitle: '告警 · 第 19 发 · 立靶高低偏差超限',
-    alertBody: '探针：弹着点散布探针 P01　检测值：+0.42 mil（判据：≤0.30 mil）',
+    alertTitle: '告警 · 第 19 发 · 立靶高低中间偏差超限',
+    alertBody: '探针：弹着点散布探针 P01　检测值：+0.42 m（判据：≤0.30 m）',
     alertSub: '触发时间：11:22:07　建议：标记为异常，进入根因分析流程',
     showRootCause: true,
   }
@@ -683,7 +683,7 @@ const m15TreeOptions = computed(() => {
   return (published.length ? published : list).map((row) => ({
     value: row.version,
     label: `${row.version} · ${row.count}项指标`,
-    count: Number(row.count) || 28,
+    count: Number(row.count) || 44,
     srcDoc: row.srcDoc || '',
   }))
 })
@@ -876,11 +876,11 @@ th{background:#f3f8fd}
 <p>本报告汇集 D-07 批次逐发测量、探针告警、遥测记录和标定资料，分析对象为第 19 发异常。判据引用指标树 V1.0；根因结论仍需复测验证。</p>
 
 <h2>2 异常特征</h2>
-<p>第 19 发立靶高低偏差 <b>+0.42 mil</b>，超出判据阈值 ≤0.30 mil（超出 40%），触发立靶精度探针 P01 告警。前 18 发偏差均在 ±0.25 mil 以内，第 19 发呈孤立突增，降低了批次性因素的优先级，但仍需复测核查。</p>
+<p>第 19 发立靶高低中间偏差 <b>+0.42 m</b>，超出判据阈值 ≤0.30 m（超出 40%），触发立靶精度探针 P01 告警。前 18 发偏差均在 ±0.25 m 以内，第 19 发呈孤立突增，降低了批次性因素的优先级，但仍需复测核查。</p>
 <p>同发次初速 818.3 m/s，低于 820 m/s 下限；飞行段 pitch 偏差 +0.38°，TH-03 温度在 T+4.2s 跳变 +2.1℃。这些信号时间接近，支持继续追查定位定向系统，但时间相关性不能单独证明根因。</p>
 <p><b>探针告警记录：</b></p>
 <ul>
-<li>P01 立靶精度告警（2024-10-18 14:32:07）：高低偏差 +0.42 mil，超出判据 ≤0.30 mil，触发一级告警</li>
+<li>P01 立靶精度告警（2024-10-18 14:32:07）：高低中间偏差 +0.42 m，超出判据 ≤0.30 m，触发一级告警</li>
 <li>P04 身管温度预警（2024-10-18 14:31:52）：TH-03 传感器温度跳变 +2.1℃，触发预警</li>
 <li>P07 遥测信号（2024-10-18 14:32:10）：姿态角 pitch 偏移 +0.38°，超出阈值 ±0.25°</li>
 </ul>
@@ -895,7 +895,7 @@ th{background:#f3f8fd}
 <p>温补失效获得姿态异常、温度跳变和标定偏差支持；火控解算软件异常缺少对应故障记录。历史案例仅作类比，不作为本次故障的直接证据。</p>
 
 <h2>4 结论与处置建议</h2>
-<div class="box"><b>结论：</b>本批次试验共 30 发，第 19 发立靶高低偏差超出判据 40%。现有证据最支持定位定向系统温补系数失效（候选置信度 0.86），最终结论仍需复测验证。</div>
+<div class="box"><b>结论：</b>本批次试验中，第 19 发立靶高低中间偏差超出判据 ≤0.30 m。现有证据最支持定位定向系统温补系数失效（候选置信度 0.86），最终结论仍需复测验证。</div>
 <div class="warn"><b>核心建议：</b>建议对定位定向系统执行温补校准后，复测第 19 发工况，以验证温补系数修正效果。</div>
 <p><b>详细处置步骤：</b></p>
 <ol>
@@ -904,7 +904,7 @@ th{background:#f3f8fd}
 <li>下批次试验前完成上述修正后，在相同工况下对第 19 发场景执行复测验证；</li>
 <li>复测结果纳入 D-07 批次试验数据库，更新探针 P01 判据基线。</li>
 </ol>
-<p>完成温补系数复核与修正后，使用相同测量链路复测对应工况；核对高低偏差是否回到 ≤0.30 mil、初速是否回到 ≥820 m/s，并确认 pitch 与 TH-03 温度曲线恢复稳定。若仍异常，应重新评估候选根因排序。</p>
+<p>完成温补系数复核与修正后，使用相同测量链路复测对应工况；核对立靶高低中间偏差是否回到 ≤0.30 m，并确认姿态与温度曲线恢复稳定。若仍异常，应重新评估候选根因排序。</p>
 
 <h2>5 证据清单</h2>
 <table>

@@ -174,7 +174,7 @@
             <div class="m14-bind-list">
               <div class="m14-bind-row">
                 <span class="lab">绑定参数</span>
-                <span class="val">{{ m14Detail.bindParam || '立靶高低偏差' }}</span>
+                <span class="val">{{ m14Detail.bindParam || '立靶高低中间偏差' }}</span>
               </div>
               <div class="m14-bind-row">
                 <span class="lab">数据来源</span>
@@ -215,7 +215,7 @@
                 </tr>
                 <tr>
                   <td class="strong">方向偏差</td>
-                  <td class="crit">立靶方向偏差 ≤ 0.30 mil</td>
+                  <td class="crit">立靶方向中间偏差 ≤ 0.30 m</td>
                   <td>
                     <button type="button" class="m14-cite" @click="previewProbeCite(m14Detail.srcNode)">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -246,11 +246,11 @@
               </div>
               <div class="m14-alarm">
                 <div class="left"><span class="dot d2"></span><span>二级预警</span></div>
-                <span class="desc">偏差 &gt; 0.25 mil → 记录关注</span>
+                <span class="desc">偏差 &gt; 0.25 m → 记录关注</span>
               </div>
               <div class="m14-alarm">
                 <div class="left"><span class="dot d3"></span><span>正常</span></div>
-                <span class="desc">偏差 ≤ 0.25 mil → 正常通过</span>
+                <span class="desc">偏差 ≤ 0.25 m → 正常通过</span>
               </div>
             </div>
           </section>
@@ -410,7 +410,7 @@
           <el-input v-model="m14CreateForm.criteria" maxlength="80" placeholder="如 |dH|≤0.30mil & |dL|≤0.30mil" />
         </el-form-item>
         <el-form-item label="绑定参数">
-          <el-input v-model="m14CreateForm.bindParam" maxlength="40" placeholder="默认与监测对象一致，如 立靶高低偏差" />
+          <el-input v-model="m14CreateForm.bindParam" maxlength="40" placeholder="默认与监测对象一致，如 立靶高低中间偏差" />
         </el-form-item>
         <el-form-item label="数据来源">
           <el-input v-model="m14CreateForm.dataSrc" maxlength="40" placeholder="如 弹道测量文件" />
@@ -621,9 +621,9 @@ export default {
     })
     const mainCriteriaText = computed(() => {
       const d = bag.m14Detail?.value ?? bag.m14Detail
-      if (!d) return '立靶高低偏差 ≤ 0.30 mil'
-      if (d.id === 'P01' || d.name?.includes('弹着点')) return '立靶高低偏差 ≤ 0.30 mil'
-      return d.criteria || '立靶高低偏差 ≤ 0.30 mil'
+      if (!d) return '立靶高低中间偏差 ≤ 0.30 m'
+      if (d.id === 'P01' || d.name?.includes('弹着点')) return '立靶高低中间偏差 ≤ 0.30 m'
+      return d.criteria || '立靶高低中间偏差 ≤ 0.30 m'
     })
     return {
       ...bag,

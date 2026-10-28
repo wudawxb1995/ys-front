@@ -24,7 +24,7 @@ export const deviationGroups = [
       { id: 'd09', title: '探针判据与指标树同源', evidence: 'm14「引自指标树 V1.0」标识', better: '试验前基准直接成为检测尺子' },
       { id: 'd10', title: '对接任务式数据接入', evidence: 'm15 任务成功状态 + 30 发留痕', better: '对应数据对接任务控制语义' },
       { id: 'd11', title: '探针扫描过程可视', evidence: 'm15 矩阵扫描动画 + 告警横幅', better: '检测非黑盒等待' },
-      { id: 'd12', title: '异常精确到发次', evidence: '第19发 0.42 mil vs ≤0.30 mil', better: '告警即结论、可定位' },
+      { id: 'd12', title: '异常精确到发次', evidence: '第19发 0.42 m vs ≤0.30 m', better: '告警即结论、可定位' },
       { id: 'd13', title: '候选根因置信度排序', evidence: 'm19 0.86 / 0.41 / 0.22', better: '图谱给假设、人来定夺' },
       { id: 'd14', title: '多参数可视化联动', evidence: 'm19 姿态/初速/温度三图', better: '根因证据曲线联动' },
       { id: 'd15', title: '推理思维链可视化', evidence: 'm19 思维链四层展开', better: '大模型过程可解释' },

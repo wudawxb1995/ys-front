@@ -72,7 +72,7 @@
               </div>
               <p class="m22-paragraph">本报告汇集 D-07 批次逐发测量、探针告警、遥测记录和标定资料，分析对象为第 19 发异常。判据引用指标树 V1.0；报告中的根因结论为当前证据支持的推断，后续复测结果应继续回填。</p>
               <div class="m22-fact-grid">
-                <div><span>立靶高低偏差</span><strong>+0.42 mil</strong><small>判据 ≤0.30 mil，超出 40%</small></div>
+                <div><span>立靶高低中间偏差</span><strong>+0.42 m</strong><small>判据 ≤0.30 m，超出 40%</small></div>
                 <div><span>炮口初速</span><strong>818.3 m/s</strong><small>低于下限 820 m/s</small></div>
                 <div><span>飞行段 pitch</span><strong>+0.38°</strong><small>超出 ±0.20° 阈值</small></div>
                 <div><span>温度测点 TH-03</span><strong>+2.1 ℃</strong><small>在 T+4.2s 出现跳变</small></div>
@@ -83,7 +83,7 @@
             <section data-section="2" class="m22-section">
               <h3 style="margin-bottom:12px"><i></i>2 异常特征</h3>
               <p style="font-size:13.5px;color:#333;margin-bottom:14px;line-height:1.8">
-                第 19 发立靶高低偏差 <b style="color:#d4380d">+0.42 mil</b>，超出判据阈值 ≤0.30 mil（超出 40%），触发立靶精度探针 P01 告警，判定为异常发次。前 18 发高低偏差绝对值最大为 {{ reportBaseline.maxDeviation }} mil，第 19 发呈孤立突增；这一对比降低了批次性因素的优先级，但仍需结合复测核查。
+                第 19 发立靶高低中间偏差 <b style="color:#d4380d">+0.42 m</b>，超出判据阈值 ≤0.30 m（超出 40%），触发立靶精度探针 P01 告警，判定为异常发次。前 18 发高低偏差绝对值最大为 {{ reportBaseline.maxDeviation }} m，第 19 发呈孤立突增；这一对比降低了批次性因素的优先级，但仍需结合复测核查。
               </p>
               <div class="m22-analysis-note"><b>同发次关联：</b>第 19 发初速为 818.3 m/s，低于 820 m/s 下限；飞行段 pitch 偏差和 TH-03 温度跳变也在同一异常发次出现。三项信号时间接近，支持继续追查定位定向系统，但时间相关性本身不能单独证明根因。</div>
               <!-- 散布图 + 告警记录 并排 -->
@@ -97,8 +97,8 @@
                     <line x1="20" y1="105" x2="245" y2="105" stroke="#dce8f2" stroke-width="1"/>
                     <!-- 判据框 -->
                     <rect x="78" y="52" width="108" height="108" fill="none" stroke="#d4380d" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.6"/>
-                    <text x="133" y="48" font-size="9" fill="#d4380d">+0.30 mil</text>
-                    <text x="133" y="172" font-size="9" fill="#d4380d">-0.30 mil</text>
+                    <text x="133" y="48" font-size="9" fill="#d4380d">+0.30 m</text>
+                    <text x="133" y="172" font-size="9" fill="#d4380d">-0.30 m</text>
                     <!-- 正常弹点（蓝） -->
                     <circle cx="128" cy="102" r="3" fill="#1668a8" opacity="0.55"/>
                     <circle cx="133" cy="98" r="3" fill="#1668a8" opacity="0.55"/>
@@ -143,7 +143,7 @@
                         <span style="font-weight:600;color:#c0392b">P01 立靶精度告警</span>
                         <span style="color:#8a99a8;font-size:12px">2024-10-18 14:32:07</span>
                       </div>
-                      <div style="color:#5a6978">高低偏差 <b style="color:#d4380d">+0.42 mil</b>，超出判据 ≤0.30 mil（超出 40%），触发一级告警</div>
+                      <div style="color:#5a6978">高低偏差 <b style="color:#d4380d">+0.42 m</b>，超出判据 ≤0.30 m（超出 40%），触发一级告警</div>
                     </div>
                     <div style="padding:10px 12px;background:#fff8e6;border:1px solid #ffe4a0;border-radius:6px;font-size:13px">
                       <div style="display:flex;justify-content:space-between;margin-bottom:4px">
@@ -171,7 +171,7 @@
               <div style="border:1px solid #e8f2fb;border-radius:8px;padding:14px;margin-bottom:16px;background:#fafcff">
                 <div style="font-size:12px;color:#8a99a8;margin-bottom:10px;font-weight:500">推理思维链（四层推导）</div>
                 <div style="display:flex;align-items:center;gap:0;overflow-x:auto">
-                  <template v-for="(node, ni) in [{id:'C1',layer:'现象',label:'弹着点散布异常',val:'超判据40%',color:''},{id:'C2',layer:'特征',label:'立靶偏差超限',val:'+0.42 mil',color:''},{id:'C4',layer:'中间因',label:'姿态角漂移 + 温度跳变',val:'+0.38° / +2.1℃',color:''},{id:'C6',layer:'根因',label:'温补系数失效',val:'置信度 0.86',color:'gold'}]" :key="node.id">
+                  <template v-for="(node, ni) in [{id:'C1',layer:'现象',label:'弹着点散布异常',val:'超判据40%',color:''},{id:'C2',layer:'特征',label:'立靶偏差超限',val:'+0.42 m',color:''},{id:'C4',layer:'中间因',label:'姿态角漂移 + 温度跳变',val:'+0.38° / +2.1℃',color:''},{id:'C6',layer:'根因',label:'温补系数失效',val:'置信度 0.86',color:'gold'}]" :key="node.id">
                     <div :style="node.color==='gold'?'border-color:#d0ab68;background:#fffbe6':''"
                       style="flex:1;padding:10px 12px;border:1px solid #d0e6f4;border-radius:8px;font-size:12px;text-align:center;min-width:110px">
                       <div style="font-size:10px;color:#8a99a8;margin-bottom:3px">{{ node.layer }}</div>
@@ -210,12 +210,12 @@
             <section data-section="4" class="m22-section">
               <h3 style="margin-bottom:12px"><i></i>4 结论与处置建议</h3>
               <div style="background:#f4f8fc;border-radius:6px;padding:14px;margin-bottom:16px;font-size:13.5px;color:#1a2b3c;line-height:1.8">
-                <b>结论：</b>本批次试验共 30 发，第 19 发立靶高低偏差超出判据 40%。现有证据最支持定位定向系统温补系数失效（候选置信度 0.86）；前 18 发稳定表现降低了批次性因素的优先级，最终结论仍需复测验证。
+                <b>结论：</b>本批次试验共 30 发，第 19 发立靶高低中间偏差超出判据 40%。现有证据最支持定位定向系统温补系数失效（候选置信度 0.86）；前 18 发稳定表现降低了批次性因素的优先级，最终结论仍需复测验证。
               </div>
               <div style="background:#fff8e6;border-left:4px solid #d0ab68;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:16px;font-size:13.5px;color:#7a5a10;line-height:1.8">
                 <b style="color:#1a2b3c">核心建议：</b>建议对定位定向系统执行温补校准后，复测第 19 发工况，以验证温补系数修正效果。
               </div>
-              <div class="m22-analysis-note"><b>验证闭环：</b>完成温补系数复核与修正后，使用相同测量链路复测对应工况；核对高低偏差是否回到 ≤0.30 mil、初速是否回到 ≥820 m/s，并确认 pitch 与 TH-03 温度曲线恢复稳定。若仍异常，应重新评估候选根因排序。</div>
+              <div class="m22-analysis-note"><b>验证闭环：</b>完成温补系数复核与修正后，使用相同测量链路复测对应工况；核对高低偏差是否回到 ≤0.30 m、初速是否回到 ≥820 m/s，并确认 pitch 与 TH-03 温度曲线恢复稳定。若仍异常，应重新评估候选根因排序。</div>
               <div style="font-size:13.5px;color:#1a2b3c;line-height:1.8">
                 <b>详细处置步骤：</b>
                 <ol style="margin:10px 0 0 20px;display:flex;flex-direction:column;gap:8px">
@@ -241,7 +241,7 @@
                   </thead>
                   <tbody>
                     <tr v-for="item in evidence" :key="item.id">
-                      <td style="font-family:monospace;color:#5a6978;font-weight:600">{{ item.id }}</td>
+                      <td style="font-famy:monospace;color:#5a6978;font-weight:600">{{ item.id }}</td>
                       <td style="font-size:13px">{{ item.text }}</td>
                       <td><span style="font-size:12px;color:#5a6978">{{ item.source }}</span></td>
                     </tr>

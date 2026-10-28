@@ -46,9 +46,9 @@
               </div>
               <div class="m19-summary-kpis">
                 <div class="m19-kpi">
-                  <span>立靶高低偏</span>
-                  <b class="warn">+0.42 mil</b>
-                  <em>判据 ≤ 0.30</em>
+                  <span>立靶高低中间偏差</span>
+                  <b class="warn">+0.42 m</b>
+                  <em>判据 ≤0.30 m</em>
                 </div>
                 <div class="m19-kpi">
                   <span>炮口初速</span>
@@ -275,17 +275,17 @@ import { evidence } from '@/data/mock'
 
 const mindNodes = [
   { id: 'alarm', layer: '现象', label: '弹着点散布', value: '探针 P01', kind: 'mid', x: 18, y: 28, w: 118, keep: ['dh', 'v0'], evid: [], detail: '第19发触发弹着点散布探针 P01。告警只说明落点异常，还要往下拆是高低、方向，还是整批都偏。' },
-  { id: 'dh', layer: '超差', label: '高低偏差', value: '+0.42 mil', kind: 'bad', x: 168, y: 6, w: 124, keep: ['alarm', 'pitch'], evid: [], detail: '立靶高低偏差 +0.42 mil，判据 ≤0.30 mil，超出 40%。这是本发被单独标出来的直接原因。' },
-  { id: 'dir', layer: '未超', label: '方向偏差', value: '0.18 mil', kind: 'ok', x: 150, y: 118, w: 118, keep: ['base', 'weather'], evid: [], detail: '同发方向偏差 0.18 mil，没有超过 ≤0.30 mil。高低是孤立超差，不能把方向指标整批否决。' },
+  { id: 'dh', layer: '超差', label: '高低中间偏差', value: '+0.42 m', kind: 'bad', x: 168, y: 6, w: 124, keep: ['alarm', 'pitch'], evid: [], detail: '立靶高低中间偏差 +0.42 m，判据 ≤0.30 m，超出 40%。这是本发被单独标出来的直接原因。' },
+  { id: 'dir', layer: '未超', label: '方向中间偏差', value: '0.18 m', kind: 'ok', x: 150, y: 118, w: 118, keep: ['base', 'weather'], evid: [], detail: '同发方向中间偏差 0.18 m，没有超过 ≤0.30 m。高低是孤立超差，不能把方向指标整批否决。' },
   { id: 'v0', layer: '伴随', label: '初速偏低', value: '818.3 m/s', kind: 'bad', x: 12, y: 156, w: 124, keep: ['alarm', 'temp'], evid: [], detail: '炮口初速 818.3 m/s，低于下限 820 m/s。它和落点超差出现在同一发，但是初速偏低本身还指不到温补。' },
-  { id: 'base', layer: '对照', label: '前18发正常', value: '最大 0.25 mil', kind: 'ok', x: 24, y: 292, w: 132, keep: ['dir', 'weather'], evid: [], detail: '前18发高低偏差最大是第15发 0.25 mil，都在判据内。第19发 0.42 mil 是孤立突增，批次性因素因此降权。' },
+  { id: 'base', layer: '对照', label: '前18发正常', value: '最大 0.25 m', kind: 'ok', x: 24, y: 292, w: 132, keep: ['dir', 'weather'], evid: [], detail: '前18发高低中间偏差最大是第15发 0.25 m，都在判据内。第19发 0.42 m 是孤立突增，批次性因素因此降权。' },
   { id: 'pitch', layer: '姿态', label: 'pitch 漂移', value: '+0.38°', kind: 'bad', x: 330, y: 48, w: 124, keep: ['dh', 'time', 'root', 'fire'], evid: ['E1'], detail: '飞行段 pitch +0.38°，阈值 0.20°。遥测通道 T-07 能证明姿态偏了，但只有姿态、没有温度和标定，还不能写成根因。' },
   { id: 'temp', layer: '温度', label: 'TH-03 跳变', value: '+2.1 ℃', kind: 'bad', x: 348, y: 176, w: 124, keep: ['v0', 'time', 'root'], evid: ['E2'], detail: 'TH-03 在 T+4.2s 跳变 +2.1℃，记录在弹载记录仪。温度和姿态、落点落在同一发，温补回路才开始成为优先方向。' },
   { id: 'time', layer: '时序', label: '同发次对齐', value: 'T+4.2 s', kind: 'mid', x: 230, y: 248, w: 124, keep: ['pitch', 'temp', 'calib'], evid: [], detail: '姿态、初速和温度跳变对齐到第19发、T+4.2s 附近。时间接近只说明该继续追查定位定向系统，不能单独证明温补失效。' },
   { id: 'calib', layer: '标定', label: '系数偏差', value: '12.4%', kind: 'bad', x: 530, y: 18, w: 118, keep: ['time', 'root'], evid: ['E3'], detail: '标定台测得温补系数与出厂标定值偏差 12.4%，容差 5%，超出 7.4 个百分点。这是把「温度跳了」收成「温补失效」的直接证据。' },
   { id: 'root', layer: '根因', label: '温补失效', value: '置信 0.86', kind: 'root', x: 548, y: 148, w: 148, keep: ['pitch', 'temp', 'calib', 'case', 'retest', 'dh', 'alarm'], evid: ['E3'], detail: '定位定向系统温补失效被采纳。标定偏差、TH-03 跳变和 pitch 漂移三条线交汇，置信度 0.86。它解释的是第19发孤立超差，不是整批故障。' },
   { id: 'case', layer: '类比', label: '历史案例', value: 'D-06', kind: 'case', x: 820, y: 36, w: 124, keep: ['root'], evid: ['E4'], detail: '2019 年同型装甲车 A 精度试验有同类温补失效，来源是历史案例库 D-06。案例只帮助排序，不能代替本次标定台的 12.4%。' },
-  { id: 'retest', layer: '印证', label: '复测对照', value: '0.18 mil', kind: 'ok', x: 812, y: 176, w: 124, keep: ['root'], evid: [], detail: '温补重新标定后复测高低偏差 0.18 mil，回到 ≤0.30 mil。首测 0.42 mil 继续保留，复测不回写为首测合格。' },
+  { id: 'retest', layer: '印证', label: '复测对照', value: '0.18 m', kind: 'ok', x: 812, y: 176, w: 124, keep: ['root'], evid: [], detail: '温补重新标定后复测高低中间偏差 0.18 m，回到 ≤0.30 m。首测 0.42 m 继续保留，复测不回写为首测合格。' },
   { id: 'fire', layer: '降权', label: '火控解算', value: '置信 0.41', kind: 'down', x: 690, y: 300, w: 128, keep: ['pitch'], evid: [], detail: '火控解算软件异常只接得上姿态角偏差。没有 TH-03 跳变，也没有标定台 12.4% 的偏差，所以停在 0.41，不采纳。' },
   { id: 'weather', layer: '排除', label: '气象修正', value: '置信 0.22', kind: 'down', x: 196, y: 348, w: 128, keep: ['base', 'dir'], evid: [], detail: '气象修正误差排在 0.22。前18发都在判据内，第19发之后的发次也回到正常区间，不像一批气象修正把落点整体带偏。' },
 ]

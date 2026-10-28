@@ -217,7 +217,7 @@
           <el-input v-model="editForm.name" maxlength="40" />
         </el-form-item>
         <el-form-item label="判据" required>
-          <el-input v-model="editForm.criteria" maxlength="60" placeholder="如 ≤0.30 mil" />
+          <el-input v-model="editForm.criteria" maxlength="60" placeholder="如 ≤0.30 m" />
         </el-form-item>
         <el-form-item label="判据类型" required>
           <el-select v-model="editForm.criteriaType" style="width:100%">

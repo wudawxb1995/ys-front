@@ -19,7 +19,7 @@ import { reactive, watch } from 'vue'
 
 // ── 默认初始值（与各部分 mock 数据保持一致）─────────────────────────────
 const M03_LIST_SEED = [
-  { id: 'v1', version: '指标树 V1.0', srcDoc: 'D-01《某型研制总要求》', count: 28, status: '已发布', publishedAt: '2026-10-08 09:24' },
+  { id: 'v1', version: '指标树 V1.0', srcDoc: '《99A式主战坦克研制总案-模拟数据》', count: 44, status: '已发布', publishedAt: '2026-10-28 16:26' },
   { id: 'v2', version: '指标树 V0.9', srcDoc: 'D-01《某型研制总要求》', count: 24, status: '草稿', publishedAt: null },
 ]
 
@@ -64,7 +64,7 @@ const M08_LIST_SEED = [
 const DEFAULTS = {
   // Part1
   metricTreeVersion: 'V1.0',
-  metricTreeCount: 28,
+  metricTreeCount: 44,
   /** 数据模型管理 · 指标树列表（sessionStorage，tab 关闭才清空） */
   m03List: M03_LIST_SEED.map((r) => ({ ...r })),
   /** 试验方案智能生成 · 方案列表 */
@@ -88,7 +88,7 @@ const DEFAULTS = {
       firstDh: 0.42,
       retestDh: 0.18,
       criterion: 0.30,
-      unit: 'mil',
+      unit: 'm',
       conclusion: '复测后符合',
     },
   },
@@ -111,7 +111,7 @@ const DEFAULTS = {
     source: '探针设计与智能定位平台',
     archivedAt: '2026-10-22 11:12',
     rootCause: '定位定向系统温补失效',
-    retest: '复测值 0.18 mil，符合 ≤0.30 mil',
+    retest: '复测值 0.18 m，符合 ≤0.30 m',
     eventId: 'EVT-001',
     eventName: '第19发超差事件',
   },
@@ -188,11 +188,41 @@ const DEFAULTS = {
 // ── sessionStorage 读写工具 ───────────────────────────────────────────────
 const STORAGE_KEY = 'ys_demo_store'
 
+function alignIndicatorBaseline(state) {
+  if (state.metricTreeCount === 28) state.metricTreeCount = 44
+  if (Array.isArray(state.m03List)) {
+    state.m03List = state.m03List.map((row) => {
+      if (row?.id === 'v1' && (row.count === 28 || /研制总要求/.test(row.srcDoc || ''))) {
+        return {
+          ...row,
+          count: 44,
+          srcDoc: '《99A式主战坦克研制总案-模拟数据》',
+        }
+      }
+      return row
+    })
+  }
+  const shot = state.trialDataDock?.shot19
+  if (shot?.unit === 'mil') {
+    state.trialDataDock = {
+      ...state.trialDataDock,
+      shot19: { ...shot, unit: 'm' },
+    }
+  }
+  if (state.reportArchived?.retest && /mil/.test(state.reportArchived.retest)) {
+    state.reportArchived = {
+      ...state.reportArchived,
+      retest: '复测值 0.18 m，符合 ≤0.30 m',
+    }
+  }
+  return state
+}
+
 function loadFromStorage() {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return { ...DEFAULTS }
-    return { ...DEFAULTS, ...JSON.parse(raw) }
+    return alignIndicatorBaseline({ ...DEFAULTS, ...JSON.parse(raw) })
   } catch {
     return { ...DEFAULTS }
   }
@@ -309,7 +339,7 @@ export function archiveInterpretReport(report) {
   const shot = store.trialDataDock?.shot19
   const retest = shot
     ? `复测值 ${shot.retestDh} ${shot.unit}，符合 ≤${shot.criterion} ${shot.unit}`
-    : '复测值 0.18 mil，符合 ≤0.30 mil'
+    : '复测值 0.18 m，符合 ≤0.30 m'
   store.reportArchived = {
     id: report.id,
     title: report.title || '第19发超差事件解读报告',
